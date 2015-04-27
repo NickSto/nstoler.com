@@ -11,15 +11,16 @@ print STDERR "\nSTART RUN: ", time, "\n\n";
 use strict;
 use CGI;
 use Config::IniFiles;
-use lib '/home/public/code';
+use FindBin;
+use lib "$FindBin::Bin/../code";
 use Passhash;
 use Traffic;
 
 # Log the visit
-add_visit_plain();
+#add_visit_plain();
 
 # Constants
-my $HASH_FILE = "/home/public/protect/auth.ini";
+my $HASH_FILE = "$FindBin::Bin/../protect/auth.ini";
 my $DELAY = 2; #seconds
 
 # Set up CGI object
