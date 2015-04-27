@@ -21,14 +21,14 @@ referrer. So Javascript is needed to pass that information to this script.)
 use strict;
 use CGI;
 use CGI::Cookie;
-use lib '/home/public/code';
+use lib 'code';
 use DBIconnect;
 use Traffic;
 use Randchar;
 
 # Constants
 my $COOKIE_NAME = "visitors_v1";
-my $CONFIG_FILE = "/home/public/protect/dbi_config.ini";
+my $CONFIG_FILE = "/var/www/nsto.co/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Tracker";
 
 # Set up CGI and DBI objects
