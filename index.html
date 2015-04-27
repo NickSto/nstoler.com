@@ -1,0 +1,112 @@
+<!doctype html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7 ]> <html class="no-js ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]>    <html class="no-js ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]>    <html class="no-js ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+
+<!-- Thanks to HTML5 Boilerplate for the starting material: http://html5boilerplate.com -->
+<!-- Almost all the comments are theirs. -->
+
+  <title>My Site</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- CSS: implied media="all" -->
+  <link rel="stylesheet" href="/css/style.css?v=2">
+  <link rel="stylesheet" href="index.css?v=2">
+  <link rel="stylesheet" id="nom" href="/nom.cgi">
+
+  <!-- Uncomment if you are specifically targeting less enabled mobile browsers
+  <link rel="stylesheet" media="handheld" href="/css/handheld.css?v=2">  -->
+
+  <!-- All JavaScript at the bottom, except for Modernizr which enables HTML5 elements & feature detects -->
+  <script src="/js/libs/modernizr-1.7.min.js"></script>
+
+ </head>
+
+<body>
+
+  <div id="container">
+    <header class="front_page">
+
+        <h1 id="title">My Site</h1>
+		
+    </header>
+    <div id="main" role="main">
+			
+		<section id="welcome">
+			<h2>Welcome</h2>
+			<p>This is my personal site. It serves as a testing platform, a utility kit, and a drawer full of things I frequently want.</p>
+		</section>
+		<section id="projects">
+			<h2>Links</h2>
+			<ul id="project_links">
+				<li>
+					<h3><a href="/pb/pbsearch.html">Paralogy Browser</a></h3>
+					<p>A bioinformatics web application. Find similar groups of genes in the <span class="species">E. coli</span> genome and browse through the similarity network. Uses the NCBI Blast package, Perl CGI scripting, MySQL, HTML5, and JavaScript.</p>
+				</li>
+				<li>
+					<h3><a href="/notepad">Notepad</a></h3>
+					<p>Uber simple scratchpad. Make your own page and add notes, links, or any bit of text you want to save for later or share between computers.</p>
+				</li>
+				<li class="project">
+					<h3><a href="/misc/logbrowser.html">Traffic Monitor</a></h3>
+					<p>An overview of the website traffic logging and monitoring system I wrote for the site. Uses Perl CGI scripting, MySQL, HTML5, and JavaScript.</p>
+				</li>
+				<li>
+					<h3><a href="/misc/userinfo.cgi">userinfo.cgi</a></h3>
+					<p>Check your IP address, user-agent string, and other information you're showing as you browse the web.</p>
+				</li>
+        <li>
+          <h3><a href="/misc/dataurl.html">dataurl</a></h3>
+          <p>Convert small files to base64 blob: URI's using javascript.</p>
+        </li>
+			</ul>
+		</section>
+        
+    </div>
+    <footer>
+		<dl id="contact">
+			<dt class="email">Contact:</dt>
+			<dd class="email">
+				<span id="contact_form"><a href="/s/contact/form.html">Send me an email</a></span>
+			</dd>
+		</dl>
+    </footer>
+  </div> <!--! end of #container -->
+
+  <!-- JavaScript at the bottom for fast page loading -->
+
+  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if necessary -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+  <script>window.jQuery || document.write("<script src='/js/libs/jquery-1.5.1.min.js'>\x3C/script>")</script>
+
+
+  <!-- !!Uncomment if you actually add plugins!!
+  <script src="/js/plugins.js"></script>
+  -->
+  <script src="/js/script.js"></script>
+
+
+  <!--[if lt IE 7 ]>
+    <script src="/js/libs/dd_belatedpng.js"></script>
+    <script>DD_belatedPNG.fix("img, .png_bg"); // Fix any <img> or .png_bg bg-images. Also, please read goo.gl/mZiyb </script>
+  <![endif]-->
+
+
+  <!-- mathiasbynens.be/notes/async-analytics-snippet Change UA-XXXXX-X to be your site's ID -->
+  <script>
+    var _gaq=[["_setAccount","UA-23000656-2"],["_trackPageview"]];
+    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.async=1;
+    g.src=("https:"==location.protocol?"//ssl":"//www")+".google-analytics.com/ga.js";
+    s.parentNode.insertBefore(g,s)}(document,"script"));
+  </script>
+
+</body>
+</html>
