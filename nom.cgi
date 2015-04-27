@@ -28,7 +28,7 @@ use Randchar;
 
 # Constants
 my $COOKIE_NAME = "visitors_v1";
-my $CONFIG_FILE = "/var/www/nsto.co/protect/dbi_config.ini";
+my $CONFIG_FILE = "protect/dbi_config.ini";
 my $CONFIG_SECTION = "Tracker";
 
 # Set up CGI and DBI objects
