@@ -15,13 +15,12 @@ Examples: /misc/export_visits.cgi, /s/contact/send.cgi
 use strict;
 use CGI;
 use CGI::Cookie;
-use lib '/home/public/code';
 use Randchar;
 use DBIconnect;
 
 # Constants
 my $COOKIE_NAME = "visitors_v1";
-my $CONFIG_FILE = "/home/public/protect/dbi_config.ini";
+my $CONFIG_FILE = "/var/www/nsto.co/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Tracker";
 
 sub add_visit {

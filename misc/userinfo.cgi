@@ -10,13 +10,13 @@ print STDERR "\n$0\nSTART RUN: ", time, "\n";
 use strict;
 use CGI;
 use CGI::Cookie;
-use lib '/home/public/code';
+use lib '/var/www/nsto.co/code';
 use Traffic;
 
 my $COOKIE_NAME = "visitors_v1";
 
 # Log the visit
-add_visit_plain();
+# add_visit_plain();
 
 # Set up CGI object 
 my $cgi = new CGI;
