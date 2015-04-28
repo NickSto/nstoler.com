@@ -8,11 +8,11 @@ print STDERR "\nSTART RUN: ", time, "\n\n";
 
 use strict;
 use CGI;
-use lib '/home/public/code';
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use Traffic;
 	
 # Log the visit
-add_visit_plain();
+#add_visit_plain();
 
 # Constants
 my $TO = 'nmapsy@gmail.com';

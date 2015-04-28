@@ -36,19 +36,20 @@ use CGI;
 use HTML::Template;
 use DBI;
 use Config::IniFiles;
-use lib '/home/public/code';
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use DBIconnect;
 use Passhash;
 use Traffic;
 	
 # Log the visit
-add_visit_plain();
+#add_visit_plain();
 
 # Constants
+my $root = $ENV{'DOCUMENT_ROOT'};
 my $TMPL_FILE = "links.tmpl";
-my $CONFIG_FILE = "/home/public/protect/dbi_config.ini";
+my $CONFIG_FILE = "$root/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Customizer";
-my $HASH_FILE = "/home/public/protect/auth.ini";
+my $HASH_FILE = "$root/protect/auth.ini";
 
 # Set up CGI, HTML::Template, and DBI objects 
 my $cgi = new CGI;

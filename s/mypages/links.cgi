@@ -15,14 +15,15 @@ use CGI;
 use HTML::Template;
 use DBI;
 use Config::IniFiles;
-use lib '/home/public/code';
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use DBIconnect;
 
 # Constants
+my $root = $ENV{'DOCUMENT_ROOT'};
 my $TMPL_FILE = "links.tmpl";
-my $CONFIG_FILE = "/home/public/protect/dbi_config.ini";
+my $CONFIG_FILE = "$root/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Customizer";
-my $NAVBAR_FILE = "/home/public/navbar.d.html";
+my $NAVBAR_FILE = "$root/navbar.d.html";
 
 # Read in navbar HTML
 open(my $navbar_fh, "<", $NAVBAR_FILE) or
