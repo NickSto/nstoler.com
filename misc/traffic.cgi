@@ -20,16 +20,17 @@ use strict;
 use CGI;
 use HTML::Template;
 use DBI;
-use lib '/home/public/code';
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use DBIconnect;
 use Traffic;
 use Auth;
 
 # Constants
+my $root = $ENV{'DOCUMENT_ROOT'};
 my $TMPL_FILE = "traffic.tmpl";
-my $CONFIG_FILE = "/home/public/protect/dbi_config.ini";
+my $CONFIG_FILE = "$root/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Tracker";
-my $NAVBAR_FILE = "/home/public/navbar.d.html";
+my $NAVBAR_FILE = "$root/navbar.d.html";
 my $NUM_PER_PAGE = 100;
 
 # Read in navbar HTML

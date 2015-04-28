@@ -14,16 +14,16 @@ use strict;
 use CGI;
 use DBI;
 use Config::IniFiles;
-use lib '/home/public/code';
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use DBIconnect;
 use Traffic;
 use Auth;
 
 # Log the visit
-add_visit_plain();
+#add_visit_plain();
 
 # Constants
-my $CONFIG_FILE = "/home/public/protect/dbi_config.ini";
+my $CONFIG_FILE = "$ENV{'DOCUMENT_ROOT'}/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Tracker";
 
 # Set up CGI and DBI objects 

@@ -11,11 +11,11 @@ use strict;
 use Env;
 use CGI;
 use DBI;
-use lib '/home/public/code';
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use DBIconnect;
 
 # Constants
-my $CONFIG_FILE = "/home/public/protect/dbi_config.ini";
+my $CONFIG_FILE = "$ENV{'DOCUMENT_ROOT'}/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Tracker";
 my $HTML_PRE = <<END;
 <!doctype html>
