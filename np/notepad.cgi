@@ -14,15 +14,16 @@ use strict;
 use CGI;
 use HTML::Template;
 use DBI;
-use lib '/home/public/code';
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use DBIconnect;
 
 # Constants
+my $root = $ENV{'DOCUMENT_ROOT'};
 my $TMPL_FILE = "notepad.tmpl";
-my $CONFIG_FILE = "/home/public/protect/dbi_config.ini";
+my $CONFIG_FILE = "$root/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Customizer";
-my $NAVBAR_FILE = "/home/public/navbar.d.html";
-my $RANDOM_PAGE = "/home/public/np/random.cgi";
+my $NAVBAR_FILE = "$root/navbar.d.html";
+my $RANDOM_PAGE = "$root/np/random.cgi";
 
 # Read in navbar HTML
 open(my $navbar_fh, "<", $NAVBAR_FILE) or

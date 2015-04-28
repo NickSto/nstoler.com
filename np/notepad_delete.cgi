@@ -13,15 +13,15 @@ MySQL database.
 use strict;
 use CGI;
 use DBI;
-use lib '/home/public/code';
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use DBIconnect;
 use Traffic;
 
 # Log the visit
-add_visit_plain();
+#add_visit_plain();
 
 # Constants
-my $CONFIG_FILE = "/home/public/protect/dbi_config.ini";
+my $CONFIG_FILE = "$ENV{'DOCUMENT_ROOT'}/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Customizer";
 my $MAIL_TO = 'nmapsy@gmail.com';
 my $MAIL_FROM = 'notepad@'.$ENV{HTTP_HOST};

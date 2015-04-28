@@ -15,12 +15,12 @@ print STDERR "\nSTART RUN: ", time, "\n\n";
 
 use strict;
 use CGI;
-use lib '/home/public/code';
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use Randchar;
 use Traffic;
 
 # Log the visit
-add_visit_plain();
+#add_visit_plain();
 
 # Set up CGI, HTML::Template, and DBI objects 
 my $cgi = new CGI;
