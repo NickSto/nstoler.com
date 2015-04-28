@@ -11,16 +11,17 @@ print STDERR "\nSTART RUN: ", time, "\n\n";
 
 use strict;
 use CGI;
-use lib '/home/public/code';
+use FindBin;
+use lib "$FindBin::Bin/../code";
 use Traffic;
 
 # Log the visit
-add_visit_plain();
+#add_visit_plain();
 
 # Set up CGI, HTML::Template, and DBI objects 
 my $cgi = new CGI;
 
-print $cgi->header('text/html');
+print $cgi->header('text/plain');
 foreach my $key (sort(keys(%ENV))) {
-    print "$key = $ENV{$key}<br>\n";
+    print "$key = $ENV{$key}\n";
 }

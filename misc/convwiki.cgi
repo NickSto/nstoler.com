@@ -5,11 +5,12 @@
 
 use strict;
 use CGI;
-use lib '/home/public/code';
+use FindBin;
+use lib "$FindBin::Bin/../code";
 use Traffic;
 
 # log the visit
-add_visit_plain();
+#add_visit_plain();
 
 my $cgi = new CGI;
 
