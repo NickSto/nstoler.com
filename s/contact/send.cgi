@@ -16,16 +16,16 @@ use Traffic;
 
 # Constants
 my $TO = 'nmapsy@gmail.com';
-my $FROM_PREFIX = 'contact@';
+my $FROM_PREFIX = 'contact';
 
 # Get the domain
-my $domain = "nsto.co";
+my $domain = "$ENV{'HTTP_HOST'}";
 if ($ENV{HTTP_HOST} =~ m/([^.]+\.[^.]+)$/) {
 	$domain = $1;
 }
 
 # Global variables
-my $from = $FROM_PREFIX . $domain;
+my $from = $FROM_PREFIX . '@' . $domain;
 my $error = 0;
 
 # Set up CGI object
