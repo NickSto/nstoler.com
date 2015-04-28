@@ -1,0 +1,128 @@
+<!doctype html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7 ]> <html class="no-js ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]>    <html class="no-js ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]>    <html class="no-js ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+
+  <!-- Thanks to HTML5 Boilerplate for the starting material: http://html5boilerplate.com -->
+  <!-- Almost all the comments are theirs. -->
+
+  <title>Genome Graphic</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  
+  <!-- CSS: implied media="all" -->
+  <link rel="stylesheet" href="/css/style.css?v=2">
+  <link rel="stylesheet" href="yourgenome.css?v=2">
+  <link rel="stylesheet" id="nom" href="/nom.cgi">
+
+  
+  <!-- Uncomment if you are specifically targeting less enabled mobile browsers
+  <link rel="stylesheet" media="handheld" href="/css/handheld.css?v=2">  -->
+
+  <!-- All JavaScript at the bottom, except for Modernizr which enables HTML5 elements & feature detects -->
+  <script src="/js/libs/modernizr-1.7.min.js"></script>
+
+</head>
+
+<body>
+
+  <div id="container">
+    <header>
+		<!--#include virtual="/navbar.d.html" -->
+    </header>
+    <div id="main" role="main">
+	
+		<header>
+			<h1 id="title">Genome Graphic Generator</h1>
+		</header>
+    <section id="abstract" class="text abstract">
+      <p>Here I describe a tool I wrote to represent personal genomes in a single, visually appealing graphic. It can turn any sequence into a graphic, but the focus is on representing whole genomes and the minute differences between them that make them unique. You can read the explanation below, skip to the <a href="#result">examples</a>, or to the <a href="http://toolshed.g2.bx.psu.edu/repository/display_tool?repository_id=4e3c152c0ec46a29&amp;render_repository_actions_for=tool_shed&amp;tool_config=database%2Fcommunity_files%2F000%2Frepo_895%2Fvisualize.xml&amp;changeset_revision=abed07ebeac7">tool itself</a>, now an installable <a href="https://usegalaxy.org/">Galaxy</a> tool.</p>
+    </section>
+		<section id="rationale" class="text overview">
+      <h2>Rationale</h2>
+			<p>The cost of DNA sequencing has been plummeting in the last few years. More than plummeting. It dropped through the floor, and then said a quick hello to Moore's Law as it flew straight past even <span class="em">that</span> exponential trend. The best way to emphasize this is with a chart from the NHGRI's page at <a href="http://www.genome.gov/sequencingcosts">genome.gov/sequencingcosts</a>.</p>
+      <p>This looks like a logarithmic trend, but note that it's already on a logarithmic scale. Moore's Law is a straight line. And before 2007 the cost per genome was already keeping pace with it. At that point a genome would cost you 10 million dollars. But then the price went off a cliff, and within four short years it was under 10 <span class="em">thousand</span> dollars:</p>
+      <div class="image intext w512">
+        <a href="/img/sequencingcosts.jpg"><img src="/img/sequencingcosts.jpg" height=100% width=100% alt="note the &quot;Moore's Law&quot; line."/></a>
+      </div>
+      <p>This means that my longtime desire to have my own genome sequenced is quickly becoming possible. And when I think about the moment I finally get my genome, I realized that what would really be nice is some way to visualize the whole thing at once. Some image that I can say is <span class="em">me</span>. That poses two problems: how do you generate some sort of graphic that both summarizes a whole genome <span class="em">and</span> retains the rare differences between it and everyone else's? With 3 billion nucleotides, obviously not all of them can be shown in a graphic that will fit in one screen. But if you squash it down to a manageable size, averaging thousands of bases into each pixel, you will inevitably get the same result for every human you run into. That's because the differences that make you unique are so rare that they're swamped by the bases common to everyone.</p>
+      <p>That's why this is a difficult problem to solve. It's especially difficult to solve it in a simple way that requires no more than a single file with your genome sequence. I've taken a crack at it, and here I'm showing what I've come up with. My approach takes into account every single nucleotide, while still emphasizing the small amount of variation in every genome. Simply put, a change in any single nucleotide will produce a wildly different image. So your graphic will be uniquely yours and represent <span class="em">you</span>.</p>
+		</section>
+    <section id="result" class="gallery text">
+      <h2>The Result</h2>
+      <p>Here is the product of my approach. Since I don't yet have my genome, this was produced from the standard reference genome, hg19.</p>
+      <p></p>
+      <div class="image intext w512">
+        <a href="/img/hg19-opacity2.png"><img src="/img/hg19-opacity2.png" alt="hg19.fa"/></a>
+      </div>
+      <p>I use a recursive algorithm that partitions the image into eighths, colors them, then partitions each eighth, colors those sub-partitions, then mixes them with the first level, and so on. This prevents the random noise you would get by breaking it into tiny bits and coloring each one independently. Instead, there are larger regions which maintain some continuity even though their constituent parts diverge.</p>
+    </section>
+    <section id="features" class="text gallery">
+      <h2>Features</h2>
+      <p>Just to show how much the image changes with a different genome, here are two different genomes side-by-side. The first is the same as above, and the second has one chromosome replaced with a <a href="https://en.wikipedia.org/wiki/Cambridge_Reference_Sequence">version</a> that differs by only a few tiny mutations.</p>
+      <div class="image genome w518">
+        <a href="/img/hg19-256.png"><img src="/img/hg19-256.png" alt="hg19.fa"/></a>
+        <a href="/img/hg19-rCRS-256.png"><img src="/img/hg19-rCRS-256.png" alt="hg19.fa with the rCRS mitochondrial genome"/></a>
+      </div>
+      <p>And because of the recursive nature of the algorithm, the image can be generated at smaller or larger sizes and maintain the same level of detail. Here is the same genome at a number of different sizes. Note that this is not simply zoomed out. That would lose too much sharpness by averaging pixels. These are generated specially at each size, with only the necessary pixels added.</p>
+      <div class="image genome w512">
+        <a href="/img/hg19-256.png"><img src="/img/hg19-256.png" alt="256x256"/></a>
+        <a href="/img/hg19-128.png"><img src="/img/hg19-128.png" alt="128x128"/></a>
+        <a href="/img/hg19-64.png"><img src="/img/hg19-64.png" alt="64x64"/></a>
+        <a href="/img/hg19-32.png"><img src="/img/hg19-32.png" alt="32x32"/></a>
+        <a href="/img/hg19-16.png"><img src="/img/hg19-16.png" alt="16x16"/></a>
+      </div>
+    </section>
+    <section id="experiments" class="text gallery">
+      <h2>Early Experiments</h2>
+      <p>Because of the way the algorithm generates multiple layers which have to be mixed, an important tuning factor is the weight given to each layer. I tried several different algorithms to determine the weighting, and the result I've shown is what I thought worked the best. But here I'll show some other options I tried, some of which I think would be better in certain contexts. Feedback is definitely appreciated, since I know I don't have the most artistic eye.</p>
+      <p>This version emphasizes the small details, and I think it really shows the vast amount of information I'm attempting to summarize.</p>
+      <div class="image genome w512">
+  		  <a href="/img/hg19-opacity4.png"><img src="/img/hg19-opacity4.png" alt="hg19.fa"/></a>
+      </div>
+      <p>This one is on the other extreme, but it does make the pattern very clear and identifiable. It might work best for small icons.</p>
+      <div class="image genome w512">
+        <a href="/img/hg19-opacity1.png"><img src="/img/hg19-opacity1.png" alt="hg19.fa"/></a>
+      </div>
+    </section>
+		
+    </div>
+    <footer>
+		<!--#include virtual="/navbar.d.html" -->
+    </footer>
+  </div> <!--! end of #container -->
+
+  <!-- JavaScript at the bottom for fast page loading -->
+
+  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if necessary -->
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+  <script>window.jQuery || document.write("<script src='/js/libs/jquery-1.5.1.min.js'>\x3C/script>")</script>
+
+
+  <!-- <script src="/js/plugins.js"></script> -->
+  <script src="/js/script.js"></script>
+
+
+  <!--[if lt IE 7 ]>
+    <script src="/js/libs/dd_belatedpng.js"></script>
+    <script>DD_belatedPNG.fix("img, .png_bg"); // Fix any <img> or .png_bg bg-images. Also, please read goo.gl/mZiyb </script>
+  <![endif]-->
+
+  <!-- mathiasbynens.be/notes/async-analytics-snippet -->
+  <script>
+    var _gaq=[["_setAccount","UA-23000656-2"],["_trackPageview"]];
+    (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.async=1;
+    g.src=("https:"==location.protocol?"//ssl":"//www")+".google-analytics.com/ga.js";
+    s.parentNode.insertBefore(g,s)}(document,"script"));
+  </script>
+
+</body>
+</html>
