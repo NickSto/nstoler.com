@@ -17,7 +17,7 @@ sub admin_cookie {
 	my $AUTH_FILE = "$ENV{'DOCUMENT_ROOT'}/protect/auth.ini";
 	
 	my $user_cookie = get_cookie($COOKIE_NAME);
-	my $auth_cookies = get_config_value($AUTH_FILE, 'Traffic', 'cookies');
+	my $auth_cookies = get_config_value($AUTH_FILE, 'Admin', 'cookies');
 	my $authorized = 0;
 	for my $auth_cookie (split(',', $auth_cookies)) {
 	  if ($auth_cookie eq $user_cookie) {
@@ -25,7 +25,6 @@ sub admin_cookie {
 	  }
 	}
 	return $authorized;
-	
 }
 
 sub get_cookie {
