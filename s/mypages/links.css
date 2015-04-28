@@ -1,0 +1,88 @@
+/***** Links *****/
+
+#link_list {
+	margin: 10px 0;
+	padding: 20px 10px;
+	background-color: #FFFFFF;
+	border: 1px solid rgb(200,200,200);
+}
+
+.link {
+	list-style-type: none;
+	margin: 10px;
+}
+
+.link h3 {
+	display: inline;
+	font-size: 125%;
+	font-weight: normal;
+}
+
+/*  these two are temporary kludges until I separate the links and notes rules
+	the selection methods are so that the first is applied only to notes and
+	the second is only for links
+*/
+input + p {
+	display: table;
+}
+h3 + p {
+	display: inline;
+	
+	/* IE 7 inline-block hack */
+	zoom: 1;
+	*display: inline;
+}
+
+#links form footer {
+	margin: 20px 0;
+}
+
+#links footer h4 {
+	margin: 5px;
+	margin-left: 47px;
+}
+
+#links footer label {
+	width: 40px;
+	float: left;
+	text-align: right;
+	margin-right: 7px;
+}
+
+#links footer input[type="submit"] {
+	margin-left: 47px;
+}
+
+input.url, input.title {
+	width: 648px;
+}
+
+.field textarea {
+	height: 35px;
+}
+
+#main #add_link h2 {
+	margin-left: 87px;
+}
+
+#main #add_link label {
+	width: 80px;
+	float: left;
+	text-align: right;
+	margin-right: 7px;
+}
+
+#add_link input[type="submit"] {
+	margin-left: 87px;
+}
+
+textarea[name="content"] {
+	height: 150px;
+}
+
+/***** Notes, Links, and Notepad *****/
+
+.del_cb {
+	float: left;
+	width: 15px;
+}
