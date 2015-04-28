@@ -13,12 +13,20 @@ use strict;
 use CGI;
 use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use Traffic;
+use Auth;
 
 # Log the visit
 #add_visit_plain();
 
-# Set up CGI, HTML::Template, and DBI objects 
+# Set up CGI DBI object
 my $cgi = new CGI;
+
+# If cookie is not authorized, print error and exit
+if (! admin_cookie()) {
+  print $cgi->header('text/html');
+  print "Error: You are not yet authorized for this content.\n";
+  exit(0);
+}
 
 print $cgi->header('text/plain');
 foreach my $key (sort(keys(%ENV))) {

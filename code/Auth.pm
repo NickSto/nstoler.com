@@ -14,7 +14,7 @@ use CGI::Cookie;
 # Check that the user has an authorized cookie
 sub admin_cookie {
 	my $COOKIE_NAME = "visitors_v1";
-	my $AUTH_FILE = "/home/public/protect/auth.ini";
+	my $AUTH_FILE = "$ENV{'DOCUMENT_ROOT'}/protect/auth.ini";
 	
 	my $user_cookie = get_cookie($COOKIE_NAME);
 	my $auth_cookies = get_config_value($AUTH_FILE, 'Traffic', 'cookies');
