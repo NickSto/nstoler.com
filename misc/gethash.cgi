@@ -11,8 +11,7 @@ print STDERR "\nSTART RUN: ", time, "\n\n";
 use strict;
 use CGI;
 use Config::IniFiles;
-use FindBin;
-use lib "$FindBin::Bin/../code";
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use Passhash;
 use Traffic;
 
@@ -20,7 +19,7 @@ use Traffic;
 #add_visit_plain();
 
 # Constants
-my $HASH_FILE = "$FindBin::Bin/../protect/auth.ini";
+my $HASH_FILE = "$ENV{'DOCUMENT_ROOT'}/protect/auth.ini";
 my $DELAY = 2; #seconds
 
 # Set up CGI object

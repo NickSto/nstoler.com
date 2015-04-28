@@ -10,8 +10,7 @@ print STDERR "\n$0\nSTART RUN: ", time, "\n";
 use strict;
 use CGI;
 use CGI::Cookie;
-use FindBin;
-use lib "$FindBin::Bin/../code";
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use Traffic;
 
 my $COOKIE_NAME = "visitors_v1";

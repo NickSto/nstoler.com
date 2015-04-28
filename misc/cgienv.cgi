@@ -11,8 +11,7 @@ print STDERR "\nSTART RUN: ", time, "\n\n";
 
 use strict;
 use CGI;
-use FindBin;
-use lib "$FindBin::Bin/../code";
+use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use Traffic;
 
 # Log the visit
