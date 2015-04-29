@@ -1,43 +1,10 @@
+/* Custom additions to the Bootstrap CSS */
 
-/***** Front Page *****/
-
-header.front_page {
-	margin: 30px;
+li.list-group-item.header {
+  background-color: #F5F5F5;
 }
 
-#project_links li {
-	list-style-type: none;
-	padding: 10px;
+#selfie {
+  width: 250px;
 }
 
-#project_links p {
-	padding: 5px;
-	padding-left: 17px;
-	text-indent: 20px;
-}
-
-aside#about_me {
-	float: right;
-	margin: 10px;
-	width: 350px;
-}
-
-dl#contact {
-	margin: 13px;
-}
-
-dl#contact dt {
-	display: inline;
-	font-size: 110%;
-	font-weight: bold;
-}
-
-dl#contact dd {
-	display: inline;
-	margin: 10px;
-}
-
-#contact_form {
-	font-size: 110%;
-	margin-right: 10px;
-}
