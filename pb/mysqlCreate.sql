@@ -1,3 +1,6 @@
+CREATE DATABASE pb;
+USE pb;
+
 CREATE TABLE sequences (
 identifier VARCHAR(60) NOT NULL,
 db_name CHAR(5) NOT NULL,
@@ -20,3 +23,8 @@ subj_start INT(6) NULL,
 subj_end INT(6) NULL,
 e_value DOUBLE UNSIGNED NULL,
 bit_score DECIMAL(5,1) NULL );
+
+CREATE USER 'pbreader' IDENTIFIED BY '[PASSWORD]';
+GRANT SELECT ON `pb`.* TO 'pbreader';
+CREATE USER 'pbadder' IDENTIFIED BY '[PASSWORD]';
+GRANT INSERT ON `pb`.* TO 'pbadder';
