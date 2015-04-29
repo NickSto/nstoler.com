@@ -20,7 +20,7 @@ use Traffic;
 use Auth;
 
 # Log the visit
-#add_visit_plain();
+add_visit_plain();
 
 # Constants
 my $CONFIG_FILE = "$ENV{'DOCUMENT_ROOT'}/protect/dbi_config.ini";

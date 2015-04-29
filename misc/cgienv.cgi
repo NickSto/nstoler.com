@@ -16,7 +16,7 @@ use Traffic;
 use Auth;
 
 # Log the visit
-#add_visit_plain();
+add_visit_plain();
 
 # Set up CGI DBI object
 my $cgi = new CGI;

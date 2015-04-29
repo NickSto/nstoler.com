@@ -20,7 +20,7 @@ use Randchar;
 use Traffic;
 
 # Log the visit
-#add_visit_plain();
+add_visit_plain();
 
 # Set up CGI, HTML::Template, and DBI objects 
 my $cgi = new CGI;

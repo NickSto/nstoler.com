@@ -39,7 +39,7 @@ use Passhash;
 use Traffic;
 	
 # Log the visit
-#add_visit_plain();
+add_visit_plain();
 
 # Constants
 my $root = $ENV{'DOCUMENT_ROOT'};

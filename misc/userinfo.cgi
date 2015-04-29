@@ -16,7 +16,7 @@ use Traffic;
 my $COOKIE_NAME = "visitors_v1";
 
 # Log the visit
-# add_visit_plain();
+add_visit_plain();
 
 # Set up CGI object 
 my $cgi = new CGI;

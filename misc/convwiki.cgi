@@ -9,7 +9,7 @@ use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use Traffic;
 
 # log the visit
-#add_visit_plain();
+add_visit_plain();
 
 my $cgi = new CGI;
 

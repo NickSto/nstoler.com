@@ -145,10 +145,6 @@ sub add_visitor_db {
 	
 	my $label;
 	my $is_me;
-	if (is_it_me($dataref)) {
-		$label = "me";
-		$is_me = '';
-	}
 	
 	my $insert_command = qq{
 		INSERT INTO visitors (cookie, ip, user_agent, label, is_me)

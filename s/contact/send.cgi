@@ -12,7 +12,7 @@ use lib "$ENV{'DOCUMENT_ROOT'}/code";
 use Traffic;
 	
 # Log the visit
-#add_visit_plain();
+add_visit_plain();
 
 # Constants
 my $TO = 'nmapsy@gmail.com';

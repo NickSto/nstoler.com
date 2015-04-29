@@ -16,7 +16,7 @@ use Passhash;
 use Traffic;
 
 # Log the visit
-#add_visit_plain();
+add_visit_plain();
 
 # Constants
 my $HASH_FILE = "$ENV{'DOCUMENT_ROOT'}/protect/auth.ini";
