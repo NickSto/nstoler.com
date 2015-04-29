@@ -33,6 +33,7 @@ my $dbh = DBI_connect($CONFIG_FILE, $CONFIG_SECTION);
 # Get the form info from the POST
 my $page = $cgi->param('page_name');
 my $spambot = $cgi->param('site');
+$page =~ s#^/##g;
 
 # Get list of existing notes from database
 my @note_ids = get_current_notes($dbh, $page);

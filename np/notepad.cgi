@@ -38,6 +38,7 @@ $dbh->{'mysql_enable_utf8'} = 1;
 
 # Get the page name from the GET
 my $page = $cgi->url_param('p');
+$page =~ s#^/##g;
 
 # Get random page if none supplied
 unless ($page) {

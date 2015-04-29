@@ -43,6 +43,7 @@ $dbh->{'mysql_enable_utf8'} = 1;
 my $content = $cgi->param('content');
 my $page = $cgi->param('page_name');
 my $spambot = $cgi->param('site');
+$page =~ s#^/##g;
 
 if ($page eq "notepad") {
 	send_mail($MAIL_TO, $MAIL_FROM,
