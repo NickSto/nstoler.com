@@ -27,7 +27,7 @@ use Auth;
 
 # Constants
 my $root = $ENV{'DOCUMENT_ROOT'};
-my $TMPL_FILE = "traffic.tmpl";
+my $TMPL_FILE = "monitor.tmpl";
 my $CONFIG_FILE = "$root/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Tracker";
 my $NAVBAR_FILE = "$root/navbar.d.html";

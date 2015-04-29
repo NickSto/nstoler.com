@@ -27,7 +27,7 @@ my $HTML_PRE = <<END;
   <body>
 END
 my $HTML_POST = <<END;
-    <p>Back to <a href='traffic.cgi'>traffic log</a>.</p>
+    <p>Back to <a href='monitor.cgi'>traffic log</a>.</p>
   </body>
 </html>
 END
