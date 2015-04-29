@@ -1,0 +1,3 @@
+[submodule "assemblo"]
+	path = assemblo
+	url = git@github.com:NickSto/assemblo.git
