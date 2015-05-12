@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
-#Passhash.pm
+
+# NOTE FROM THE FUTURE:
+# I have to point out that I'm now aware that this is completely wrong.
+# Version 2.0 will use pbkdf2! (Or maybe scrypt!)
+
 =begin comment
 
 For performing multi-round, optionally salted, password hashing.
