@@ -3,9 +3,8 @@ from __future__ import division
 import re
 import os
 import sys
-import socket
-import httplib
 import argparse
+import requests
 import ConfigParser
 
 OPT_DEFAULTS = {}
@@ -45,32 +44,18 @@ def read_config_section(config_path, section):
 
 def userinfo(settings):
   data = read_config_section(settings._path, 'data_userinfo')
-  headers = {'Host': settings.hostname,
-             'User-Agent': settings.useragent,
-             'Cookie': 'visitors_v1='+settings.cookie,
-             'Referer': data.referer}
-  conex = httplib.HTTPConnection(settings.host)
+  headers = {'host': settings.hostname,
+             'user-agent': settings.useragent,
+             'cookie': 'visitors_v1='+settings.cookie,
+             'referer': data.referer}
   try:
-    conex.connect()
-  except (httplib.HTTPException, socket.error):
-    sys.stderr.write('Connection error.\n')
+    response = requests.get('http://'+settings.hostname+data.path, headers=headers)
+  except requests.exceptions.RequestException:
     return False
-  try:
-    conex.request('GET', data.path, '', headers)
-  except (httplib.HTTPException, socket.error):
-    sys.stderr.write('Request error.\n')
-    return False
-  try:
-    response = conex.getresponse()
-  except (httplib.HTTPException, socket.error):
-    sys.stderr.write('Getresponse error.\n')
-    return False
-  if response.status != 200:
+  if response.status_code != 200:
     sys.stderr.write('Status {}.\n'.format(response.status))
     return False
-  body = response.read(2048)
-  conex.close()
-  lines = body.splitlines()
+  lines = response.text.splitlines()
   if len(lines) != 4:
     return False
   if not re.search('^your IP address: [a-fA-F\d:.]+$', lines[0]):
