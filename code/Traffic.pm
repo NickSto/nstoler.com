@@ -22,6 +22,7 @@ use DBIconnect;
 my $COOKIE_NAME = "visitors_v1";
 my $CONFIG_FILE = "$ENV{'DOCUMENT_ROOT'}/protect/dbi_config.ini";
 my $CONFIG_SECTION = "Tracker";
+my $TESTER_COOKIE = 'tester';
 
 sub add_visit {
 	add_visit_plain();
@@ -114,6 +115,9 @@ sub add_visitor_db {
 	my $user_agent = $$dataref{user_agent};
 	my $cookie = $$dataref{cookie};
 	
+	if ($cookie eq $TESTER_COOKIE) {
+		return;
+	}
 	
 	# Check if visitor is already in database, return its visitor_id if so
 	
@@ -176,6 +180,10 @@ sub add_visitor_db {
 sub add_visit_db {
 	
 	my ($dbh, $dataref, $visitor_id) = @_;
+
+	if ($$dataref{cookie} eq $TESTER_COOKIE) {
+		return;
+	}
 	
 	if ($$dataref{referrer}) {
 	
