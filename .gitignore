@@ -1,3 +1,4 @@
+*.pyc
 protect/
 media/
 img/
