@@ -124,13 +124,17 @@ def email_result(settings, failed_tests):
 
 
 def sendmail(from_, to, subject, body):
-  if not distutils.spawn.find_executable('sendmail'):
+  if distutils.spawn.find_executable('sendmail'):
+    mail_cmd = 'sendmail'
+  elif distutils.spawn.find_executable('/usr/sbin/sendmail'):
+    mail_cmd = '/usr/sbin/sendmail'
+  else:
     return False
   message = email.mime.text.MIMEText(body)
   message['From'] = from_
   message['To'] = to
   message['Subject'] = subject
-  process = subprocess.Popen(['sendmail', '-oi', '-t'], stdin=subprocess.PIPE)
+  process = subprocess.Popen([mail_cmd, '-oi', '-t'], stdin=subprocess.PIPE)
   process.communicate(input=message.as_string())
   return True
 
