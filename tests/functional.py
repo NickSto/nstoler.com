@@ -10,6 +10,7 @@ import requests
 import subprocess
 import ConfigParser
 import distutils.spawn
+import email.mime.text
 
 CONFIG_FILE = 'functional.cfg'
 EXPIRATION_DEFAULT = 24*60*60
@@ -125,15 +126,12 @@ def email_result(settings, failed_tests):
 def sendmail(from_, to, subject, body):
   if not distutils.spawn.find_executable('sendmail'):
     return False
-  email = """\
-From: {from_}
-To: {to}
-Subject: {subject}
-
-{body}
-""".format(from_=from_, to=to, subject=subject, body=body)
+  message = email.mime.text.MIMEText(body)
+  message['From'] = from_
+  message['To'] = to
+  message['Subject'] = subject
   process = subprocess.Popen(['sendmail', '-oi', '-t'], stdin=subprocess.PIPE)
-  process.communicate(input=email)
+  process.communicate(input=message.as_string())
   return True
 
 
