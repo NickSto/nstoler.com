@@ -81,6 +81,7 @@ def main(argv):
   change = check_status(status_path, len(failed_tests), expiration=expiration)
   write_status(status_path, len(failed_tests))
   if change:
+    sys.stderr.write('Emailing result..\n')
     email_result(settings, failed_tests)
 
 
