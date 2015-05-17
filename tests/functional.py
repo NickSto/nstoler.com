@@ -81,7 +81,7 @@ def main(argv):
   change = check_status(status_path, len(failed_tests), expiration=expiration)
   write_status(status_path, len(failed_tests))
   if change:
-    sendmail(settings, failed_tests)
+    email_result(settings, failed_tests)
 
 
 def read_config_section(config_path, section):
@@ -109,18 +109,28 @@ def get_enabled_tests(config_path):
   return tests
 
 
-def sendmail(settings, failed_tests):
+def email_result(settings, failed_tests):
+  from_ = '{user}@{host}'.format(user=settings.from_user, host=settings.hostname)
+  to = settings.to_email
+  if len(failed_tests) == 0:
+    subject = 'All tests succeeded on {host}'.format(host=settings.hostname)
+    body = 'Test functionality restored.'
+  else:
+    subject = '{total} FAILED tests on {host}'.format(total=len(failed_tests), host=settings.hostname)
+    body = 'Failed tests:\n' + '\n'.join(failed_tests) + '\n'
+  sendmail(from_, to, subject, body)
+
+
+def sendmail(from_, to, subject, body):
   if not distutils.spawn.find_executable('sendmail'):
     return False
   email = """\
-From: {user}@{host}
-To: {email}
-Subject: {total} FAILED tests on {host}
+From: {from_}
+To: {to}
+Subject: {subject}
 
-Failed tests:
-{test_names}
-""".format(user=settings.from_user, host=settings.hostname, email=settings.to_email,
-           total=len(failed_tests), test_names='\n'.join(failed_tests))
+{body}
+""".format(from_=from_, to=to, subject=subject, body=body)
   process = subprocess.Popen(['sendmail', '-oi', '-t'], stdin=subprocess.PIPE)
   process.communicate(input=email)
   return True
