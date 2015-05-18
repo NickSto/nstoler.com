@@ -4,7 +4,6 @@ import re
 import os
 import sys
 import time
-import datetime
 import argparse
 import requests
 import subprocess
@@ -26,6 +25,8 @@ def main(argv):
 
   parser.add_argument('config', metavar='functional.cfg', nargs='?',
     help='Config file.')
+  parser.add_argument('-t', '--test',
+    help='Run this test instead of those in the config file.')
   parser.add_argument('-s', '--status')
   parser.add_argument('-e', '--email',
     help='On test failure, send an email to this address (overrides value in config file).')
@@ -60,7 +61,10 @@ def main(argv):
              'user-agent': settings.useragent,
              'cookie': 'visitors_v1='+settings.cookie}
 
-  tests = get_enabled_tests(config)
+  if args.test:
+    tests = [args.test]
+  else:
+    tests = get_enabled_tests(config)
   functions = globals()
 
   failed_tests = []
@@ -75,13 +79,13 @@ def main(argv):
       failed_tests.append(test)
       print 'FAIL'
       print result['message']
-      if 'mismatch' in result:
+      if 'mismatch' in result and len(result['body']) < 250:
         print 'Response:'
         print result['body']
 
   change = check_status(status_path, len(failed_tests), expiration=expiration)
   write_status(status_path, len(failed_tests))
-  if change:
+  if change and not args.no_email:
     sys.stderr.write('Emailing result..\n')
     email_result(settings, failed_tests)
 
@@ -169,6 +173,12 @@ def write_status(status_path, failed):
     status.write('{timestamp}\t{failed}\n'.format(timestamp=int(time.time()), failed=failed))
 
 
+class TesterError(Exception):
+  def __init__(self, message=None):
+    if message:
+      Exception.__init__(self, message)
+
+
 #################### TESTS ####################
 
 
@@ -198,10 +208,56 @@ def userinfo(settings, headers):
   return result
 
 
-class TesterError(Exception):
-  def __init__(self, message=None):
-    if message:
-      Exception.__init__(self, message)
+def np_get(settings, headers):
+  data = read_config_section(settings._path, 'data_np_get')
+  try:
+    response = requests.get('http://'+settings.hostname+data.path, headers=headers)
+  except requests.exceptions.RequestException as exception:
+    return {'message':'RequestException: '+str(exception)}
+  if response.status_code != 200:
+    return {'message':'Status '+str(response.status_code), 'body':response.text}
+  notes = _np_get_parse(response.text)
+  result = {'message':'Incorrect response.', 'body':response.text, 'mismatch':True}
+  if len(notes) != 2:
+    return result
+  if notes[0]['id'] != '3860':
+    return result
+  if notes[0]['text'] != 'note 1':
+    return result
+  if notes[1]['id'] != '3861':
+    return result
+  if notes[1]['text'] != 'note 2':
+    return result
+  del(result['mismatch'])
+  result['success'] = True
+  return result
+
+
+def _np_get_parse(html):
+  LI__REGEX = r'^\s*<li +(id=[\'"]bottom[\'"] +)?class=[\'"]note[\'"]>\s*$'
+  CHECKBOX_REGEX = r'^\s*<input +type=[\'"]checkbox[\'"] +class=[\'"]del_cb[\'"] +name=[\'"]note_(\d+)[\'"]>\s*$'
+  TEXT_REGEX = r'^\s*<p>(.+)</p>\s*$'
+  notes = []
+  state = 'outside'
+  for line in html.splitlines():
+    if state == 'outside':
+      match = re.search(LI__REGEX, line)
+      if match:
+        note = {}
+        state = 'checkbox'
+    elif state == 'checkbox':
+      match = re.search(CHECKBOX_REGEX, line)
+      if match:
+        note['id'] = match.group(1)
+        state = 'text'
+    elif state == 'text':
+      match = re.search(TEXT_REGEX, line)
+      if match:
+        note['text'] = match.group(1)
+        if 'id' in note and 'text' in note:
+          notes.append(note)
+        state = 'outside'
+  return notes
 
 
 if __name__ == '__main__':
