@@ -4,6 +4,7 @@ import re
 import os
 import sys
 import time
+import logging
 import argparse
 import requests
 import subprocess
@@ -14,9 +15,10 @@ import email.mime.text
 CONFIG_FILE = 'functional.cfg'
 EXPIRATION_DEFAULT = 24*60*60
 
-OPT_DEFAULTS = {}
+OPT_DEFAULTS = {'verbosity':2}
 USAGE = "%(prog)s [options]"
 DESCRIPTION = """"""
+
 
 def main(argv):
 
@@ -32,6 +34,10 @@ def main(argv):
     help='On test failure, send an email to this address (overrides value in config file).')
   parser.add_argument('-E', '--no-email', action='store_true',
     help='Do not send any email.')
+  parser.add_argument('-l', '--log',
+    help='A log file to write stderr messages to.')
+  parser.add_argument('-v', '--verbose', dest='verbosity', action='store_const', const=3)
+  parser.add_argument('-q', '--quiet', dest='verbosity', action='store_const', const=1)
 
   args = parser.parse_args(argv[1:])
 
@@ -42,6 +48,8 @@ def main(argv):
     config = os.path.join(script_dir, CONFIG_FILE)
 
   settings = read_config_section(config, 'settings')
+
+  logging_init(args.verbosity, args.log)
 
   if args.status:
     status_file = args.status
@@ -86,8 +94,26 @@ def main(argv):
   change = check_status(status_path, len(failed_tests), expiration=expiration)
   write_status(status_path, len(failed_tests))
   if change and not args.no_email:
-    sys.stderr.write('Emailing result..\n')
+    logging.info('Emailing result..\n')
     email_result(settings, failed_tests)
+
+
+def logging_init(verbosity, log):
+  if verbosity <= 0:
+    logging.disable(logging.CRITICAL)
+    return
+  elif verbosity == 1:
+    loglevel = logging.CRITICAL
+  elif verbosity == 2:
+    loglevel = logging.WARNING
+  elif verbosity == 3:
+    loglevel = logging.INFO
+  else:
+    loglevel = logging.DEBUG
+  if log:
+    logging.basicConfig(filename=log, filemode='a', level=loglevel, format='%(message)s')
+  else:
+    logging.basicConfig(stream=sys.stderr, level=loglevel, format='%(message)s')
 
 
 def read_config_section(config_path, section):
