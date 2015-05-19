@@ -100,7 +100,13 @@ sub get_data {
 	$data{ip} = $cgi->remote_addr();
 	$data{referrer} = $cgi->referer();
 	$data{user_agent} = $cgi->user_agent();
-	$data{page} = $ENV{HTTP_HOST} . $ENV{REQUEST_URI};
+	my $scheme = '';
+	if ($ENV{SERVER_PORT} eq '80') {
+		$scheme = 'http://';
+	} elsif ($ENV{SERVER_PORT} eq '443') {
+		$scheme = 'https://';
+	}
+	$data{page} = $scheme . $ENV{HTTP_HOST} . $ENV{REQUEST_URI};
 	
 	return \%data;
 }
