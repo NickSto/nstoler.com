@@ -20,25 +20,31 @@ USAGE = "%(prog)s [options]"
 DESCRIPTION = """"""
 
 
-def main(argv):
-
+def get_parser():
   parser = argparse.ArgumentParser(description=DESCRIPTION)
   parser.set_defaults(**OPT_DEFAULTS)
-
-  parser.add_argument('config', metavar='functional.cfg', nargs='?',
+  opts = {}
+  opts['config'] = parser.add_argument('config', metavar='functional.cfg', nargs='?',
     help='Config file.')
-  parser.add_argument('-t', '--test',
+  opts['test'] = parser.add_argument('-t', '--test',
     help='Run this test instead of those in the config file.')
-  parser.add_argument('-s', '--status')
-  parser.add_argument('-e', '--email',
+  opts['status'] = parser.add_argument('-s', '--status')
+  opts['email'] = parser.add_argument('-e', '--email',
     help='On test failure, send an email to this address (overrides value in config file).')
-  parser.add_argument('-E', '--no-email', action='store_true',
+  opts['no_email'] = parser.add_argument('-E', '--no-email', action='store_true',
     help='Do not send any email.')
-  parser.add_argument('-l', '--log',
+  opts['log'] = parser.add_argument('-l', '--log',
     help='A log file to write stderr messages to.')
-  parser.add_argument('-v', '--verbose', dest='verbosity', action='store_const', const=3)
-  parser.add_argument('-q', '--quiet', dest='verbosity', action='store_const', const=1)
+  opts['verbose'] = parser.add_argument('-v', '--verbose', dest='verbosity', action='store_const',
+    const=3)
+  opts['quiet'] = parser.add_argument('-q', '--quiet', dest='verbosity', action='store_const',
+    const=1)
+  return (parser, opts)
 
+
+def main(argv):
+
+  parser = get_parser()[0]
   args = parser.parse_args(argv[1:])
 
   if args.config:
