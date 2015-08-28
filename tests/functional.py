@@ -20,35 +20,28 @@ USAGE = "%(prog)s [options]"
 DESCRIPTION = """"""
 
 
-def get_parser():
-  parser = argparse.ArgumentParser(description=DESCRIPTION)
-  parser.set_defaults(**OPT_DEFAULTS)
-  opts = {}
-  opts['config'] = parser.add_argument('config', metavar='functional.cfg', nargs='?',
-    help='Config file.')
-  opts['test'] = parser.add_argument('-t', '--test',
-    help='Run this test instead of those in the config file.')
-  opts['status'] = parser.add_argument('-s', '--status')
-  opts['email'] = parser.add_argument('-e', '--email',
-    help='On test failure, send an email to this address (overrides value in config file).')
-  opts['no_email'] = parser.add_argument('-E', '--no-email', action='store_true',
-    help='Do not send any email.')
-  opts['log'] = parser.add_argument('-l', '--log',
-    help='A log file to write stderr messages to.')
-  opts['verbose'] = parser.add_argument('-v', '--verbose', dest='verbosity', action='store_const',
-    const=logging.INFO
-    help='Print verbose error messages to the log.')
-  opts['quiet'] = parser.add_argument('-q', '--quiet', dest='verbosity', action='store_const',
-    const=logging.CRITICAL,
-    help='Print few messages to the log.')
-  opts['silent'] = parser.add_argument('-S', '--silent', action='store_true',
-    help='Do not print any output if all tests pass.')
-  return (parser, opts)
-
-
 def main(argv):
 
-  parser = get_parser()[0]
+  parser = argparse.ArgumentParser(description=DESCRIPTION)
+  parser.set_defaults(**OPT_DEFAULTS)
+  parser.add_argument('config', metavar='functional.cfg', nargs='?',
+    help='Config file.')
+  parser.add_argument('-t', '--test',
+    help='Run this test instead of those in the config file.')
+  parser.add_argument('-s', '--status')
+  parser.add_argument('-e', '--email',
+    help='On test failure, send an email to this address (overrides value in config file).')
+  parser.add_argument('-E', '--no-email', action='store_true',
+    help='Do not send any email.')
+  parser.add_argument('-l', '--log',
+    help='A log file to write stderr messages to.')
+  parser.add_argument('-v', '--verbose', dest='verbosity', action='store_const', const=logging.INFO,
+    help='Print verbose error messages to the log.')
+  parser.add_argument('-q', '--quiet', dest='verbosity', action='store_const', const=logging.CRITICAL,
+    help='Print few messages to the log.')
+  parser.add_argument('-S', '--silent', action='store_true',
+    help='Do not print any output if all tests pass.')
+
   args = parser.parse_args(argv[1:])
 
   if args.config:
