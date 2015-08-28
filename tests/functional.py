@@ -15,7 +15,7 @@ import email.mime.text
 CONFIG_FILE = 'functional.cfg'
 EXPIRATION_DEFAULT = 24*60*60
 
-OPT_DEFAULTS = {'verbosity':2}
+OPT_DEFAULTS = {'verbosity':logging.WARNING}
 USAGE = "%(prog)s [options]"
 DESCRIPTION = """"""
 
@@ -36,9 +36,13 @@ def get_parser():
   opts['log'] = parser.add_argument('-l', '--log',
     help='A log file to write stderr messages to.')
   opts['verbose'] = parser.add_argument('-v', '--verbose', dest='verbosity', action='store_const',
-    const=3)
+    const=logging.INFO
+    help='Print verbose error messages to the log.')
   opts['quiet'] = parser.add_argument('-q', '--quiet', dest='verbosity', action='store_const',
-    const=1)
+    const=logging.CRITICAL,
+    help='Print few messages to the log.')
+  opts['silent'] = parser.add_argument('-S', '--silent', action='store_true',
+    help='Do not print any output if all tests pass.')
   return (parser, opts)
 
 
@@ -55,7 +59,10 @@ def main(argv):
 
   settings = read_config_section(config, 'settings')
 
-  logging_init(args.verbosity, args.log)
+  if args.log:
+    logging.basicConfig(filename=args.log, filemode='a', level=args.verbosity, format='%(message)s')
+  else:
+    logging.basicConfig(stream=sys.stderr, level=args.verbosity, format='%(message)s')
 
   if args.status:
     status_file = args.status
@@ -85,10 +92,12 @@ def main(argv):
   for test in tests:
     if test not in functions:
       raise TesterError('Test "{}" from config "{}" has no test defined.'.format(test, config))
-    sys.stdout.write('\t{}: '.format(test))
+    if not args.silent:
+      sys.stdout.write('\t{}: '.format(test))
     result = functions[test](settings, headers)
     if 'success' in result:
-      print 'success'
+      if not args.silent:
+        print 'success'
     else:
       failed_tests.append(test)
       print 'FAIL'
@@ -102,24 +111,6 @@ def main(argv):
   if change and not args.no_email:
     logging.info('Emailing result..\n')
     email_result(settings, failed_tests)
-
-
-def logging_init(verbosity, log):
-  if verbosity <= 0:
-    logging.disable(logging.CRITICAL)
-    return
-  elif verbosity == 1:
-    loglevel = logging.CRITICAL
-  elif verbosity == 2:
-    loglevel = logging.WARNING
-  elif verbosity == 3:
-    loglevel = logging.INFO
-  else:
-    loglevel = logging.DEBUG
-  if log:
-    logging.basicConfig(filename=log, filemode='a', level=loglevel, format='%(message)s')
-  else:
-    logging.basicConfig(stream=sys.stderr, level=loglevel, format='%(message)s')
 
 
 def read_config_section(config_path, section):
