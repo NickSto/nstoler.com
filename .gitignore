@@ -1,4 +1,5 @@
 *.pyc
-protect/
+protect/*.ini
+protect/*.tsv
 media/
 img/
