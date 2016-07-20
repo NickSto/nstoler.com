@@ -24,10 +24,6 @@ Note: I encountered a problem in processing notes to be deleted. Here's what
 
 ########## MAIN BODY ##########
 
-# Printing to apache's error log to identify where my entries will start and
-# make my "section" more visible.
-print STDERR "\nSTART RUN: ", time, "\n\n";
-
 use strict;
 use CGI;
 use HTML::Template;

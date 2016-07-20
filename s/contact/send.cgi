@@ -2,10 +2,6 @@
 #contact_send.cgi
 # Contact form email sender
 
-# Printing to apache's error log to identify where my entries will start and
-# make my "section" more visible.
-print STDERR "\nSTART RUN: ", time, "\n\n";
-
 use strict;
 use CGI;
 use lib "$ENV{'DOCUMENT_ROOT'}/code";

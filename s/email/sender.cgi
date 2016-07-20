@@ -2,10 +2,6 @@
 #email.cgi
 # Making a generic email sender
 
-# Printing to apache's error log to identify where my entries will start and
-# make my "section" more visible.
-print STDERR "\nSTART RUN: ", time, "\n\n";
-
 use strict;
 use CGI;
 use Config::IniFiles;

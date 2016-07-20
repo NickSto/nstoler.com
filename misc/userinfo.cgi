@@ -3,10 +3,6 @@
 #
 ########## MAIN BODY ##########
 
-# Printing to apache's error log to identify where my entries will start and
-# make my "section" more visible.
-print STDERR "\n$0\nSTART RUN: ", time, "\n";
-
 use strict;
 use CGI;
 use CGI::Cookie;
