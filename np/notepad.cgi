@@ -38,11 +38,11 @@ $dbh->{'mysql_enable_utf8'} = 1;
 
 # Get the page name from the GET
 my $page = $cgi->url_param('p');
+$page =~ s#^/##g;
 my $format = $cgi->url_param('format');
 if (!defined($format)) {
 	$format = 'html';
 }
-$page =~ s#^/##g;
 
 # Get random page if none supplied
 unless ($page) {
@@ -59,7 +59,7 @@ if ($notes) {
 	$tmpl->param( NOTES => $notes );
 }
 
-# Print the HTML
+# Print the output
 if ($format eq 'plain') {
 	print $cgi->header(-type=>'text/plain', -charset=>'utf-8');
 	for my $note (@$notes) {

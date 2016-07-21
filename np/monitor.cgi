@@ -37,9 +37,15 @@ my $cgi = new CGI;
 my $tmpl = HTML::Template->new(filename => $TMPL_FILE);
 my $dbh = DBI_connect($CONFIG_FILE, $CONFIG_SECTION);
 
+# Check the format parameter.
+my $format = $cgi->url_param('format');
+if (!defined($format)) {
+	$format = 'html';
+}
+
 # If cookie is not authorized, print error and exit
 if (! admin_cookie()) {
-	print $cgi->header('text/html');
+	print $cgi->header(-type=>'text/plain', -charset=>'utf-8');
 	print "Error: You are not yet authorized for this content.\n";
 	# Disconnect from database
 	$dbh->disconnect();
@@ -55,13 +61,19 @@ if (defined(@$pages)) {
 	$tmpl->param( PAGES => $pages );
 }
 
-# Print the HTML
-print $cgi->header('text/html');
-print $tmpl->output;
+# Print the output
+if ($format eq 'plain') {
+	print $cgi->header(-type=>'text/plain', -charset=>'utf-8');
+	for my $page (@$pages) {
+		print "$$page{PAGE}\n";
+	}
+} else {
+	print $cgi->header(-type=>'text/html', -charset=>'utf-8');
+	print $tmpl->output;
+}
 
 # Disconnect from database
 $dbh->disconnect();
-
 
 
 
