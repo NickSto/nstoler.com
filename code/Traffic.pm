@@ -34,9 +34,11 @@ sub add_visit_plain {
 	my $cgi = new CGI;
 	my $dbh = DBI_connect($CONFIG_FILE, $CONFIG_SECTION);
 
-	# set cookie if needed
+	# Set cookie if needed
 	my $cookie_value = get_cookie($COOKIE_NAME);
 	unless ($cookie_value) {
+		# Get the domain to set the cookie for from the HTTP_HOST.
+		# Uses the last two levels ("nsto.co" in "www.nsto.co", "co.uk in wired.co.uk").
 		if ($ENV{HTTP_HOST} =~ m/([^.]+\.[^.]+)$/) {
 			$cookie_value = set_cookie($COOKIE_NAME, $1);
 		}
