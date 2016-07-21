@@ -38,6 +38,10 @@ $dbh->{'mysql_enable_utf8'} = 1;
 
 # Get the page name from the GET
 my $page = $cgi->url_param('p');
+my $format = $cgi->url_param('format');
+if (!defined($format)) {
+	$format = 'html';
+}
 $page =~ s#^/##g;
 
 # Get random page if none supplied
@@ -46,23 +50,29 @@ unless ($page) {
 }
 
 # Get notes from MySQL
-my ($notes) = get_notes($dbh, $page);
+my ($notes) = get_notes($dbh, $page, $format);
 
 # Set CGI template variables
 $tmpl->param( NAVBAR => $navbar );
 $tmpl->param( PAGE => $page );
-if (defined(@$notes)) {
+if ($notes) {
 	$tmpl->param( NOTES => $notes );
 }
 
 # Print the HTML
-#print $cgi->header('text/html');
-print $cgi->header(-type=>'text/html', -charset=>'utf-8');
-print $tmpl->output;
+if ($format eq 'plain') {
+	print $cgi->header(-type=>'text/plain', -charset=>'utf-8');
+	for my $note (@$notes) {
+		# print "Note $$note{NOTE_ID}:\n";  # Show the note id (probably not needed).
+		print "$$note{CONTENT}\n\n\n";
+	}
+} else {
+	print $cgi->header(-type=>'text/html', -charset=>'utf-8');
+	print $tmpl->output;
+}
 
 # Disconnect from database
 $dbh->disconnect();
-
 
 
 
@@ -71,7 +81,7 @@ $dbh->disconnect();
 # Finds notes for the selected page
 sub get_notes {
 	
-	my ($dbh, $page) = @_;
+	my ($dbh, $page, $format) = @_;
 	
 	my $query = qq{
 		SELECT note_id, content
@@ -85,7 +95,10 @@ sub get_notes {
 	
 	my $notes;
 	while ( my $row = $dsh->fetchrow_hashref ) {
-		my $content = NBSP(hyperlink(HTML_encode($$row{content})));
+		my $content = $$row{content};
+		if ($format eq 'html') {
+			$content = NBSP(hyperlink(HTML_encode($content)));
+		}
 		push(@$notes, {
 			NOTE_ID => $$row{note_id},
 			CONTENT => $content,
