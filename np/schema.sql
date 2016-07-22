@@ -18,12 +18,4 @@ CREATE TABLE notepad (
 page VARCHAR(50) NOT NULL,
 note_id INT(9) NOT NULL AUTO_INCREMENT,
 content TEXT NOT NULL,
-PRIMARY KEY (note_id) );
-
-
-CREATE USER 'customizer' IDENTIFIED BY '[PASSWORD]';
-GRANT SELECT ON `content`.* TO 'customizer';
-GRANT INSERT ON `content`.* TO 'customizer';
-GRANT DELETE ON `content`.* TO 'customizer';
-GRANT UPDATE ON `content`.* TO 'customizer';
-GRANT LOCK TABLES ON `content`.* TO 'customizer';
+PRIMARY KEY (note_id) ); --TODO: DEFAULT CHARSET=utf8
