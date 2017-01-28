@@ -153,7 +153,7 @@ sub NBSP {
 sub hyperlink {
 	my ($text) = @_;
 	unless ($text =~ m#&lt;a .*?href=".*?"&gt;#) {
-		$text =~ s#(http(s?)://\S*\.\S*)(<br>)?#<a target="_blank" rel="nofollow" href="$1">$1</a>#g;
+		$text =~ s#(http(s?)://\S*\.\S*)(<br>)?#<a target="_blank" rel="nofollow noreferrer" href="$1">$1</a>#g;
 	}
 	return $text;
 }
