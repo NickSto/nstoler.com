@@ -20,4 +20,7 @@ urlpatterns = [
   url(r'^admin/', include(admin.site.urls)),
   url(r'^env/', include('env.urls')),
   url(r'^testapp/', include('testapp.urls', namespace='testapp')),
+  url(r'^np/', include('notepad.urls')),
+  # If nothing else matches, send it to notepad.
+  url(r'', include('notepad.urls')),
 ]
