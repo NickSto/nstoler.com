@@ -1,9 +1,8 @@
 from django.db import models
 from django.utils import timezone
 
-# Create your models here.
 class Visitor(models.Model):
-  ip = models.CharField(max_length=39)
+  ip = models.GenericIPAddressField()
   cookie1 = models.CharField(max_length=16, null=True, blank=True)
   cookie2 = models.CharField(max_length=24, null=True, blank=True)
   user_agent = models.CharField(max_length=200, null=True, blank=True)
@@ -23,8 +22,8 @@ class Visit(models.Model):
   timestamp = models.DateTimeField(default=timezone.now)
   method = models.CharField(max_length=8)
   host = models.CharField(max_length=1023)
-  url = models.TextField()
-  referrer = models.TextField(null=True, blank=True)
+  url = models.URLField(max_length=4095)
+  referrer = models.URLField(max_length=4095, null=True, blank=True)
   visitor = models.ForeignKey(Visitor, models.PROTECT)
   def __str__(self):
     return '{}: {}'.format(self.timestamp, self.url)
