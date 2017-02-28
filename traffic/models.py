@@ -3,11 +3,11 @@ from django.utils import timezone
 
 # Create your models here.
 class Visitor(models.Model):
-  cookie1 = models.CharField(max_length=16)
-  cookie2 = models.CharField(max_length=24)
   ip = models.CharField(max_length=39)
-  user_agent = models.CharField(max_length=200)
-  is_me = models.BooleanField(default=False)
+  cookie1 = models.CharField(max_length=16, null=True, blank=True)
+  cookie2 = models.CharField(max_length=24, null=True, blank=True)
+  user_agent = models.CharField(max_length=200, null=True, blank=True)
+  is_me = models.NullBooleanField(default=None, null=True, blank=True)
   label = models.CharField(max_length=200)
   def __str__(self):
     data = {'ip':self.ip, 'cookie':self.cookie1, 'user_agent':self.user_agent}
@@ -21,8 +21,10 @@ class Visitor(models.Model):
 
 class Visit(models.Model):
   timestamp = models.DateTimeField(default=timezone.now)
-  page = models.TextField()
-  referrer = models.TextField()
+  method = models.CharField(max_length=8)
+  host = models.CharField(max_length=1023)
+  url = models.TextField()
+  referrer = models.TextField(null=True, blank=True)
   visitor = models.ForeignKey(Visitor, models.PROTECT)
   def __str__(self):
-    return '{}: {}'.format(self.timestamp, self.page)
+    return '{}: {}'.format(self.timestamp, self.url)
