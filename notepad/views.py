@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.template import loader
 from django.shortcuts import render, redirect
 from .models import Note
-import traffic.lib
+from traffic.lib import add_visit
 import random as rand
 import string
 
@@ -16,22 +16,20 @@ def notes(request, page):
   #TODO: Take care of navbar (and the rest of the boilerplate html) by using template inheritance:
   #      https://docs.djangoproject.com/en/1.10/ref/templates/language/#template-inheritance
   context = {'page':page, 'notes':notes, 'bottom':bottom, 'navbar':''}
-  template = loader.get_template('notepad/notes.tmpl')
-  response = HttpResponse(template.render(context, request))
-  response, visitor, visit = traffic.lib.add_visit(request, response)
-  return response
+  return add_visit(request, render(request, 'notepad/notes.tmpl', context))
 
 def add(request):
   params = request.POST
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were added to the main "notepad" page.
   response = redirect('notepad:notes', params['page'])
-  response, visitor, visit = traffic.lib.add_visit(request, response)
+  traffic_data = {'visit':1}
+  response = add_visit(request, response, side_effects=traffic_data)
   if params['site'] == '':
     note = Note(
       page=params['page'],
       content=params['content'],
-      visit=visit
+      visit=traffic_data['visit']
     )
     note.save()
   return response
@@ -52,13 +50,9 @@ def delete(request):
         note.delete()
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were deleted from the main "notepad" page.
-  response = redirect('notepad:notes', params['page'])
-  response, visitor, visit = traffic.lib.add_visit(request, response)
-  return response
+  return add_visit(request, redirect('notepad:notes', params['page']))
 
 def random(request):
   alphabet = string.ascii_lowercase
   page = ''.join([rand.choice(alphabet) for i in range(5)])
-  response = redirect('notepad:notes', page)
-  response, visitor, visit = traffic.lib.add_visit(request, response)
-  return response
+  return add_visit(request, redirect('notepad:notes', page))

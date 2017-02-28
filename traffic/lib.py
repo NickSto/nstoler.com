@@ -23,7 +23,7 @@ def set_cookies(response, cookies):
   # Don't need to set visitors_v2, since Nginx takes care of that.
   return response
 
-def add_visit(request, response):
+def add_visit(request, response, side_effects=None):
   cookies = get_or_make_cookies(request)
   response = set_cookies(response, cookies)
   headers = request.META
@@ -62,4 +62,13 @@ def add_visit(request, response):
     visitor=visitor
   )
   visit.save()
-  return response, visitor, visit
+  # Let the caller get the visitor and/or visit objects we just created.
+  # If we were to return these values directly instead of through this side effect, we couldn't
+  # use the quick idiom of
+  #   return add_visit(request, render(request, 'notepad/notes.tmpl', context))
+  if side_effects is not None:
+    if 'visitor' in side_effects:
+      side_effects['visitor'] = visitor
+    if 'visit' in side_effects:
+      side_effects['visit'] = visit
+  return response
