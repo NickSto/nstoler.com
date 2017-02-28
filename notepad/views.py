@@ -47,7 +47,8 @@ def delete(request):
           note = Note.objects.get(pk=note_id)
         except Note.DoesNotExist:
           continue
-        note.delete()
+        note.deleted = True
+        note.save()
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were deleted from the main "notepad" page.
   return add_visit(request, redirect('notepad:notes', params['page']))
