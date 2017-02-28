@@ -57,7 +57,7 @@ def add_visit(request, response, side_effects=None):
   visit = Visit(
     method=request.method,
     host=request.get_host(),
-    url=request.get_full_path(),
+    url=request.build_absolute_uri(),
     referrer=headers.get('HTTP_REFERER'),
     visitor=visitor
   )
