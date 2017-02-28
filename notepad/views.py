@@ -1,7 +1,6 @@
 from django.http import HttpResponse
 from django.template import loader
 from django.shortcuts import render, redirect
-from django.utils import timezone
 from .models import Note
 import traffic.lib
 import random as rand
@@ -32,8 +31,7 @@ def add(request):
     note = Note(
       page=params['page'],
       content=params['content'],
-      timestamp=timezone.now(),
-      visitor=visitor
+      visit=visit
     )
     note.save()
   return response
