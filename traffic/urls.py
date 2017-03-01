@@ -1,12 +1,11 @@
 from django.conf.urls import url
-from django.views.generic.base import RedirectView
 
 from . import views
 
 app_name = 'traffic'
 urlpatterns = [
-  #TODO: Preserve query string in redirects.
-  url(r'^monitor\.cgi', RedirectView.as_view(url='monitor', permanent=True)),
-  url(r'^monitor/', RedirectView.as_view(url='../monitor', permanent=True)),
+  # Redirect to special view in order to preserve query string.
+  url(r'^monitor\.cgi', views.monitor_redirect),
+  url(r'^monitor/', views.monitor_redirect),
   url(r'^monitor', views.monitor, name='monitor'),
 ]

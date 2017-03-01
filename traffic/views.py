@@ -6,6 +6,17 @@ from .models import Visit
 
 PER_PAGE_DEFAULT = 50
 
+def monitor_redirect(request):
+  """Redirect to the monitor() view, preserving the query string."""
+  path = reverse('traffic:monitor')
+  if 'QUERY_STRING' in request.GET:
+    query_string = request.GET['QUERY_STRING']
+  else:
+    query_string = request.GET.urlencode()
+  if query_string:
+    path += '?'+query_string
+  return add_visit(request, redirect(path, permanent=True))
+
 def monitor(request):
   #TODO: Check for admin cookie and secure connection!
   # Get query parameters.
