@@ -19,6 +19,7 @@ from django.contrib import admin
 urlpatterns = [
   url(r'^admin/', include(admin.site.urls)),
   url(r'^env/?$', include('env.urls')),
+  url(r'^traffic/', include('traffic.urls')),
   # If nothing else matches, send it to notepad.
   url(r'', include('notepad.urls')),
 ]
