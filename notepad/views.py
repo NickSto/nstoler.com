@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from django.template.defaultfilters import escape, urlize
 from .models import Note
 from traffic.lib import add_visit
 import random as rand
@@ -8,18 +9,15 @@ import string
 def notes(request, page):
   format = request.GET.get('format')
   #TODO: Allow showing deleted notes with ?include=deleted (but only with admin cookie).
-  #TODO: Hyperlink urls, convert spaces to nbsp.
-  #TODO: Make empty notes display properly.
+  #      Display deleted ones differently.
   note_objects = Note.objects.filter(page=page, deleted=False)
-  # Go through the notes, splitting multi-line content into a list of lines.
   text = ''
   notes = []
   for note in note_objects:
     if format == 'plain':
       text += note.content
     else:
-      lines = note.content.splitlines()
-      # Note list: note_id, content.
+      lines = format_note(note.content)
       notes.append((note.id, lines))
   if format == 'plain':
     response = HttpResponse(text, content_type='text/plain; charset=UTF-8')
@@ -27,6 +25,22 @@ def notes(request, page):
   else:
     context = {'page':page, 'notes':notes}
     return add_visit(request, render(request, 'notepad/notes.tmpl', context))
+
+def format_note(content):
+  if content:
+    lines = content.splitlines()
+  else:
+    lines = ['']
+  lines_formatted = []
+  for line in lines:
+    line = escape(line)
+    line = urlize(line)
+    if line == '' or line == ' ':
+      line = '&nbsp;'
+    line = line.replace('  ', '&nbsp; ').replace('  ', ' &nbsp;')
+    line = line.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+    lines_formatted.append(line)
+  return lines_formatted
 
 def add(request):
   params = request.POST

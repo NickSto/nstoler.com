@@ -36,9 +36,11 @@
 					<li id="note_{{ note_id }}" class="note">
 						<input type="checkbox" class="del_cb" name="note_{{ note_id }}">
 						<div class="content">
-							{% for line in content %}
-								<p>{{ line }}</p>
-							{% endfor %}
+							{% autoescape off %}
+								{% for line in content %}
+									<p>{{ line }}</p>
+								{% endfor %}
+							{% endautoescape %}
 						</div>
 					</li>
 				{% empty %}
