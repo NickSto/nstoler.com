@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from .lib import add_visit
 from .models import Visit
-import collections
+# import collections
 
 PER_PAGE_DEFAULT = 50
 
@@ -27,7 +28,6 @@ def monitor(request):
   if page*per_page - total_visits >= per_page:
     # Then redirect to the last possible page.
     new_page = (total_visits-1) // per_page + 1
-    #TODO: parameterize view and redirect to url name instead of redirecting to a literal path.
     return add_visit(request, redirect(_construct_monitor_path(new_page, include, per_page)))
   # Obtain visits list from database.
   if include == 'me':
@@ -60,7 +60,8 @@ def monitor(request):
   return add_visit(request, render(request, 'traffic/monitor.tmpl', context))
 
 def _construct_monitor_path(page, include, per_page):
-  path = '/traffic/monitor'
+  #TODO: Use a different solution instead of re-building the prettified query string.
+  path = reverse('traffic:monitor')
   if page > 1:
     path += '?p='+str(page)
   if include == 'me':
