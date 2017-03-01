@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.template.defaultfilters import escape, urlize
+from django.conf import settings
 from .models import Note
 from traffic.lib import add_visit
 import random as rand
@@ -8,9 +9,16 @@ import string
 
 def notes(request, page):
   format = request.GET.get('format')
-  #TODO: Allow showing deleted notes with ?include=deleted (but only with admin cookie).
-  #      Display deleted ones differently.
-  note_objects = Note.objects.filter(page=page, deleted=False)
+  show_deleted = request.GET.get('include') == 'deleted'
+  #TODO: Only allow showing deleted notes with admin cookie.
+  # Only allow showing deleted notes over HTTPS, unless DEBUG is True.
+  if not request.is_secure() and not settings.DEBUG:
+    show_deleted = False
+  #TODO: Display deleted notes differently.
+  if show_deleted:
+    note_objects = Note.objects.filter(page=page)
+  else:
+    note_objects = Note.objects.filter(page=page, deleted=False)
   text = ''
   notes = []
   for note in note_objects:
