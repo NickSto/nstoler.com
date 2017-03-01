@@ -15,10 +15,12 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
   url(r'^admin/', include(admin.site.urls)),
-  url(r'^env/?$', include('env.urls')),
+  url(r'^env$', include('env.urls')),
+  url(r'^env/$', RedirectView.as_view(url='/env', permanent=True)),
   url(r'^traffic/', include('traffic.urls')),
   # If nothing else matches, send it to notepad.
   url(r'', include('notepad.urls')),
