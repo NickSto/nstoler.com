@@ -32,12 +32,10 @@
 <!-- FYI I plan on handling multi-line notes much better than the kludge of <br>'s. But to do it properly I have to figure out some issues with the server-side scripts. -->
 				{% if notes %}
 					{% for note in notes %}
-						{% if not note.deleted %}
-							<li {% if note.id == bottom %}id="bottom" {% endif %}class="note">
-								<input type="checkbox" class="del_cb" name="note_{{ note.id }}">
-								<p>{{ note.content }}</p>
-							</li>
-						{% endif %}
+						<li {% if note.id == bottom %}id="bottom" {% endif %}class="note">
+							<input type="checkbox" class="del_cb" name="note_{{ note.id }}">
+							<p>{{ note.content }}</p>
+						</li>
 					{% endfor %}
 				{% else %}
 					<li class="note">

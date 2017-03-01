@@ -1,5 +1,3 @@
-from django.http import HttpResponse
-from django.template import loader
 from django.shortcuts import render, redirect
 from .models import Note
 from traffic.lib import add_visit
@@ -7,7 +5,7 @@ import random as rand
 import string
 
 def notes(request, page):
-  notes = Note.objects.filter(page=page)
+  notes = Note.objects.filter(page=page, deleted=False)
   #TODO: Handle multi-line notes. Will have to iterate through notes and create our own list.
   bottom = None
   if notes:
