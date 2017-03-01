@@ -19,6 +19,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
+#TODO: Read variables like SECRET_KEY and ALLOWED_HOSTS from outside config file.
+#      (And change the secret key!)
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'h2!94u-kg77+5me^t!=nqwo8tnfb6syjexlk5(0d21xd@2p587'
 
@@ -118,8 +121,12 @@ USE_TZ = True
 
 APPEND_SLASH = False
 
+FILE_CHARSET = 'utf-8'
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
