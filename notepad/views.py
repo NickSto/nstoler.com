@@ -13,9 +13,7 @@ def notes(request, page):
   if notes:
     bottom = notes[len(notes)-1].id
   #TODO: Plaintext format if "format" parameter is true.
-  #TODO: Take care of navbar (and the rest of the boilerplate html) by using template inheritance:
-  #      https://docs.djangoproject.com/en/1.10/ref/templates/language/#template-inheritance
-  context = {'page':page, 'notes':notes, 'bottom':bottom, 'navbar':''}
+  context = {'page':page, 'notes':notes, 'bottom':bottom}
   return add_visit(request, render(request, 'notepad/notes.tmpl', context))
 
 def add(request):

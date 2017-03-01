@@ -1,40 +1,13 @@
-<!doctype html>
-<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
-<!--[if lt IE 7 ]> <html class="no-js ie6" lang="en"> <![endif]-->
-<!--[if IE 7 ]>    <html class="no-js ie7" lang="en"> <![endif]-->
-<!--[if IE 8 ]>    <html class="no-js ie8" lang="en"> <![endif]-->
-<!--[if (gte IE 9)|!(IE)]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
-<head>
-	<meta charset="utf-8">
-	
-<!-- Thanks to HTML5 Boilerplate for the starting material: http://html5boilerplate.com -->
-<!-- Almost all the comments are theirs. -->
+{% extends 'html5boilerplate1.0.tmpl' %}
+{% load staticfiles %}
 
-	<title>{{ page }} - Notepad</title>
-	<meta name="description" content="">
-	<meta name="author" content="">
+{% block title %}{{ page }} - Notepad{% endblock %}
 
-	<!-- Mobile viewport optimized: j.mp/bplateviewport -->
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-	<!-- CSS: implied media="all" -->
-	{% load staticfiles %}
-	<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% block stylesheet %}
 	<link rel="stylesheet" href="{% static 'notepad/css/notepad.css' %}">
+{% endblock %}
 
-	<!-- All JavaScript at the bottom, except for Modernizr which enables HTML5 elements & feature detects -->
-	<script src="{% static 'js/libs/modernizr-1.7.min.js' %}"></script>
-
- </head>
-
-<body>
-
-	<div id="container">
-		<header>
-			{{ navbar }}
-		</header>
-	
-		<div id="main" role="main">
+{% block content %}
 		<header>
 			<h1 id="title">Notepad</h1>
 			<p class="youarehere">Your current page name:
@@ -103,30 +76,9 @@
 				<input type="submit" value="Submit">
 			</form>
 		</section>
-		</div>
-	
-		<footer>
-			{{ navbar }}
-		</footer>
-	</div> <!--! end of #container -->
+{% endblock content %}
 
-	<!-- JavaScript at the bottom for fast page loading -->
+{% block javascript %}
+	<!-- <script src="{% static 'notepad/js/main.js' %}"></script> -->
+{% endblock %}
 
-	<!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if necessary -->
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-	<script>window.jQuery || document.write('<script src="{% static 'js/libs/jquery-1.5.1.min.js' %}"><\/script>')</script>
-
-	<!-- page-specific JavaScript
-	<script src="{% static 'notepad/js/main.js' %}"></script>
-	-->
-
-	<!-- mathiasbynens.be/notes/async-analytics-snippet -->
-	<script>
-		var _gaq=[["_setAccount","UA-23000656-2"],["_trackPageview"]];
-		(function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.async=1;
-		g.src=("https:"==location.protocol?"//ssl":"//www")+".google-analytics.com/ga.js";
-		s.parentNode.insertBefore(g,s)}(document,"script"));
-	</script>
-
-</body>
-</html>
