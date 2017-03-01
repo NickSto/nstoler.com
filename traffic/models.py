@@ -3,7 +3,7 @@ from django.utils import timezone
 
 class Visitor(models.Model):
   ip = models.GenericIPAddressField()
-  cookie1 = models.CharField(max_length=16, null=True, blank=True)
+  cookie1 = models.CharField(max_length=24, null=True, blank=True)
   cookie2 = models.CharField(max_length=24, null=True, blank=True)
   user_agent = models.CharField(max_length=200, null=True, blank=True)
   is_me = models.NullBooleanField(default=None, null=True, blank=True)
