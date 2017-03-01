@@ -29,12 +29,15 @@
 			<form name='delete_notes' method='post' action="{% url 'notepad:delete' %}">
 				{% csrf_token %}
 				<ul id="note_list">
-<!-- FYI I plan on handling multi-line notes much better than the kludge of <br>'s. But to do it properly I have to figure out some issues with the server-side scripts. -->
 				{% if notes %}
-					{% for note in notes %}
-						<li {% if note.id == bottom %}id="bottom" {% endif %}class="note">
-							<input type="checkbox" class="del_cb" name="note_{{ note.id }}">
-							<p>{{ note.content }}</p>
+					{% for note_id, content, is_bottom in notes %}
+						<li {% if is_bottom %}id="bottom" {% endif %}class="note">
+							<input type="checkbox" class="del_cb" name="note_{{ note_id }}">
+							<div class="content">
+								{% for line in content %}
+									<p>{{ line }}</p>
+								{% endfor %}
+							</div>
 						</li>
 					{% endfor %}
 				{% else %}

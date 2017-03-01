@@ -5,13 +5,20 @@ import random as rand
 import string
 
 def notes(request, page):
-  notes = Note.objects.filter(page=page, deleted=False)
-  #TODO: Handle multi-line notes. Will have to iterate through notes and create our own list.
-  bottom = None
-  if notes:
-    bottom = notes[len(notes)-1].id
+  #TODO: Allow showing deleted notes with ?include=deleted (but only with admin cookie).
   #TODO: Plaintext format if "format" parameter is true.
-  context = {'page':page, 'notes':notes, 'bottom':bottom}
+  #TODO: Hyperlink urls, convert spaces to nbsp.
+  #TODO: Make empty notes display properly.
+  note_objects = Note.objects.filter(page=page, deleted=False)
+  notes = []
+  for note in note_objects:
+    lines = note.content.splitlines()
+    # Note list: note_id, content, is_bottom.
+    notes.append([note.id, lines, False])
+  # Set is_bottom on the last note to True.
+  if notes:
+    notes[-1][-1] = True
+  context = {'page':page, 'notes':notes}
   return add_visit(request, render(request, 'notepad/notes.tmpl', context))
 
 def add(request):

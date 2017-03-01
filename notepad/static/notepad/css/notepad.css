@@ -1,12 +1,8 @@
-/***** Notes, Links, and Notepad *****/
 
 .del_cb {
 	float: left;
 	width: 15px;
 }
-
-
-/***** Notepad *****/
 
 #main #add_note h2 {
 	margin-left: 20px;
@@ -35,8 +31,8 @@
 	margin: 10px;
 }
 
-.note p {
-	display: table;
+.content {
+	margin-left: 20px;
 }
 
 .youarehere {
