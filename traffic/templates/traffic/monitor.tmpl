@@ -4,7 +4,7 @@
 {% block title %}Traffic Monitor{% endblock %}
 
 {% block stylesheet %}
-	<link rel="stylesheet" href="{% static 'traffic/css/monitor.css' %}">
+	<link rel="stylesheet" href="{% static 'traffic/css/monitor.css' %}?via=html">
 {% endblock %}
 
 
@@ -142,5 +142,5 @@
 
 
 {% block javascript %}
-  <!-- <script src="{% static 'traffic/js/main.js' %}"></script> -->
+  <!-- <script src="{% static 'traffic/js/main.js' %}"?via=html></script> -->
 {% endblock %}

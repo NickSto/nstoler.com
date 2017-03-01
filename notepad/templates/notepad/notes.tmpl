@@ -4,7 +4,7 @@
 {% block title %}{{ page }} - Notepad{% endblock %}
 
 {% block stylesheet %}
-	<link rel="stylesheet" href="{% static 'notepad/css/notepad.css' %}">
+	<link rel="stylesheet" href="{% static 'notepad/css/notepad.css' %}?via=html">
 {% endblock %}
 
 {% block content %}
@@ -81,6 +81,6 @@
 {% endblock content %}
 
 {% block javascript %}
-	<!-- <script src="{% static 'notepad/js/main.js' %}"></script> -->
+	<!-- <script src="{% static 'notepad/js/main.js' %}?via=html"></script> -->
 {% endblock %}
 
