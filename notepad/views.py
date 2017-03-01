@@ -1,25 +1,34 @@
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from .models import Note
 from traffic.lib import add_visit
 import random as rand
 import string
 
 def notes(request, page):
+  format = request.GET.get('format')
   #TODO: Allow showing deleted notes with ?include=deleted (but only with admin cookie).
-  #TODO: Plaintext format if "format" parameter is true.
   #TODO: Hyperlink urls, convert spaces to nbsp.
   #TODO: Make empty notes display properly.
   note_objects = Note.objects.filter(page=page, deleted=False)
+  # Go through the notes, splitting multi-line content into a list of lines.
+  text = ''
   notes = []
   for note in note_objects:
     lines = note.content.splitlines()
+    if format == 'plain':
+      text += '\n'.join(lines)+'\n\n'
     # Note list: note_id, content, is_bottom.
     notes.append([note.id, lines, False])
   # Set is_bottom on the last note to True.
   if notes:
     notes[-1][-1] = True
-  context = {'page':page, 'notes':notes}
-  return add_visit(request, render(request, 'notepad/notes.tmpl', context))
+  if format == 'plain':
+    response = HttpResponse(text, content_type='text/plain; charset=UTF-8')
+    return add_visit(request, response)
+  else:
+    context = {'page':page, 'notes':notes}
+    return add_visit(request, render(request, 'notepad/notes.tmpl', context))
 
 def add(request):
   params = request.POST
