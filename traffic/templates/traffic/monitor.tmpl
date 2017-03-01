@@ -51,7 +51,6 @@
 		
 		<section id="notepad">
 			<div id="visits">
-			{% if visits %}
 				{% for visit in visits %}
 					<article class="visit">
 						<section class="pane1">
@@ -98,16 +97,15 @@
 							</p>
 						</section>
 					</article>
+				{% empty %}
+					<article class="visit">
+						<section class="pane1">
+							<span class="datum">
+								No visits to display!
+							</span>
+						</section>
+					</article>
 				{% endfor %}
-			{% else %}
-				<article class="visit">
-					<section class="pane1">
-						<span class="datum">
-							No visits to display!
-						</span>
-					</section>
-				</article>
-			{% endif %}
 			</div>
 		</section>
 		<nav class="nav-options">

@@ -15,14 +15,12 @@ def notes(request, page):
   text = ''
   notes = []
   for note in note_objects:
-    lines = note.content.splitlines()
     if format == 'plain':
-      text += '\n'.join(lines)+'\n\n'
-    # Note list: note_id, content, is_bottom.
-    notes.append([note.id, lines, False])
-  # Set is_bottom on the last note to True.
-  if notes:
-    notes[-1][-1] = True
+      text += note.content
+    else:
+      lines = note.content.splitlines()
+      # Note list: note_id, content.
+      notes.append((note.id, lines))
   if format == 'plain':
     response = HttpResponse(text, content_type='text/plain; charset=UTF-8')
     return add_visit(request, response)

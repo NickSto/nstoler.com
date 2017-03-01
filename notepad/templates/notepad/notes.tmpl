@@ -29,23 +29,24 @@
 			<form name='delete_notes' method='post' action="{% url 'notepad:delete' %}">
 				{% csrf_token %}
 				<ul id="note_list">
-				{% if notes %}
-					{% for note_id, content, is_bottom in notes %}
-						<li {% if is_bottom %}id="bottom" {% endif %}class="note">
-							<input type="checkbox" class="del_cb" name="note_{{ note_id }}">
-							<div class="content">
-								{% for line in content %}
-									<p>{{ line }}</p>
-								{% endfor %}
-							</div>
-						</li>
-					{% endfor %}
-				{% else %}
+				{% for note_id, content in notes %}
+					{% if forloop.last %}
+						<a id="bottom"></a>
+					{% endif %}
+					<li id="note_{{ note_id }}" class="note">
+						<input type="checkbox" class="del_cb" name="note_{{ note_id }}">
+						<div class="content">
+							{% for line in content %}
+								<p>{{ line }}</p>
+							{% endfor %}
+						</div>
+					</li>
+				{% empty %}
 					<li class="note">
 						<p>Nothing here yet!</p>
 						<p>Try adding something with the form below!</p>
 					</li>
-				{% endif %}
+				{% endfor %}
 				</ul>
 				
 				<footer class="del_submit">
