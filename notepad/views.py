@@ -4,15 +4,16 @@ from django.template.defaultfilters import escape, urlize
 from django.conf import settings
 from .models import Note
 from traffic.lib import add_visit
+from myadmin.lib import get_admin_cookie
 import random as rand
 import string
 
 def notes(request, page):
   format = request.GET.get('format')
   show_deleted = request.GET.get('include') == 'deleted'
-  #TODO: Only allow showing deleted notes with admin cookie.
-  # Only allow showing deleted notes over HTTPS, unless DEBUG is True.
-  if not request.is_secure() and not settings.DEBUG:
+  # Only allow showing deleted notes to the admin over HTTPS.
+  admin_cookie = get_admin_cookie(request)
+  if not settings.DEBUG and (admin_cookie and request.is_secure()):
     show_deleted = False
   #TODO: Display deleted notes differently.
   if show_deleted:

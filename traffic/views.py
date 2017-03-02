@@ -1,7 +1,10 @@
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from django.urls import reverse
+from django.conf import settings
 from .lib import add_visit
 from .models import Visit
+from myadmin.lib import get_admin_cookie
 # import collections
 
 PER_PAGE_DEFAULT = 50
@@ -18,7 +21,11 @@ def monitor_redirect(request):
   return add_visit(request, redirect(path, permanent=True))
 
 def monitor(request):
-  #TODO: Check for admin cookie and secure connection!
+  # Only allow access to admin users over HTTPS.
+  admin_cookie = get_admin_cookie(request)
+  if not settings.DEBUG and (admin_cookie and request.is_secure()):
+    text = 'This page is only for admin users visiting via HTTPS.'
+    return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
   # Get query parameters.
   params = request.GET
   page = int(params.get('p', 1))
