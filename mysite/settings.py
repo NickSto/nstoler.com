@@ -141,25 +141,6 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 
 # Sensitive settings I don't want in version control.
 # These will override any settings in this file.
-CONFIG_FILE = 'protected.ini'
-
-import configparser
-
-# Do it all in a function to avoid polluting global namespace.
-def _import_external_settings(config_file, local_dict):
-    """Read in additionall settings from an external config file and add them to the local_dict.
-    All keys will be converted to all-caps."""
-    # WARNING: This trusts the config file and does an eval() on the data in it.
-    if not os.path.isfile(config_file):
-        return
-    config = configparser.RawConfigParser()
-    config.read(config_file)
-    for key in config.options('settings'):
-        key = key.upper()
-        value_str = config.get('settings', key)
-        local_dict[key] = eval(value_str)
-
-try:
-   _import_external_settings(os.path.join(BASE_DIR, CONFIG_FILE), vars())
-except configparser.Error:
-    pass
+# Credit to Steven Armstrong for idea: https://code.djangoproject.com/wiki/SplitSettings
+if os.path.isfile('protected_settings.py'):
+    from protected_settings import *
