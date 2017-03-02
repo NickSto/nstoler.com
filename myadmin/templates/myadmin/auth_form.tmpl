@@ -1,0 +1,28 @@
+{% extends 'html5boilerplate1.0.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block stylesheet %}
+	<link rel="stylesheet" href="{% static 'myadmin/css/auth_form.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+		<div>
+			<h5>{{ instruction }}</h5>
+		</div>
+		<form id="pwd_form" name='pwd_form' method='post' action="{% url action %}">
+			{% csrf_token %}
+			{% if get_password %}
+				<div class="form_bit">
+					<label for="query">Password:</label>
+				</div>
+				<div class="form_bit">
+					<input class="password" name="password" type="password" autocomplete="off">
+				</div>
+			{% endif %}
+			<div class="form_bit">
+				<input type="submit" value="Submit">
+			</div>
+		</form>
+{% endblock content %}

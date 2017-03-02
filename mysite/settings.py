@@ -25,6 +25,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'h2!94u-kg77+5me^t!=nqwo8tnfb6syjexlk5(0d21xd@2p587'
 
+ADMIN_SALT = '5586ae9e10fb6681f37332b26180358b1492dfc990646de79618d33ab3fba597'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -37,6 +39,7 @@ INSTALLED_APPS = [
     'env',
     'notepad',
     'traffic',
+    'myadmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

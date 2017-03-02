@@ -1,0 +1,15 @@
+/***** Email *****/
+
+.to, .from, .subject {
+	width: 648px;
+}
+
+.field textarea {
+	height: 200px;
+	width: 648px;
+}
+
+.instructions {
+	padding: 0 0 8px 83px;
+	width: 659px;
+}
