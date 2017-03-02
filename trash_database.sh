@@ -7,6 +7,8 @@ set -ue
 
 Usage="Usage: \$ $(basename $0)"
 
+APPS="traffic myadmin notepad"
+
 function main {
   if [[ $# -ge 1 ]] && [[ $1 == '-h' ]]; then
     fail "$Usage"
@@ -21,11 +23,22 @@ function main {
   fi
   mv db.sqlite3 db.sqlite3.bak
 
-  trash traffic/migrations/[0-9][0-9][0-9][0-9]_*.py
-  trash notepad/migrations/[0-9][0-9][0-9][0-9]_*.py
+  for app in $APPS; do
+    echo "Deleting migrations for $app.."
+    for migration in $app/migrations/[0-9][0-9][0-9][0-9]_*.py; do
+      if [[ -f $migration ]]; then
+        echo "Deleting $migration.."
+        trash $app/migrations/[0-9][0-9][0-9][0-9]_*.py
+      fi
+    done
+  done
 
-  python3 manage.py makemigrations traffic
-  python3 manage.py makemigrations notepad
+  for app in $APPS; do
+    echo "Making migration for $app.."
+    python3 manage.py makemigrations $app
+  done
+
+  echo "Migrating database.."
   python3 manage.py migrate
 }
 
