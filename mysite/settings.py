@@ -18,15 +18,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ########## My custom settings ##########
 
 # Requre HTTPS when transferring sensitive information?
-REQUIRE_HTTPS = True
+REQUIRE_HTTPS = False
 
+# Use a separate value instead of deriving from the SECRET_KEY, since this isn't really a secret.
+# It can even be obtained from the web interface by the admin.
 ADMIN_SALT = '5586ae9e10fb6681f37332b26180358b1492dfc990646de79618d33ab3fba597'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
-
-#TODO: Read variables like SECRET_KEY and ALLOWED_HOSTS from outside config file.
-#      (And change the secret key!)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'h2!94u-kg77+5me^t!=nqwo8tnfb6syjexlk5(0d21xd@2p587'
@@ -137,3 +136,30 @@ FILE_CHARSET = 'utf-8'
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+
+########## Read config file settings ##########
+
+# Sensitive settings I don't want in version control.
+# These will override any settings in this file.
+CONFIG_FILE = 'protected.ini'
+
+import configparser
+
+# Do it all in a function to avoid polluting global namespace.
+def _import_external_settings(config_file, local_dict):
+    """Read in additionall settings from an external config file and add them to the local_dict.
+    All keys will be converted to all-caps."""
+    # WARNING: This trusts the config file and does an eval() on the data in it.
+    if not os.path.isfile(config_file):
+        return
+    config = configparser.RawConfigParser()
+    config.read(config_file)
+    for key in config.options('settings'):
+        key = key.upper()
+        value_str = config.get('settings', key)
+        local_dict[key] = eval(value_str)
+
+try:
+   _import_external_settings(os.path.join(BASE_DIR, CONFIG_FILE), vars())
+except configparser.Error:
+    pass

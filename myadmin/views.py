@@ -139,9 +139,17 @@ def logout_submit(request):
 
 def hash_submit(request):
   password = request.POST['password']
+  admin_cookie = get_admin_cookie(request)
+  if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
+    authorized = True
+  else:
+    authorized = False
   digest = str(_get_hash(password), 'utf8')
-  text = ('{}\n\nAlgorithm:\t{}\nHash:\t{}\nIterations:\t{}\nSalt:\t{}'
-          .format(digest, ALGORITHM, HASH, ITERATIONS, settings.ADMIN_SALT))
+  text = ('{}\n\nAlgorithm:\t{}\nHash:\t{}\nIterations:\t{}'
+          .format(digest, ALGORITHM, HASH, ITERATIONS))
+  # Only give out the salt to the admin user over HTTPS.
+  if authorized:
+    text += '\n'+settings.ADMIN_SALT
   return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
 
 def _get_hash(password):
