@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 from django.urls import reverse
 from .models import AdminCookie, AdminDigest
@@ -26,10 +26,11 @@ doesn't offer great protection. I may re-evaluate this trade-off later.
 """
 #TODO: Mark visitors_v1 HTTPS only, or use a different, HTTPS-only cookie.
 #TODO: Add a sub-navigation bar to go between login, logout, and hash generation.
-#TODO: Redirect from each "submit" action to a result static html page.
-#      Would be nice to see the result in the logs.
 
 def auth_form(request, action):
+  result = request.GET.get('result')
+  if result:
+    return _display_result(request, action, result)
   # Only allow the form to be loaded and submitted over HTTPS.
   if settings.REQUIRE_HTTPS and not request.is_secure():
     back_link = 'https://'+request.get_host()+reverse('myadmin:auth_form', args=['login'])
@@ -44,26 +45,34 @@ def auth_form(request, action):
     context = {
       'title':'Get password hash',
       'instruction':'Get the hash of a password:',
-      'action':'myadmin:hash_submit',
+      'action':'hash',
       'get_password':True,
     }
   elif action == 'logout':
     context = {
       'title':'Admin logout',
       'instruction':'De-authenticate yourself as an administrator:',
-      'action':'myadmin:logout_submit',
+      'action':'logout',
       'get_password':False,
     }
   else:
     context = {
       'title':'Admin login',
       'instruction':'Identify yourself as an administrator:',
-      'action':'myadmin:login_submit',
+      'action':'login',
       'get_password':True,
     }
   return add_visit(request, render(request, 'myadmin/auth_form.tmpl', context))
 
-def login_submit(request):
+def submit(request, action):
+  if action == 'login':
+    return _submit_login(request)
+  elif action == 'logout':
+    return _submit_logout(request)
+  elif action == 'hash':
+    return _submit_hash(request)
+
+def _submit_login(request):
   password = request.POST['password']
   digest = _get_hash(password)
   try:
@@ -92,52 +101,22 @@ def login_submit(request):
         result = 'nocookie'
   else:
     result = 'badpass'
-  if result == 'success':
-    context = {
-      'title': 'Success!',
-      'message': 'Your cookie is now marked with admin privileges.',
-      'back_text': 'Go back',
-    }
-  elif result == 'badpass':
-    context = {
-      'title':' Authentication failed',
-      'message': 'Wrong Password',
-      'back_text': 'Try again',
-    }
-  elif result == 'nocookie':
-    context = {
-      'title': 'Error',
-      'message': 'Error: No cookie present!',
-      'back_text': 'Try again',
-    }
-  elif result == 'redundant':
-    context = {
-      'title': 'Already authenticated',
-      'message': 'You seem to already be authenticated!',
-      'back_text': 'Go back',
-    }
-  context['back_link'] = reverse('myadmin:auth_form', args=('login',))
-  return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))
+  path = reverse('myadmin:auth_form', args=('login',))
+  path += '?result='+result
+  return add_visit(request, HttpResponseRedirect(path))
 
-def logout_submit(request):
+def _submit_logout(request):
   admin_cookie = get_admin_cookie(request)
   if admin_cookie:
     admin_cookie.delete()
-    context = {
-      'title': 'De-authorized',
-      'message': 'Cookie successfully de-authorized.',
-      'back_text': 'Go back',
-    }
+    result = 'success'
   else:
-    context = {
-      'title': 'Logged out',
-      'message': 'You seem to be already de-authorized: your cookie was not found in the AdminCookie table.',
-      'back_text': 'Try again',
-    }
-  context['back_link'] = reverse('myadmin:auth_form', args=('logout',))
-  return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))
+    result = 'redundant'
+  path = reverse('myadmin:auth_form', args=('logout',))
+  path += '?result='+result
+  return add_visit(request, HttpResponseRedirect(path))
 
-def hash_submit(request):
+def _submit_hash(request):
   password = request.POST['password']
   admin_cookie = get_admin_cookie(request)
   if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
@@ -145,11 +124,14 @@ def hash_submit(request):
   else:
     authorized = False
   digest = str(_get_hash(password), 'utf8')
-  text = ('{}\n\nAlgorithm:\t{}\nHash:\t{}\nIterations:\t{}'
+  text = ('{}\n\nAlgorithm:\t{}\nHash:\t\t{}\nIterations:\t{}'
           .format(digest, ALGORITHM, HASH, ITERATIONS))
   # Only give out the salt to the admin user over HTTPS.
   if authorized:
-    text += '\n'+settings.ADMIN_SALT
+    text += '\nSalt:\t\t'+settings.ADMIN_SALT
+  # Safe to return a response directly to this POST instead of redirecting because it doesn't
+  # actually change anything on the server. We're just using a POST because it's potentially
+  # sensitive data so we don't want it in the query url as a query string.
   return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
 
 def _get_hash(password):
@@ -160,3 +142,47 @@ def _get_hash(password):
   #      https://docs.python.org/3.5/library/hashlib.html
   digest = hashlib.pbkdf2_hmac(HASH, pwd_bytes, salt, ITERATIONS)
   return binascii.hexlify(digest)
+
+def _display_result(request, action, result):
+  if action == 'login':
+    if result == 'success':
+      context = {
+        'title': 'Success!',
+        'message': 'Your cookie is now marked with admin privileges.',
+        'back_text': 'Go back',
+      }
+    elif result == 'badpass':
+      context = {
+        'title':' Authentication failed',
+        'message': 'Wrong Password',
+        'back_text': 'Try again',
+      }
+    elif result == 'nocookie':
+      context = {
+        'title': 'Error',
+        'message': 'Error: No cookie present!',
+        'back_text': 'Try again',
+      }
+    elif result == 'redundant':
+      context = {
+        'title': 'Already authenticated',
+        'message': 'You seem to already be authenticated!',
+        'back_text': 'Go back',
+      }
+    context['back_link'] = reverse('myadmin:auth_form', args=('login',))
+  elif action == 'logout':
+    if result == 'success':
+      context = {
+        'title': 'De-authorized',
+        'message': 'Cookie successfully de-authorized.',
+        'back_text': 'Go back',
+      }
+    elif result == 'redundant':
+      context = {
+        'title': 'Logged out',
+        'message': ('You seem to be already de-authorized: your cookie was not found in the '
+                    'AdminCookie table.'),
+        'back_text': 'Try again',
+      }
+    context['back_link'] = reverse('myadmin:auth_form', args=('logout',))
+  return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))

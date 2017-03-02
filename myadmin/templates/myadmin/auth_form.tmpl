@@ -11,7 +11,7 @@
 		<div>
 			<h5>{{ instruction }}</h5>
 		</div>
-		<form id="pwd_form" name='pwd_form' method='post' action="{% url action %}">
+		<form id="pwd_form" name='pwd_form' method='post' action="{% url 'myadmin:submit' action %}">
 			{% csrf_token %}
 			{% if get_password %}
 				<div class="form_bit">
