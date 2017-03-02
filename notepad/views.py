@@ -26,7 +26,7 @@ def notes(request, page):
     if format == 'plain':
       text += note.content
     else:
-      lines = format_note(note.content)
+      lines = _format_note(note.content)
       notes.append((note.id, lines))
   if format == 'plain':
     response = HttpResponse(text, content_type='text/plain; charset=UTF-8')
@@ -35,7 +35,7 @@ def notes(request, page):
     context = {'page':page, 'notes':notes}
     return add_visit(request, render(request, 'notepad/notes.tmpl', context))
 
-def format_note(content):
+def _format_note(content):
   if content:
     lines = content.splitlines()
   else:
@@ -44,10 +44,8 @@ def format_note(content):
   for line in lines:
     line = escape(line)
     line = urlize(line)
-    if line == '' or line == ' ':
-      line = '&nbsp;'
-    line = line.replace('  ', '&nbsp; ').replace('  ', ' &nbsp;')
-    line = line.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+    if line == '':
+      line = ' '
     lines_formatted.append(line)
   return lines_formatted
 
