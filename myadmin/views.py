@@ -1,7 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
+from django.urls import reverse
 from .models import AdminCookie, AdminDigest
+from traffic.lib import add_visit
 import binascii
 import hashlib
 
@@ -22,9 +24,22 @@ I can't generate a random salt and store it with each digest. Instead, I have a 
 doesn't offer great protection. I may re-evaluate this trade-off later.
 """
 #TODO: Mark visitors_v1 HTTPS only, or use a different, HTTPS-only cookie.
+#TODO: Add a sub-navigation bar to go between login, logout, and hash generation.
+#TODO: Redirect from each "submit" action to a result static html page.
+#      Would be nice to see the result in the logs.
 
 def auth_form(request, action):
-  if action == 'hash':
+  # Only allow the form to be loaded and submitted over HTTPS.
+  if not request.is_secure() and not settings.DEBUG:
+    back_link = 'https://'+request.get_host()+reverse('myadmin:auth_form', args=['login'])
+    context = {
+      'title': 'Access denied',
+      'message': 'Access to this area is restricted to HTTPS only',
+      'back_text': 'Go back',
+      'back_link': back_link,
+    }
+    return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))
+  elif action == 'hash':
     context = {
       'title':'Get password hash',
       'instruction':'Get the hash of a password:',
@@ -45,7 +60,7 @@ def auth_form(request, action):
       'action':'myadmin:login_submit',
       'get_password':True,
     }
-  return render(request, 'myadmin/auth_form.tmpl', context)
+  return add_visit(request, render(request, 'myadmin/auth_form.tmpl', context))
 
 def login_submit(request):
   password = request.POST['password']
@@ -100,8 +115,8 @@ def login_submit(request):
       'message': 'You seem to already be authenticated!',
       'back_text': 'Go back',
     }
-  context['action'] = 'login'
-  return render(request, 'myadmin/auth_result.tmpl', context)
+  context['back_link'] = reverse('myadmin:auth_form', args=('login',))
+  return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))
 
 def logout_submit(request):
   admin_cookie = _get_admin_cookie(request)
@@ -118,8 +133,8 @@ def logout_submit(request):
       'message': 'You seem to be already de-authorized: your cookie was not found in the AdminCookie table.',
       'back_text': 'Try again',
     }
-  context['action'] = 'logout'
-  return render(request, 'myadmin/auth_result.tmpl', context)
+  context['back_link'] = reverse('myadmin:auth_form', args=('logout',))
+  return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))
 
 def _get_admin_cookie(request):
   cookie = request.COOKIES.get('visitors_v1')
@@ -135,7 +150,7 @@ def hash_submit(request):
   digest = str(_get_hash(password), 'utf8')
   text = ('{}\n\nAlgorithm:\t{}\nHash:\t{}\nIterations:\t{}\nSalt:\t{}'
           .format(digest, ALGORITHM, HASH, ITERATIONS, settings.ADMIN_SALT))
-  return HttpResponse(text, content_type='text/plain; charset=UTF-8')
+  return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
 
 def _get_hash(password):
   pwd_bytes = bytes(password, 'utf8')
