@@ -23,7 +23,7 @@ def monitor_redirect(request):
 def monitor(request):
   # Only allow access to admin users over HTTPS.
   admin_cookie = get_admin_cookie(request)
-  if not settings.DEBUG and (admin_cookie and request.is_secure()):
+  if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
     text = 'This page is only for admin users visiting via HTTPS.'
     return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
   # Get query parameters.

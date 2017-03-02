@@ -31,7 +31,7 @@ doesn't offer great protection. I may re-evaluate this trade-off later.
 
 def auth_form(request, action):
   # Only allow the form to be loaded and submitted over HTTPS.
-  if not request.is_secure() and not settings.DEBUG:
+  if settings.REQUIRE_HTTPS and not request.is_secure():
     back_link = 'https://'+request.get_host()+reverse('myadmin:auth_form', args=['login'])
     context = {
       'title': 'Access denied',

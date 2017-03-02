@@ -15,6 +15,12 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+########## My custom settings ##########
+
+# Requre HTTPS when transferring sensitive information?
+REQUIRE_HTTPS = True
+
+ADMIN_SALT = '5586ae9e10fb6681f37332b26180358b1492dfc990646de79618d33ab3fba597'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
@@ -24,8 +30,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'h2!94u-kg77+5me^t!=nqwo8tnfb6syjexlk5(0d21xd@2p587'
-
-ADMIN_SALT = '5586ae9e10fb6681f37332b26180358b1492dfc990646de79618d33ab3fba597'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

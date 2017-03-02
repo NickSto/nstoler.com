@@ -13,7 +13,7 @@ def notes(request, page):
   show_deleted = request.GET.get('include') == 'deleted'
   # Only allow showing deleted notes to the admin over HTTPS.
   admin_cookie = get_admin_cookie(request)
-  if not settings.DEBUG and (admin_cookie and request.is_secure()):
+  if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
     show_deleted = False
   #TODO: Display deleted notes differently.
   if show_deleted:
