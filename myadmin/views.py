@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.urls import reverse
 from .models import AdminCookie, AdminDigest
+from .lib import get_admin_cookie
 from traffic.lib import add_visit
 import binascii
 import hashlib
@@ -77,7 +78,7 @@ def login_submit(request):
   except AdminDigest.DoesNotExist:
     authenticated = False
   if authenticated:
-    admin_cookie = _get_admin_cookie(request)
+    admin_cookie = get_admin_cookie(request)
     # Is this user already authorized? Then don't create another AdminCookie.
     if admin_cookie:
       result = 'redundant'
@@ -119,7 +120,7 @@ def login_submit(request):
   return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))
 
 def logout_submit(request):
-  admin_cookie = _get_admin_cookie(request)
+  admin_cookie = get_admin_cookie(request)
   if admin_cookie:
     admin_cookie.delete()
     context = {
@@ -135,15 +136,6 @@ def logout_submit(request):
     }
   context['back_link'] = reverse('myadmin:auth_form', args=('logout',))
   return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))
-
-def _get_admin_cookie(request):
-  cookie = request.COOKIES.get('visitors_v1')
-  if cookie:
-    try:
-      return AdminCookie.objects.get(cookie=cookie)
-    except AdminCookie.DoesNotExist:
-      pass
-  return None
 
 def hash_submit(request):
   password = request.POST['password']
