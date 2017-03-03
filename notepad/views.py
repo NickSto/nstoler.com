@@ -8,7 +8,7 @@ from myadmin.lib import get_admin_cookie
 import random as rand
 import string
 
-def notes(request, page):
+def view(request, page):
   format = request.GET.get('format')
   show_deleted = request.GET.get('include') == 'deleted'
   # Only allow showing deleted notes to the admin over HTTPS.
@@ -53,7 +53,7 @@ def add(request, page):
   params = request.POST
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were added to the main "notepad" page.
-  response = redirect('notepad:notes', page)
+  response = redirect('notepad:view', page)
   traffic_data = {'visit':1}
   response = add_visit(request, response, side_effects=traffic_data)
   if params['site'] == '':
@@ -82,9 +82,9 @@ def delete(request, page):
         note.save()
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were deleted from the main "notepad" page.
-  return add_visit(request, redirect('notepad:notes', page))
+  return add_visit(request, redirect('notepad:view', page))
 
 def random(request):
   alphabet = string.ascii_lowercase
   page = ''.join([rand.choice(alphabet) for i in range(5)])
-  return add_visit(request, redirect('notepad:notes', page))
+  return add_visit(request, redirect('notepad:view', page))

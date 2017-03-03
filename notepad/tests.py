@@ -13,7 +13,7 @@ def add_note(page, content, deleted=False, visit=None):
 class NoteDisplayTests(TestCase):
 
   def test_empty_page(self):
-    response = self.client.get(reverse('notepad:notes', args=(TEST_PAGE,)))
+    response = self.client.get(reverse('notepad:view', args=(TEST_PAGE,)))
     self.assertEqual(response.status_code, 200)
     self.assertContains(response, 'Nothing here yet')
     self.assertQuerysetEqual(response.context['notes'], [])
@@ -21,7 +21,7 @@ class NoteDisplayTests(TestCase):
   def test_one_note(self):
     TEST_CONTENT = 'rsjhlsvoda'
     add_note(TEST_PAGE, TEST_CONTENT)
-    response = self.client.get(reverse('notepad:notes', args=(TEST_PAGE,)))
+    response = self.client.get(reverse('notepad:view', args=(TEST_PAGE,)))
     self.assertEqual(response.status_code, 200)
     self.assertContains(response, TEST_CONTENT)
     self.assertQuerysetEqual(response.context['notes'], ["(1, ['"+TEST_CONTENT+"'])"])
@@ -36,7 +36,7 @@ class NoteAddTests(TestCase):
     path = reverse('notepad:add', args=(TEST_PAGE,))
     post_data = {'page':TEST_PAGE, 'site':'', 'content':TEST_CONTENT}
     response = self.client.post(path, post_data)
-    location = reverse('notepad:notes', args=(TEST_PAGE,))
+    location = reverse('notepad:view', args=(TEST_PAGE,))
     self.assertEqual(response.get('Location'), location)
     self.assertEqual(response.status_code, 302)
     try:
@@ -57,7 +57,7 @@ class NoteDeleteTests(TestCase):
     path = reverse('notepad:delete', args=(TEST_PAGE,))
     post_data = {'page':TEST_PAGE, 'site':'', 'note_1':'on'}
     response = self.client.post(path, post_data)
-    location = reverse('notepad:notes', args=(TEST_PAGE,))
+    location = reverse('notepad:view', args=(TEST_PAGE,))
     self.assertEqual(response.get('Location'), location)
     self.assertEqual(response.status_code, 302)
     try:
