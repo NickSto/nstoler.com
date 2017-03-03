@@ -4,6 +4,10 @@ from .models import Note
 
 TEST_PAGE = 'xwasebwnav'
 TEST_CONTENT = 'rsjhlsvoda'
+# From https://mathiasbynens.be/notes/javascript-unicode#poo-test
+# The first 20 symbols are in the range from U+0000 to U+00FF, then one between U+0100 and U+FFFF,
+# and finally a non-BMP astral symbol between U+010000 and U+10FFFF.
+UNICODE_CONTENT = 'Iñtërnâtiônàlizætiøn☃💩'
 
 def add_note(page, content, deleted=False, visit=None):
   note = Note(page=page, content=content, deleted=deleted, visit=visit)
@@ -72,6 +76,9 @@ class NoteDisplayTests(TestCase):
   def test_one_note(self):
     test_view_note(self, TEST_PAGE, TEST_CONTENT)
 
+  def test_unicode_note(self):
+    test_view_note(self, UNICODE_CONTENT, UNICODE_CONTENT)
+
   #TODO: Test hiding/showing deleted notes.
 
 
@@ -80,8 +87,14 @@ class NoteAddTests(TestCase):
   def test_add_one_note(self):
     test_add_note(self, TEST_PAGE, TEST_CONTENT)
 
+  def test_add_unicode_note(self):
+    test_add_note(self, UNICODE_CONTENT, UNICODE_CONTENT)
+
 
 class NoteDeleteTests(TestCase):
 
   def test_delete_one_note(self):
     test_delete_note(self, TEST_PAGE, TEST_CONTENT)
+
+  def test_delete_unicode_note(self):
+    test_delete_note(self, UNICODE_CONTENT, UNICODE_CONTENT)
