@@ -26,7 +26,7 @@
 		</header>
 		
 		<section id="notepad">
-			<form name='delete_notes' method='post' action="{% url 'notepad:delete' %}">
+			<form name='delete_notes' method='post' action="{% url 'notepad:delete' page %}">
 				{% csrf_token %}
 				<ul id="note_list">
 				{% for note_id, content in notes %}
@@ -67,7 +67,7 @@
 		
 		<section id="add_note">
 			<h2>Add a Note</h2>
-			<form name='add_note' method='post' action="{% url 'notepad:add' %}" >
+			<form name='add_note' method='post' action="{% url 'notepad:add' page %}" >
 				{% csrf_token %}
 				<div class="hidden">
 					<input type="text" name="page" value="{{ page }}">

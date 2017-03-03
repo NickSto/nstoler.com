@@ -49,23 +49,23 @@ def _format_note(content):
     lines_formatted.append(line)
   return lines_formatted
 
-def add(request):
+def add(request, page):
   params = request.POST
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were added to the main "notepad" page.
-  response = redirect('notepad:notes', params['page'])
+  response = redirect('notepad:notes', page)
   traffic_data = {'visit':1}
   response = add_visit(request, response, side_effects=traffic_data)
   if params['site'] == '':
     note = Note(
-      page=params['page'],
+      page=page,
       content=params['content'],
       visit=traffic_data['visit']
     )
     note.save()
   return response
 
-def delete(request):
+def delete(request, page):
   params = request.POST
   if params['site'] == '':
     for key in params:
@@ -82,7 +82,7 @@ def delete(request):
         note.save()
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were deleted from the main "notepad" page.
-  return add_visit(request, redirect('notepad:notes', params['page']))
+  return add_visit(request, redirect('notepad:notes', page))
 
 def random(request):
   alphabet = string.ascii_lowercase
