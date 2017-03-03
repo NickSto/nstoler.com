@@ -4,7 +4,7 @@ from django.conf import settings
 from myadmin.lib import get_admin_cookie
 import os
 
-def index(request):
+def env(request):
   # Only allow showing details about the server environment to the admin over HTTPS.
   admin_cookie = get_admin_cookie(request)
   if admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS):

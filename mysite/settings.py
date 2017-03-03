@@ -39,7 +39,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'env',
+    'misc',
     'notepad',
     'traffic',
     'myadmin',
@@ -126,6 +126,8 @@ USE_L10N = True
 USE_TZ = True
 
 APPEND_SLASH = False
+
+DEFAULT_CHARSET = 'utf-8'
 
 FILE_CHARSET = 'utf-8'
 
