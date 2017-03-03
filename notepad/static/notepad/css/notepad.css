@@ -31,13 +31,17 @@
 	margin: 10px;
 }
 
-.content {
+.content, .admin {
 	margin-left: 20px;
 }
 
 /* preserve runs of whitespace in the notes */
 .content p {
 	white-space: pre-wrap;
+}
+
+.admin span {
+	margin-right: 10px;
 }
 
 .youarehere {

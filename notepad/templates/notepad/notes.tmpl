@@ -29,15 +29,41 @@
 			<form name='delete_notes' method='post' action="{% url 'notepad:delete' page %}">
 				{% csrf_token %}
 				<ul id="note_list">
-				{% for note_id, content in notes %}
+				{% for note, lines in notes %}
 					{% if forloop.last %}
 						<a id="bottom"></a>
 					{% endif %}
-					<li id="note_{{ note_id }}" class="note">
-						<input type="checkbox" class="del_cb" name="note_{{ note_id }}">
+					<li id="note_{{ note.id }}" class="note">
+						<input type="checkbox" class="del_cb" name="note_{{ note.id }}">
+						{% if admin %}
+							<div class="admin">
+								<p>
+									<span><strong>id</strong>: {{ note.id }}</span>
+									<span><strong>deleted</strong>: {{ note.deleted }}</span>
+									{% if note.visit %}
+										<span><strong>added</strong>: {{ note.visit.timestamp }}</span>
+										<span>
+											<strong>IP</strong>: <a href="http://whatismyipaddress.com/ip/{{ note.visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ note.visit.visitor.ip }}</a>
+										</span>
+										{% if note.visit.visitor.label %}
+											<span><strong>label</strong>: {{ note.visit.visitor.label }}</span>
+										{% endif %}
+										{% if note.visit.visitor.is_me %}
+											<span>(<strong>me</strong>)</span>
+										{% endif %}
+										<span><strong>cookie</strong>: {{ note.visit.visitor.cookie1 }}</span>
+									{% endif %}
+								</p>
+								{% if note.visit %}
+									<p>
+										<span><strong>user agent</strong>: {{ note.visit.visitor.user_agent }}</span>
+									</p>
+								{% endif %}
+							</div>
+						{% endif %}
 						<div class="content">
 							{% autoescape off %}
-								{% for line in content %}
+								{% for line in lines %}
 									<p>{{ line }}</p>
 								{% endfor %}
 							{% endautoescape %}

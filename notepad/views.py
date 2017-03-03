@@ -9,12 +9,15 @@ import random as rand
 import string
 
 def view(request, page):
-  format = request.GET.get('format')
-  show_deleted = request.GET.get('include') == 'deleted'
+  params = request.GET
+  format = params.get('format')
+  admin = params.get('admin')
+  show_deleted = params.get('include') == 'deleted'
   # Only allow showing deleted notes to the admin over HTTPS.
   admin_cookie = get_admin_cookie(request)
   if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
     show_deleted = False
+    admin = False
   #TODO: Display deleted notes differently.
   if show_deleted:
     note_objects = Note.objects.filter(page=page)
@@ -27,12 +30,12 @@ def view(request, page):
       text += note.content
     else:
       lines = _format_note(note.content)
-      notes.append((note.id, lines))
+      notes.append((note, lines))
   if format == 'plain':
     response = HttpResponse(text, content_type='text/plain; charset=UTF-8')
     return add_visit(request, response)
   else:
-    context = {'page':page, 'notes':notes}
+    context = {'page':page, 'notes':notes, 'admin':admin}
     return add_visit(request, render(request, 'notepad/notes.tmpl', context))
 
 def _format_note(content):
