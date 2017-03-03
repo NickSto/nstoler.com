@@ -9,6 +9,57 @@ def add_note(page, content, deleted=False, visit=None):
   note = Note(page=page, content=content, deleted=deleted, visit=visit)
   note.save()
 
+def test_view_note(tester, page, content):
+  add_note(page, content)
+  response = tester.client.get(reverse('notepad:view', args=(page,)))
+  tester.assertEqual(response.status_code, 200)
+  tester.assertContains(response, content)
+  notes = response.context['notes']
+  tester.assertEqual(len(notes), 1)
+  if len(notes) > 0:
+    for note_tuple in notes:
+      tester.assertEqual(len(note_tuple), 2)
+      if len(note_tuple) == 2:
+        note, lines = note_tuple
+        tester.assertEqual(note.id, 1)
+        tester.assertEqual(lines, [content])
+
+def test_add_note(tester, page, content):
+  path = reverse('notepad:add', args=(page,))
+  post_data = {'page':page, 'site':'', 'content':content}
+  response = tester.client.post(path, post_data)
+  location = reverse('notepad:view', args=(page,))
+  tester.assertEqual(response.get('Location'), location)
+  tester.assertEqual(response.status_code, 302)
+  try:
+    note = Note.objects.get(pk=1)
+    missing = False
+  except Note.DoesNotExist:
+    missing = True
+  tester.assertEqual(missing, False)
+  if not missing:
+    tester.assertEqual(note.content, content)
+    tester.assertEqual(note.page, page)
+
+def test_delete_note(tester, page, content):
+  add_note(page, content)
+  path = reverse('notepad:delete', args=(page,))
+  post_data = {'page':page, 'site':'', 'note_1':'on'}
+  response = tester.client.post(path, post_data)
+  location = reverse('notepad:view', args=(page,))
+  tester.assertEqual(response.get('Location'), location)
+  tester.assertEqual(response.status_code, 302)
+  try:
+    note = Note.objects.get(pk=1)
+    missing = False
+  except Note.DoesNotExist:
+    missing = True
+  tester.assertEqual(missing, False)
+  if not missing:
+    tester.assertEqual(note.page, page)
+    tester.assertEqual(note.content, content)
+    tester.assertEqual(note.deleted, True)
+
 
 class NoteDisplayTests(TestCase):
 
@@ -19,20 +70,7 @@ class NoteDisplayTests(TestCase):
     self.assertEqual(response.context['notes'], [])
 
   def test_one_note(self):
-    TEST_CONTENT = 'rsjhlsvoda'
-    add_note(TEST_PAGE, TEST_CONTENT)
-    response = self.client.get(reverse('notepad:view', args=(TEST_PAGE,)))
-    self.assertEqual(response.status_code, 200)
-    self.assertContains(response, TEST_CONTENT)
-    notes = response.context['notes']
-    self.assertEqual(len(notes), 1)
-    if len(notes) > 0:
-      for note_tuple in notes:
-        self.assertEqual(len(note_tuple), 2)
-        if len(note_tuple) == 2:
-          note, lines = note_tuple
-          self.assertEqual(note.id, 1)
-          self.assertEqual(lines, [TEST_CONTENT])
+    test_view_note(self, TEST_PAGE, TEST_CONTENT)
 
   #TODO: Test hiding/showing deleted notes.
 
@@ -40,41 +78,10 @@ class NoteDisplayTests(TestCase):
 class NoteAddTests(TestCase):
 
   def test_add_one_note(self):
-    TEST_CONTENT = 'rsjhlsvoda'
-    path = reverse('notepad:add', args=(TEST_PAGE,))
-    post_data = {'page':TEST_PAGE, 'site':'', 'content':TEST_CONTENT}
-    response = self.client.post(path, post_data)
-    location = reverse('notepad:view', args=(TEST_PAGE,))
-    self.assertEqual(response.get('Location'), location)
-    self.assertEqual(response.status_code, 302)
-    try:
-      note = Note.objects.get(pk=1)
-      missing = False
-    except Note.DoesNotExist:
-      missing = True
-    self.assertEqual(missing, False)
-    if not missing:
-      self.assertEqual(note.content, TEST_CONTENT)
-      self.assertEqual(note.page, TEST_PAGE)
+    test_add_note(self, TEST_PAGE, TEST_CONTENT)
 
 
 class NoteDeleteTests(TestCase):
 
   def test_delete_one_note(self):
-    add_note(TEST_PAGE, TEST_CONTENT)
-    path = reverse('notepad:delete', args=(TEST_PAGE,))
-    post_data = {'page':TEST_PAGE, 'site':'', 'note_1':'on'}
-    response = self.client.post(path, post_data)
-    location = reverse('notepad:view', args=(TEST_PAGE,))
-    self.assertEqual(response.get('Location'), location)
-    self.assertEqual(response.status_code, 302)
-    try:
-      note = Note.objects.get(pk=1)
-      missing = False
-    except Note.DoesNotExist:
-      missing = True
-    self.assertEqual(missing, False)
-    if not missing:
-      self.assertEqual(note.page, TEST_PAGE)
-      self.assertEqual(note.content, TEST_CONTENT)
-      self.assertEqual(note.deleted, True)
+    test_delete_note(self, TEST_PAGE, TEST_CONTENT)
