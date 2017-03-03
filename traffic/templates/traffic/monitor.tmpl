@@ -36,7 +36,7 @@
 						</li>
 					{% else %}
 						<li>
-							<a href="monitor?p={{ current }}&include=me">include me</a>
+							<a href="monitor?p={{ current }}&amp;include=me">include me</a>
 						</li>
 					{% endif %}
 					{% if next %}
@@ -44,7 +44,6 @@
 						<a href="monitor?p={{ next }}{{ include_me }}">next page</a>
 					</li>
 					{% endif %}
-					</li>
 				</ul>
 			</nav>
 		</header>
@@ -121,7 +120,7 @@
 					</li>
 				{% else %}
 					<li>
-						<a href="monitor?p={{ current }}&include=me">include me</a>
+						<a href="monitor?p={{ current }}&amp;include=me">include me</a>
 					</li>
 				{% endif %}
 				{% if next %}
@@ -129,7 +128,6 @@
 					<a href="monitor?p={{ next }}{{ include_me }}">next page</a>
 				</li>
 				{% endif %}
-				</li>
 			</ul>
 		</nav>
 		<div class="after">
