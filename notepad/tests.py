@@ -16,7 +16,7 @@ class NoteDisplayTests(TestCase):
     response = self.client.get(reverse('notepad:view', args=(TEST_PAGE,)))
     self.assertEqual(response.status_code, 200)
     self.assertContains(response, 'Nothing here yet')
-    self.assertQuerysetEqual(response.context['notes'], [])
+    self.assertEqual(response.context['notes'], [])
 
   def test_one_note(self):
     TEST_CONTENT = 'rsjhlsvoda'
@@ -24,7 +24,7 @@ class NoteDisplayTests(TestCase):
     response = self.client.get(reverse('notepad:view', args=(TEST_PAGE,)))
     self.assertEqual(response.status_code, 200)
     self.assertContains(response, TEST_CONTENT)
-    self.assertQuerysetEqual(response.context['notes'], ["(1, ['"+TEST_CONTENT+"'])"])
+    self.assertEqual(response.context['notes'], [(1, [TEST_CONTENT])])
 
   #TODO: Test hiding/showing deleted notes.
 
