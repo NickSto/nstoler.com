@@ -2,6 +2,11 @@ from .models import Visit, Visitor
 import string
 import random
 
+#TODO: Grab info about the IP address at the time. Stuff like the ISP, ASN, and geoip data.
+#      That stuff can change, especially as IPv4 addresses are bought and sold increasingly.
+#      Maybe run a daemon separate from Django to do it in the background, to not hold up the
+#      response.
+
 ALPHABET1 = string.ascii_lowercase + string.ascii_uppercase + string.digits + '+-'
 COOKIE_EXPIRATION = 10*365*24*60*60  # 10 years
 
@@ -56,8 +61,10 @@ def add_visit(request, response, side_effects=None):
     visitor.save()
   visit = Visit(
     method=request.method,
+    scheme=request.scheme,
     host=request.get_host(),
-    url=request.build_absolute_uri(),
+    path=request.path_info,
+    query_str=request.META.get('QUERY_STRING') or request.GET.urlencode(),
     referrer=headers.get('HTTP_REFERER'),
     visitor=visitor
   )

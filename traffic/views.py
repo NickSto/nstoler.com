@@ -12,13 +12,12 @@ PER_PAGE_DEFAULT = 50
 def monitor_redirect(request):
   """Redirect to the monitor() view, preserving the query string."""
   path = reverse('traffic:monitor')
-  if 'QUERY_STRING' in request.GET:
-    query_string = request.GET['QUERY_STRING']
-  else:
-    query_string = request.GET.urlencode()
+  query_string = request.META.get('QUERY_STRING') or request.GET.urlencode()
   if query_string:
     path += '?'+query_string
   return add_visit(request, redirect(path, permanent=True))
+
+#TODO: A view to set a Visitor.label or Visitor.is_me, so I can do it via a link in the monitor.
 
 def monitor(request):
   # Only allow access to admin users over HTTPS.
