@@ -1,0 +1,32 @@
+{% extends 'html5boilerplate1.0.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}Notepad Monitor{% endblock %}
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'notepad/css/notepad.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+		<header>
+			<h1 id="title">Notepad - Monitor</h1>
+			<div class="randpage">Go to <a href="{% url 'notepad:random' %}">random page</a>
+			</div>
+			<p class="youarehere">Currently existing pages:</p>
+		</header>
+		
+		<section id="notepad">
+			<ul id="note_list">
+      {% for page in pages %}
+				<li class="note">
+					<p><a href="../{{ page }}">{{ page }}</a></p>
+				</li>
+			{% empty %}
+				<li class="note">
+					<p>No existing pages right now.</p>
+				</li>
+			{% endfor %}
+			</ul>
+		</section>
+		<p><a href="export.cgi">Export</a> all existing notes</p>
+{% endblock content %}

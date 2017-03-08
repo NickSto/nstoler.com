@@ -91,3 +91,9 @@ def random(request):
   alphabet = string.ascii_lowercase
   page = ''.join([rand.choice(alphabet) for i in range(5)])
   return add_visit(request, redirect('notepad:view', page))
+
+def monitor(request):
+  query_set = Note.objects.values('page').distinct()
+  pages = [result['page'] for result in query_set]
+  context = {'pages':sorted(pages)}
+  return add_visit(request, render(request, 'notepad/monitor.tmpl', context))
