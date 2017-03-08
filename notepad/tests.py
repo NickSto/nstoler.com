@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
-from .models import Note
+from .models import Note, Page
 
 TEST_PAGE = 'xwasebwnav'
 TEST_CONTENT = 'rsjhlsvoda'
@@ -9,7 +9,12 @@ TEST_CONTENT = 'rsjhlsvoda'
 # and finally a non-BMP astral symbol between U+010000 and U+10FFFF.
 UNICODE_CONTENT = 'Iñtërnâtiônàlizætiøn☃💩'
 
-def add_note(page, content, deleted=False, visit=None):
+def add_note(page_name, content, deleted=False, visit=None):
+  try:
+    page = Page.objects.get(name=page_name)
+  except Page.DoesNotExist:
+    page = Page(name=page_name)
+    page.save()
   note = Note(page=page, content=content, deleted=deleted, visit=visit)
   note.save()
 
@@ -43,7 +48,7 @@ def test_add_note(tester, page, content):
   tester.assertEqual(missing, False)
   if not missing:
     tester.assertEqual(note.content, content)
-    tester.assertEqual(note.page, page)
+    tester.assertEqual(note.page.name, page)
 
 def test_delete_note(tester, page, content):
   add_note(page, content)
@@ -60,7 +65,7 @@ def test_delete_note(tester, page, content):
     missing = True
   tester.assertEqual(missing, False)
   if not missing:
-    tester.assertEqual(note.page, page)
+    tester.assertEqual(note.page.name, page)
     tester.assertEqual(note.content, content)
     tester.assertEqual(note.deleted, True)
 

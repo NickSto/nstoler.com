@@ -201,6 +201,7 @@ def transfer_notepad(cursor, limit=None, resume=None, get_note=None, get_unicode
   total = cursor.execute(query)
   logging.info('Total notes found: '+str(total))
 
+  pages = {}
   rows = 0
   for row in cursor.fetchall():
 
@@ -230,9 +231,20 @@ def transfer_notepad(cursor, limit=None, resume=None, get_note=None, get_unicode
           break
       continue
 
-    logging.info('Adding note {note_id} on page {page}: {}'.format(repr(row['content']), **row))
+    page_name = row['page']
+    logging.info('Adding note {note_id} on page {}: {}'.format(page_name, repr(row['content']), **row))
+
+    if page_name in pages:
+      page = pages[page_name]
+    else:
+      page = notepad.models.Page(
+        name=page_name
+      )
+      page.save()
+      pages[page_name] = page
+
     note = notepad.models.Note(
-      page=row['page'],
+      page=page,
       deleted=False,
       content=row['content'],
     )
