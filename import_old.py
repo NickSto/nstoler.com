@@ -40,6 +40,7 @@ def make_argparser():
          '"USE [database_name]; SELECT @@character_set_database, @@collation_database;". '
          'Default: %(default)s')
   parser.add_argument('-l', '--limit', type=int)
+  parser.add_argument('-r', '--resume', type=int)
   parser.add_argument('-L', '--log', type=argparse.FileType('w'),
     help='Print log messages to this file instead of to stderr. Warning: Will overwrite the file.')
   parser.add_argument('-q', '--quiet', dest='volume', action='store_const', const=logging.CRITICAL)
@@ -71,14 +72,14 @@ def main(argv):
   try:
     with connection.cursor() as cursor:
       if args.database == 'traffic':
-        transfer_traffic(cursor)
+        transfer_traffic(cursor, limit=args.limit, resume=args.resume)
       elif args.database == 'content' or args.database == 'notepad':
         pass
   finally:
     connection.close()
 
 
-def transfer_traffic(cursor, limit=None):
+def transfer_traffic(cursor, limit=None, resume=None):
   import traffic.models
 
   query = """
@@ -97,6 +98,15 @@ def transfer_traffic(cursor, limit=None):
     rows += 1
     if limit and rows > limit:
       break
+
+    if resume:
+      visit_id = row['visit_id']
+      if visit_id < resume:
+        continue
+
+    print('Adding visit: {visitor_id}/{visit_id} {ip}, {label}, {cookie}: {page}'.format(**row))
+    # for key, value in row.items():
+    #   print('{}:\t({})\t{}'.format(key, type(value).__name__, value))
 
     visitor_id = row['visitor_id']
     if visitor_id in visitor_ids:
@@ -125,21 +135,11 @@ def transfer_traffic(cursor, limit=None):
       visitor=visitor
     )
     visit.save()
-    break
 
-"""
-class Visit(models.Model):
-  timestamp = models.DateTimeField(default=timezone.now)
-  method = models.CharField(max_length=8)
-  scheme = models.CharField(max_length=8)
-  host = models.CharField(max_length=1023)
-  path = models.CharField(max_length=4095)
-  query_str = models.CharField(max_length=4095)
-  referrer = models.URLField(max_length=4095, null=True, blank=True)
-  visitor = models.ForeignKey(Visitor, models.PROTECT)
-"""
 
 def parse_page(page):
+  if page is None:
+    return '', '', '', ''
   # Some pages are definitely missing the "http://". None seem to be missing the domain, though.
   if page.startswith('http://') or page.startswith('https://'):
     has_scheme = True
@@ -150,6 +150,7 @@ def parse_page(page):
   if not has_scheme:
     scheme = ''
   return scheme, host, path, query_str
+
 
 def print_traffic_row(row):
   output = []
