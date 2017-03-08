@@ -100,6 +100,16 @@ def random(request):
   return add_visit(request, redirect('notepad:view', page_name))
 
 def monitor(request):
+  format = request.GET.get('format')
+  # Only show global list of pages to the admin over HTTPS.
+  admin_cookie = get_admin_cookie(request)
+  if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
+    text = 'You are not authorized for this content.'
+    return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
   pages = Page.objects.order_by('name')
-  context = {'pages':pages}
-  return add_visit(request, render(request, 'notepad/monitor.tmpl', context))
+  if format == 'plain':
+    text = '\n'.join([page.name for page in pages])
+    return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
+  else:
+    context = {'pages':pages}
+    return add_visit(request, render(request, 'notepad/monitor.tmpl', context))
