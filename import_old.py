@@ -17,8 +17,8 @@ import pymysql
 import django
 import django.conf
 
-ARG_DEFAULTS = {'site':'mysite', 'charset':'latin1', 'host':'localhost', 'config':'dbi_config.ini',
-                'log':sys.stderr, 'volume':logging.ERROR}
+ARG_DEFAULTS = {'site':'mysite', 'charset':'latin1', 'host':'localhost',
+                'config':'utils/dbi_config.ini', 'log':sys.stderr, 'volume':logging.ERROR}
 DESCRIPTION = """"""
 
 
@@ -121,7 +121,7 @@ def transfer_traffic(cursor, limit=None, resume=None):
     WHERE vtr.visitor_id = vt.visitor_id
   """
   total = cursor.execute(query)
-  print('Total visits found: '+str(total))
+  logging.info('Total visits found: '+str(total))
 
   rows = 0
   visitor_ids = {}
@@ -136,7 +136,7 @@ def transfer_traffic(cursor, limit=None, resume=None):
       if visit_id < resume:
         continue
 
-    print('Adding visit: {visitor_id}/{visit_id} {ip}, {label}, {cookie}: {page}'.format(**row))
+    logging.info('Adding visit: {visitor_id}/{visit_id} {ip}, {label}, {cookie}: {page}'.format(**row))
     # for key, value in row.items():
     #   print('{}:\t({})\t{}'.format(key, type(value).__name__, value))
 
@@ -230,7 +230,7 @@ def transfer_notepad(cursor, limit=None, resume=None, get_note=None, get_unicode
           break
       continue
 
-    print('Adding note {note_id} on page {page}: {}'.format(repr(row['content']), **row))
+    logging.info('Adding note {note_id} on page {page}: {}'.format(repr(row['content']), **row))
     note = notepad.models.Note(
       page=row['page'],
       deleted=False,
