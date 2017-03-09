@@ -1,0 +1,23 @@
+/* Custom additions to the Bootstrap CSS */
+
+li.list-group-item.header {
+  background-color: #F5F5F5;
+}
+
+.jumbotron .well h3 {
+  font-size: 150%
+}
+
+.jumbotron .well p {
+  font-size: 110%;
+}
+
+.jumbotron p {
+  font-size: 125%;
+}
+
+#selfie {
+  width: 175px;
+  margin-left: 10px;
+}
+
