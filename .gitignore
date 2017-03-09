@@ -1,0 +1,12 @@
+*.pyc
+__pycache__
+django/db.sqlite*
+*.sublime-project
+*.sublime-workspace
+1.0/protect/*.ini
+1.0/protect/*.tsv
+1.0/media/
+1.0/img/
+*.log
+*.log.gz
+
