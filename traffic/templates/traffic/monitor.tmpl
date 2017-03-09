@@ -1,0 +1,142 @@
+{% extends 'html5boilerplate1.0.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}Traffic Monitor{% endblock %}
+
+{% block stylesheet %}
+	<link rel="stylesheet" href="{% static 'traffic/css/monitor.css' %}?via=html">
+{% endblock %}
+
+
+{% block content %}
+		<header>
+			<h1 id="title">Traffic Monitor</h1>
+			<p class="youarehere">
+			{% if end %}
+				Visits {{ start }} to {{ end }}
+			{% endif %}
+			</p>
+			{% if debug %}
+				<table>
+					{% for key, value in debug.items %}
+						<tr><td>{{ key }}:</td><td>{{ value }}</td></tr>
+					{% endfor %}
+				</table>
+			{% endif %}
+			<nav class="nav-options">
+				<ul>
+					{% if prev %}
+					<li>
+						<a href="monitor?p={{ prev }}{{ include_me }}">previous page</a>
+					</li>
+					{% endif %}
+					{% if include_me %}
+						<li>
+							<a href="monitor?p={{ current }}">hide me</a>
+						</li>
+					{% else %}
+						<li>
+							<a href="monitor?p={{ current }}&amp;include=me">include me</a>
+						</li>
+					{% endif %}
+					{% if next %}
+					<li>
+						<a href="monitor?p={{ next }}{{ include_me }}">next page</a>
+					</li>
+					{% endif %}
+				</ul>
+			</nav>
+		</header>
+		
+		<section id="notepad">
+			<div id="visits">
+				{% for visit in visits %}
+					<article class="visit">
+						<section class="pane1">
+							<p>
+								<span class="datum ip">
+									<a href="http://whatismyipaddress.com/ip/{{ visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ visit.visitor.ip }}</a>
+								</span>
+							</p>
+							<p>
+								<span class="datum time">
+									{{ visit.timestamp }}
+								</span>
+							</p>
+						</section>
+						<section class="pane2">
+							<p>
+								<span class="datum">
+									<span class="label">page:&nbsp;</span>
+										<a href="{{ visit.url }}" target="_blank">{{ visit.url }}</a>
+								</span>
+								{% if visit.visitor.cookie1 is not None %}
+								<span class="datum">
+									<span class="label">cookie:&nbsp;</span>{{ visit.visitor.cookie1 }}
+								</span>
+								{% endif %}
+								{% if visit.visitor.label %}
+								<span class="datum">
+									<span class="label">label:&nbsp;</span>{{ visit.visitor.label }}
+								</span>
+								{% endif %}
+								{% if visit.referrer %}
+								<span class="datum">
+									<span class="label">referrer:&nbsp;</span>
+										<a href="{{ visit.referrer }}" rel="nofollow noreferrer" target="_blank">{{ visit.referrer }}</a>
+								</span>
+								{% endif %}
+							</p>
+							<p>
+								{% if visit.visitor.user_agent is not None %}
+								<span class="datum">
+									<span class="label">user-agent: </span>{{ visit.visitor.user_agent }}
+								</span>
+								{% endif %}
+							</p>
+						</section>
+					</article>
+				{% empty %}
+					<article class="visit">
+						<section class="pane1">
+							<span class="datum">
+								No visits to display!
+							</span>
+						</section>
+					</article>
+				{% endfor %}
+			</div>
+		</section>
+		<nav class="nav-options">
+			<ul>
+				{% if prev %}
+				<li>
+					<a href="monitor?p={{ prev }}{{ include_me }}">previous page</a>
+				</li>
+				{% endif %}
+				{% if include_me %}
+					<li>
+						<a href="monitor?p={{ current }}">hide me</a>
+					</li>
+				{% else %}
+					<li>
+						<a href="monitor?p={{ current }}&amp;include=me">include me</a>
+					</li>
+				{% endif %}
+				{% if next %}
+				<li>
+					<a href="monitor?p={{ next }}{{ include_me }}">next page</a>
+				</li>
+				{% endif %}
+			</ul>
+		</nav>
+		<div class="after">
+			<p><a href="clean">Clean</a> database</p>
+			<p><a href="export-visits">Export</a> all visits</p>
+		</div>
+{% endblock content %}
+
+
+{% block javascript %}
+  <!-- <script src="{% static 'traffic/js/main.js' %}"?via=html></script> -->
+{% endblock %}
