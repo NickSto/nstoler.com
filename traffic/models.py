@@ -33,7 +33,7 @@ class Visit(models.Model):
   @property
   def url(self):
     url = urllib.parse.urlunparse((self.scheme, self.host, self.path, None, self.query_str, None))
-    if self.scheme is None:
-      return url[2:]
+    if self.scheme == '':
+      return 'http:'+url
     else:
       return url
