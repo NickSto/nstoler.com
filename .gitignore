@@ -1,6 +1,9 @@
 *.pyc
 __pycache__
+django/.venv
+django/protected_settings.py
 django/db.sqlite*
+static/
 *.sublime-project
 *.sublime-workspace
 1.0/protect/*.ini

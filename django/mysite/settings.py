@@ -138,12 +138,14 @@ FILE_CHARSET = 'utf-8'
 
 STATIC_URL = '/static/'
 
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static')
+
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 
 ########## Read config file settings ##########
 
-# Sensitive settings I don't want in version control.
-# These will override any settings in this file.
+# Sensitive or site-specific settings I don't want in version control.
+# Put "protected_settings.py" in the BASE_DIR. These will override any settings in this file.
 # Credit to Steven Armstrong for idea: https://code.djangoproject.com/wiki/SplitSettings
 if os.path.isfile('protected_settings.py'):
     from protected_settings import *
