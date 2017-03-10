@@ -1,4 +1,5 @@
-from .models import Visit, Visitor
+from .models import Visit, Visitor, User
+import logging
 import string
 import random
 
@@ -38,25 +39,30 @@ def add_visit(request, response, side_effects=None):
   try:
     visitor = Visitor.objects.get(ip=ip, cookie1=cookies[0], user_agent=user_agent)
   except Visitor.MultipleObjectsReturned:
-    #TODO: handle
-    raise
+    #TODO: Determine more intelligently which visitor to use.
+    logging.warn('Multiple visitors found with ip "{}", cookie1 "{}", and user_agent "{}".'
+                  .format(ip, cookie[0], user_agent))
+    visitor = Visitor.objects.filter(ip=ip, cookie1=cookies[0], user_agent=user_agent)[0]
   except Visitor.DoesNotExist:
+    # If we haven't seen this exact visitor before, have this User before?
+    # Identify the User by the cookie.
     visitors = Visitor.objects.filter(cookie1=cookies[0])
-    label = ''
-    is_me = None
-    for visitor in visitors:
-      #TODO: Do something (log?) if there are multiple, disagreeing labels or is_me values.
-      if visitor.label:
-        label = visitor.label
-      if visitor.is_me:
-        is_me = True
+    if visitors:
+      # Take the label for the new visitor from the existing ones.
+      label = get_common_start([visitor.label for visitor in visitors])
+      user = visitors[0].user
+    else:
+      # If we've never seen a visitor with this cookie before, create a new User too.
+      label = ''
+      user = User()
+      user.save()
     visitor = Visitor(
       ip=ip,
       user_agent=user_agent,
       cookie1=cookies[0],
       cookie2=cookies[1],
       label=label,
-      is_me=is_me
+      user=user
     )
     visitor.save()
   visit = Visit(
@@ -79,3 +85,25 @@ def add_visit(request, response, side_effects=None):
     if 'visit' in side_effects:
       side_effects['visit'] = visit
   return response
+
+def get_common_start(labels):
+  """Example: get_common_start(['me and you', 'me and you at 1507', 'me and Emily']) -> 'me and'
+  Ignores empty strings (adding an empty string to the above list would give the same result).
+  """
+  common_start = None
+  for label in labels:
+    if label == '':
+      continue
+    elif common_start is None:
+      common_start = label.split()
+    else:
+      label_parts = label.split()
+      common_start_new = []
+      for part1, part2 in zip(common_start, label_parts):
+        if part1 == part2:
+          common_start_new.append(part1)
+      common_start = common_start_new
+  if common_start is None:
+    return ''
+  else:
+    return ' '.join(common_start)

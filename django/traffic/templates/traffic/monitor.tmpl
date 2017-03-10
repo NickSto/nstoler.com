@@ -66,32 +66,34 @@
 						</section>
 						<section class="pane2">
 							<p>
-								<span class="datum">
-									<span class="label">page:&nbsp;</span>
-										<a href="{{ visit.url }}" target="_blank">{{ visit.url }}</a>
-								</span>
+								{% if visit.url %}
+									<span class="datum">
+										<span class="label">page:&nbsp;</span>
+											<a href="{{ visit.url }}" target="_blank">{{ visit.url }}</a>
+									</span>
+								{% endif %}
 								{% if visit.visitor.cookie1 is not None %}
-								<span class="datum">
-									<span class="label">cookie:&nbsp;</span>{{ visit.visitor.cookie1 }}
-								</span>
+									<span class="datum">
+										<span class="label">cookie:&nbsp;</span>{{ visit.visitor.cookie1 }}
+									</span>
 								{% endif %}
 								{% if visit.visitor.label %}
-								<span class="datum">
-									<span class="label">label:&nbsp;</span>{{ visit.visitor.label }}
-								</span>
+									<span class="datum">
+										<span class="label">label:&nbsp;</span>{{ visit.visitor.label }}
+									</span>
 								{% endif %}
 								{% if visit.referrer %}
-								<span class="datum">
-									<span class="label">referrer:&nbsp;</span>
-										<a href="{{ visit.referrer }}" rel="nofollow noreferrer" target="_blank">{{ visit.referrer }}</a>
-								</span>
+									<span class="datum">
+										<span class="label">referrer:&nbsp;</span>
+											<a href="{{ visit.referrer }}" rel="nofollow noreferrer" target="_blank">{{ visit.referrer }}</a>
+									</span>
 								{% endif %}
 							</p>
 							<p>
 								{% if visit.visitor.user_agent is not None %}
-								<span class="datum">
-									<span class="label">user-agent: </span>{{ visit.visitor.user_agent }}
-								</span>
+									<span class="datum">
+										<span class="label">user-agent: </span>{{ visit.visitor.user_agent }}
+									</span>
 								{% endif %}
 							</p>
 						</section>

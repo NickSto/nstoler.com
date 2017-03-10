@@ -29,10 +29,12 @@ def make_argparser():
 
   parser.add_argument('database', choices=('traffic', 'notepad'),
     help='Name of the database to import.')
+  parser.add_argument('-s', '--save', action='store_true',
+    help='Actually modify the database and perform the import. Otherwise it will not be changed.')
   parser.add_argument('-c', '--config',
     help='Config file to read for database connection parameters like username and password. '
          'Default: %(default)s')
-  parser.add_argument('-s', '--site',
+  parser.add_argument('-S', '--site',
     help='Name of the Django site we\'re writing to. Default: %(default)s')
   parser.add_argument('-H', '--host',
     help='Hostname of the source database. Default: %(default)s')
@@ -66,6 +68,9 @@ def main(argv):
   logging.basicConfig(stream=args.log, level=args.volume, format='%(message)s')
   tone_down_logger()
 
+  script_dir = os.path.dirname(os.path.realpath(__file__))
+  sys.path[0] = os.path.dirname(script_dir)
+
   if not (args.user and args.password):
     user, password, database = get_settings(args.config, args.database)
   else:
@@ -90,9 +95,9 @@ def main(argv):
   try:
     with connection.cursor() as cursor:
       if args.database == 'traffic':
-        transfer_traffic(cursor, limit=args.limit, resume=args.resume)
+        transfer_traffic(cursor, save=args.save, limit=args.limit, resume=args.resume)
       elif args.database == 'content' or args.database == 'notepad':
-        transfer_notepad(cursor, limit=args.limit, resume=args.resume, get_note=args.note,
+        transfer_notepad(cursor, save=args.save, limit=args.limit, resume=args.resume, get_note=args.note,
                          get_unicode=args.get_unicode)
   finally:
     connection.close()
@@ -111,19 +116,24 @@ def get_settings(config_file, database):
   return user, password, database
 
 
-def transfer_traffic(cursor, limit=None, resume=None):
+def transfer_traffic(cursor, save=False, limit=None, resume=None):
   import traffic.models
+  import traffic.lib
 
   query = """
     SELECT vtr.visitor_id, vtr.ip, vtr.is_me, vtr.label, vtr.cookie, vtr.user_agent,
            vt.visit_id, vt.unix_time, vt.page, vt.referrer
     FROM visitors as vtr, visits as vt
     WHERE vtr.visitor_id = vt.visitor_id
+    ORDER BY vt.visit_id
   """
   total = cursor.execute(query)
   logging.info('Total visits found: '+str(total))
 
   rows = 0
+  me = None
+  users_by_cookie = {}
+  users_by_label = {}
   visitor_ids = {}
   for row in cursor.fetchall():
 
@@ -140,33 +150,64 @@ def transfer_traffic(cursor, limit=None, resume=None):
     # for key, value in row.items():
     #   print('{}:\t({})\t{}'.format(key, type(value).__name__, value))
 
+    label = row['label'] or ''
+    cookie = row['cookie']
     visitor_id = row['visitor_id']
     if visitor_id in visitor_ids:
+      logging.debug('Visitor {} already present in visitor_ids.'.format(visitor_id))
       visitor = visitor_ids[visitor_id]
-    else:
+    elif save:
+      logging.debug('Visitor {} is new.'.format(visitor_id))
       if row['is_me'] == '':
         is_me = True
       else:
         is_me = None
+      # Get the user for this visitor.
+      if is_me:
+        logging.debug('  The visitor is me.')
+        # If it's marked as me, we know that's one user: me.
+        if me is None:
+          logging.debug('    First time we\'ve seen me! Creating User..')
+          me = traffic.models.User(label='me')
+          me.save()
+          assert me.id == 1, me.id
+        user = me
+      else:
+        logging.debug('  The visitor isn\'t me.')
+        # For regular visitors, just group them by cookie. 1 user = 1 cookie.
+        if cookie is not None and cookie in users_by_cookie:
+          logging.debug('    But we\'ve seen this cookie ({}) before. Using existing User..'.format(cookie))
+          user = users_by_cookie[cookie]
+        elif label != '' and label in users_by_label:
+          logging.debug('    But we\'ve seen this label ({}) before. Using existing User..'.format(label))
+          user = users_by_label[label]
+        else:
+          logging.debug('    We haven\'t seen this cookie or label before. Creating a new User..')
+          user = traffic.models.User(label=label)
+          user.save()
+          if cookie is not None:
+            users_by_cookie[cookie] = user
+          if label != '':
+            users_by_label[label] = user
       visitor = traffic.models.Visitor(ip=row['ip'],
                                        cookie1=row['cookie'],
-                                       is_me=is_me,
-                                       label=row['label'] or '',
+                                       user=user,
+                                       label=label,
                                        user_agent=row['user_agent'])
       visitor.save()
-      visitor_ids[row['visitor_id']] = visitor
-
+      visitor_ids[visitor_id] = visitor
     scheme, host, path, query_str = parse_page(row['page'])
-    visit = traffic.models.Visit(
-      timestamp=datetime.fromtimestamp(row['unix_time'], tz=pytz.utc),  # default timezone: UTC
-      scheme=scheme,
-      host=host,
-      path=path,
-      query_str=query_str,
-      referrer=row['referrer'],
-      visitor=visitor
-    )
-    visit.save()
+    if save:
+      visit = traffic.models.Visit(
+        timestamp=datetime.fromtimestamp(row['unix_time'], tz=pytz.utc),  # default timezone: UTC
+        scheme=scheme,
+        host=host,
+        path=path,
+        query_str=query_str,
+        referrer=row['referrer'],
+        visitor=visitor
+      )
+      visit.save()
 
 
 def parse_page(page):
@@ -192,7 +233,7 @@ def print_traffic_row(row):
   print(*output, sep='\t')
 
 
-def transfer_notepad(cursor, limit=None, resume=None, get_note=None, get_unicode=False):
+def transfer_notepad(cursor, save=False, limit=None, resume=None, get_note=None, get_unicode=False):
   import notepad.models
   logging.info('Called transfer_notepad(cursor, limit={}, resume={}, get_note={}, get_unicode={})'
                .format(limit, resume, get_note, get_unicode))
@@ -236,26 +277,20 @@ def transfer_notepad(cursor, limit=None, resume=None, get_note=None, get_unicode
 
     if page_name in pages:
       page = pages[page_name]
-    else:
+    elif save:
       page = notepad.models.Page(
         name=page_name
       )
       page.save()
       pages[page_name] = page
 
-    note = notepad.models.Note(
-      page=page,
-      deleted=False,
-      content=row['content'],
-    )
-    note.save()
-
-"""
-page = models.CharField(max_length=200)
-content = models.TextField()
-deleted = models.BooleanField(default=False)
-visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True)
-"""
+    if save:
+      note = notepad.models.Note(
+        page=page,
+        deleted=False,
+        content=row['content'],
+      )
+      note.save()
 
 
 def tone_down_logger():

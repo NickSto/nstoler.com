@@ -18,6 +18,8 @@ def monitor_redirect(request):
   return add_visit(request, redirect(path, permanent=True))
 
 #TODO: A view to set a Visitor.label or Visitor.is_me, so I can do it via a link in the monitor.
+#TODO: Let any user see the monitor, but restrict to their own visits.
+#      Generalize "include=me" to apply to any user, and only allow an admin to see all users.
 
 def monitor(request):
   # Only allow access to admin users over HTTPS.
@@ -34,7 +36,7 @@ def monitor(request):
   if include == 'me':
     total_visits = Visit.objects.count()
   else:
-    total_visits = Visit.objects.exclude(visitor__is_me=True).count()
+    total_visits = Visit.objects.exclude(visitor__user__id=1).count()
   start_from_last = (page-1)*per_page + 1
   end_from_last = page*per_page
   end = total_visits - start_from_last + 1
@@ -50,7 +52,7 @@ def monitor(request):
   if include == 'me':
     visits = Visit.objects.all()[start:end]
   else:
-    visits = Visit.objects.exclude(visitor__is_me=True)[start:end]
+    visits = Visit.objects.exclude(visitor__user__id=1)[start:end]
   # Calculate some data for the template.
   if include == 'me':
     include_me = '&include=me'
