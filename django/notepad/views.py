@@ -77,6 +77,9 @@ def add(request, page_name):
 
 def delete(request, page_name):
   params = request.POST
+  response = redirect('notepad:view', page_name)
+  traffic_data = {'visit':1}
+  response = add_visit(request, response, side_effects=traffic_data)
   if params['site'] == '':
     for key in params:
       if key.startswith('note_'):
@@ -87,12 +90,15 @@ def delete(request, page_name):
         try:
           note = Note.objects.get(pk=note_id)
         except Note.DoesNotExist:
+          logging.info('Visitor "{}"" tried to delete non-existent note #{}.'
+                       .format(traffic_data['visit'].visitor, note_id))
           continue
         note.deleted = True
+        note.deleting_visit = traffic_data['visit']
         note.save()
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were deleted from the main "notepad" page.
-  return add_visit(request, redirect('notepad:view', page_name))
+  return response
 
 def random(request):
   alphabet = string.ascii_lowercase
