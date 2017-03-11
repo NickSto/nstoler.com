@@ -20,9 +20,9 @@ def view(request, page_name):
     admin = False
   #TODO: Display deleted notes differently.
   if show_deleted:
-    note_objects = Note.objects.filter(page__name=page_name)
+    note_objects = Note.objects.filter(page__name=page_name).order_by('id')
   else:
-    note_objects = Note.objects.filter(page__name=page_name, deleted=False)
+    note_objects = Note.objects.filter(page__name=page_name, deleted=False).order_by('id')
   text = ''
   notes = []
   for note in note_objects:
