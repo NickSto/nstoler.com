@@ -1,0 +1,42 @@
+<!--# set var="css" value="traffic/index.css" -->
+<!--# set var="title" value="Traffic Monitor" -->
+<!--# include virtual="/static/h5bp-top.html" -->
+	
+		<header>
+			<h1 id="title">Traffic Monitor Project</h1>
+		</header>
+		<section class="text overview">
+			<h3>Note: The system described here has been totally rewritten and functions completely differently now. This text describes its original incarnation.</h3>
+			<p></p>
+			<p>Because existing free traffic monitoring services are limited and because I wanted to learn how they work, I wrote my own. My system logs visits to my webpages and displays them in an easily-browsable format.</p>
+			<p>The system is composed of:</p>
+			<ul>
+				<li>
+					<p>A resource embedded on every page which, when requested, logs visit data.</p>
+					<p><span class="em">Technology:</span> Perl CGI scripting and JavaScript.</p>
+				</li>
+				<li>
+					<p>A database the visit data is logged to, and which can be queried to display the data.</p>
+					<p><span class="em">Technology:</span> MySQL</p>
+				</li>
+				<li>
+					<p>An internal browser to format and display visit data for easy visualization.</p>
+					<p><span class="em">Technology:</span> Perl CGI scripting, HTML5, and CSS</p>
+				</li>
+			</ul>
+			<p>The primary limitation was that my shared hosting service does not provide sufficient access to the webserver to allow me to write a system to log traffic on the per-request level. So instead I had to rely on the requested pages themselves performing the logging via the embedded resource.</p>
+		</section>
+		<section class="text result">
+			<h3>Result</h3>
+			<p>The final product is a scalable system, in the sense that no special consideration needs to be made to enable logging on each page. To add the page to the system, one must only link to the external resource and include the standard JavaScript file with site-wide custom scripts.</p>
+			<p>The browser interface is also important, showing the data in an easily-comprehended layout and allowing navigation back through the entire visitor history.</p>
+		</section>
+		
+		<section class="text screenshot">
+			<h3>A Visual</h3>
+			<p>Below is a screenshot of the internal browser, showing how individual visits appear to the administrator. Clicking any of the IP addresses links to a page at <a href="http://whatismyipaddress.com">whatismyipaddress.com</a> showing information about that specific address, including a geolocation map. This is the most useful visualization for a site the size of mine, allowing me to see information about each individual visit and the visitor.</p>
+			<p class="note">Sensitive information like IP addresses were replaced with anonymized versions. The page's URL has been obscured, but it does not rely on this obscurity, using cookie authentication instead.</p>
+		</section>
+		<a href="/static/img/monitor_small.png"><img class="screenshot" src="/static/img/monitor_small.png?via=html" alt="An example page from the administrator interface"/></a>
+		
+<!--#include virtual="/static/h5bp-bottom.html" -->

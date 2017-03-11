@@ -1,5 +1,5 @@
 body {
-	background-image: url('/img/hg19-opacity1.png');
+	background-image: url('/static/img/hg19-opacity1.png?via=css');
 }
 
 #main {

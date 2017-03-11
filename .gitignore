@@ -3,13 +3,12 @@ __pycache__
 django/.venv
 django/protected_settings.py
 django/db.sqlite*
-static/
+static/img/
+static/media/
 *.sublime-project
 *.sublime-workspace
 1.0/protect/*.ini
 1.0/protect/*.tsv
-1.0/media/
-1.0/img/
 *.log
 *.log.gz
 
