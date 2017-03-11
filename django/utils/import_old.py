@@ -150,9 +150,18 @@ def transfer_traffic(cursor, save=False, limit=None, resume=None):
     # for key, value in row.items():
     #   print('{}:\t({})\t{}'.format(key, type(value).__name__, value))
 
+    ip = row['ip']
     label = row['label'] or ''
+    if len(label) > 200:
+      logging.info('label longer than 200 characters: "{}"'.format(label))
+      label = label[:200]
+    user_agent = row['user_agent']
+    if len(user_agent) > 200:
+      logging.info('user_agent longer than 200 characters: "{}"'.format(user_agent))
+      user_agent = user_agent[:200]
     cookie = row['cookie']
     visitor_id = row['visitor_id']
+
     if visitor_id in visitor_ids:
       logging.debug('Visitor {} already present in visitor_ids.'.format(visitor_id))
       visitor = visitor_ids[visitor_id]
@@ -189,11 +198,11 @@ def transfer_traffic(cursor, save=False, limit=None, resume=None):
             users_by_cookie[cookie] = user
           if label != '':
             users_by_label[label] = user
-      visitor = traffic.models.Visitor(ip=row['ip'],
-                                       cookie1=row['cookie'],
+      visitor = traffic.models.Visitor(ip=ip,
+                                       cookie1=cookie,
                                        user=user,
                                        label=label,
-                                       user_agent=row['user_agent'])
+                                       user_agent=user_agent)
       visitor.save()
       visitor_ids[visitor_id] = visitor
     scheme, host, path, query_str = parse_page(row['page'])
