@@ -118,7 +118,6 @@ def get_settings(config_file, database):
 
 def transfer_traffic(cursor, save=False, limit=None, resume=None):
   import traffic.models
-  import traffic.lib
 
   query = """
     SELECT vtr.visitor_id, vtr.ip, vtr.is_me, vtr.label, vtr.cookie, vtr.user_agent,
@@ -162,6 +161,7 @@ def transfer_traffic(cursor, save=False, limit=None, resume=None):
     cookie = row['cookie']
     visitor_id = row['visitor_id']
 
+    #TODO: Replace most of this with traffic.lib.get_visitor()
     if visitor_id in visitor_ids:
       logging.debug('Visitor {} already present in visitor_ids.'.format(visitor_id))
       visitor = visitor_ids[visitor_id]
@@ -231,6 +231,8 @@ def parse_page(page):
   scheme, host, path, params, query_str, frag = urllib.parse.urlparse(page)
   if not has_scheme:
     scheme = ''
+  if params:
+    path += ';'+params
   return scheme, host, path, query_str
 
 
