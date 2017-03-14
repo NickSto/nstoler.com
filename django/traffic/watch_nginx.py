@@ -17,8 +17,7 @@ import django.conf
 
 COOKIE1_NAME = 'visitors_v1'
 COOKIE2_NAME = 'visitors_v2'
-ARG_DEFAULTS = {'site':'mysite', 'static_paths':('/static/','/img/','/media/'),
-                'ignore_via':('html','css'), 'log':sys.stderr, 'volume':logging.ERROR,
+ARG_DEFAULTS = {'site':'mysite', 'ignore_via':('html','css'), 'log':sys.stderr, 'volume':logging.ERROR,
                 'ignore_ua':('Pingdom.com_bot_version','Functional Tester')}
 DESCRIPTION = """"""
 # tail -n 0 --follow=name traffic1.log 2>/dev/null | ./watch_nginx.py
@@ -28,10 +27,6 @@ def make_argparser():
   parser = argparse.ArgumentParser(description=DESCRIPTION)
   parser.set_defaults(**ARG_DEFAULTS)
 
-  parser.add_argument('-s', '--static-paths',
-    help='Only add requests whose internal Nginx path starts with one of these paths. All other '
-         'requests are assumed to dynamic and logged by Django. If you give an empty string, this '
-         'will not filter by path. Give as comma-delimited list. Default: %(default)s')
   parser.add_argument('-v', '--ignore-via',
     help='Ignore requests with a "via" query string parameter matching any of these values. '
          'This is a system to filter out requests for resources included in the HTML of pages, '
@@ -59,7 +54,7 @@ def main(argv):
 
   init_django(args.site)
 
-  list_args = process_list_args(args, ('static_paths', 'ignore_via', 'ignore_ua'))
+  list_args = process_list_args(args, ('ignore_via', 'ignore_ua'))
 
   watch(**list_args)
 
@@ -95,9 +90,9 @@ def process_list_args(args, list_args):
   return processed_values
 
 
-def watch(static_paths=(), ignore_via=(), ignore_ua=()):
-  logging.debug('Called watch(static_paths={}, ignore_via={}, ignore_ua={})'
-                .format(repr(static_paths), repr(ignore_via), repr(ignore_ua)))
+def watch(ignore_via=(), ignore_ua=()):
+  logging.debug('Called watch(ignore_via={}, ignore_ua={})'
+                .format(repr(ignore_via), repr(ignore_ua)))
   from traffic.models import Visit, Visitor, User
   import traffic.lib
 
@@ -105,19 +100,12 @@ def watch(static_paths=(), ignore_via=(), ignore_ua=()):
     fields = parse_log_line(line)
     if fields:
       (timestamp, ip, method, scheme, host, path, query_str, referrer, user_agent, cookies,
-       nginx_path) = fields
+       nginx_path, handler) = fields
     else:
       continue
-    # Skip requests that aren't under specific paths.
-    if static_paths:
-      ignore = True
-      for static_path in static_paths:
-        if nginx_path.startswith(static_path):
-          ignore = False
-          break
-      if ignore:
-        logging.info('Ignoring request for dynamic path "{}"'.format(nginx_path))
-        continue
+    # Skip requests that weren't served directly by Nginx.
+    if handler != 'nginx':
+      continue
     # Skip requests for resources via certain sources.
     query = urllib.parse.parse_qs(query_str)
     via = query.get('via', ('',))[0]
@@ -134,7 +122,7 @@ def watch(static_paths=(), ignore_via=(), ignore_ua=()):
       logging.info('Ignoring request from user agent "{}"'.format(user_agent))
       continue
     # Get the Visitor matching these identifiers or create one.
-    visitor = traffic.lib.get_visitor(ip, cookies, user_agent)
+    visitor = traffic.lib.get_or_create_visitor(ip, cookies, user_agent)
     # Create this Visit and save it.
     visit = Visit(
       timestamp=datetime.fromtimestamp(timestamp, tz=pytz.utc),
@@ -157,8 +145,8 @@ def parse_log_line(line_raw):
     line = line_raw.rstrip('\r\n')
     logging.debug(line)
     fields = line.split('\t')
-    if len(fields) != 13:
-      logging.warn('Invalid number of fields in log line. Expected 13, got {}:\n{}'
+    if len(fields) != 14:
+      logging.warn('Invalid number of fields in log line. Expected 14, got {}:\n{}'
                    .format(len(fields), line))
       return None
     # Replace '-' with the appropriate null value for the field.
@@ -170,7 +158,7 @@ def parse_log_line(line_raw):
         else:
           fields[i] = ''
     (timestamp, ip, method, scheme, host, full_path, nginx_path, nginx_query_str, referrer, code,
-     size, user_agent, cookies) = fields
+     size, user_agent, cookies, handler) = fields
     # Timestamp
     try:
       timestamp = float(timestamp)
@@ -195,7 +183,7 @@ def parse_log_line(line_raw):
     if params:
       path += ';'+params
     return (timestamp, ip, method, scheme, host, path, query_str, referrer, user_agent, cookies,
-            nginx_path)
+            nginx_path, handler)
 
 
 def get_cookie(cookie_line, cookie_name=COOKIE1_NAME):
