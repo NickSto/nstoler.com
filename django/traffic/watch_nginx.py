@@ -105,6 +105,7 @@ def watch(ignore_via=(), ignore_ua=()):
       continue
     # Skip requests that weren't served directly by Nginx.
     if handler != 'nginx':
+      logging.info('Ignoring request already handled by '+handler)
       continue
     # Skip requests for resources via certain sources.
     query = urllib.parse.parse_qs(query_str)
