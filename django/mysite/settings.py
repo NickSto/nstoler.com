@@ -120,7 +120,7 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
-USE_I18N = True
+USE_I18N = False
 
 USE_L10N = True
 
@@ -141,6 +141,75 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static')
 
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+
+
+# Logging
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format': "%(asctime)s %(levelname)s %(name)s line %(lineno)3d || %(message)s",
+            'datefmt': "%s"
+        },
+    },
+    'handlers': {
+        'null': {
+            'level':'DEBUG',
+            'class':'logging.NullHandler',
+        },
+        'logfile': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': '/var/www/logs/django.log',
+            'maxBytes': 500000,
+            'backupCount': 99999,
+            'formatter': 'standard',
+        },
+        'sqlfile': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': '/var/www/logs/django_sql.log',
+            'maxBytes': 500000,
+            'backupCount': 99999,
+            'formatter': 'standard',
+        },
+        'console':{
+            'level':'INFO',
+            'class':'logging.StreamHandler',
+            'formatter': 'standard'
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers':['console', 'logfile'],
+            'level':'WARN',
+            'propagate': True,
+        },
+        'django.db.backends': {
+            'handlers': ['console', 'sqlfile'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'notepad': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'traffic': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'myadmin': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+        'misc': {
+            'handlers': ['console', 'logfile'],
+            'level': 'DEBUG',
+        },
+    }
+}
 
 ########## Read config file settings ##########
 
