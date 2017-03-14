@@ -91,48 +91,51 @@ def process_list_args(args, list_args):
 
 
 def watch(ignore_via=(), ignore_ua=()):
-  logging.debug('Called watch(ignore_via={}, ignore_ua={})'
-                .format(repr(ignore_via), repr(ignore_ua)))
-  from traffic.models import Visit, Visitor, User
+  logging.debug('Called watch(ignore_via={!r}, ignore_ua={!r})'.format(ignore_via, ignore_ua))
+  from traffic.models import Visit
   import traffic.lib
 
   for line in sys.stdin:
     fields = parse_log_line(line)
-    if fields:
-      (timestamp, ip, method, scheme, host, path, query_str, referrer, user_agent, cookies,
-       nginx_path, handler) = fields
-    else:
+    if not fields:
       continue
     # Skip requests that weren't served directly by Nginx.
-    if handler != 'nginx':
-      logging.info('Ignoring request already handled by '+handler)
+    if fields['handler'] != 'nginx':
+      if fields['uid_was_set']:
+        logging.info('Request served by {}, but $uid_set is present, indicating it\'s a first-time '
+                     'visit to a dynamic page. Adding the visitors_v2 value {!r} to the Visitor..'
+                     .format(fields['handler'], fields['cookies'][1]))
+        add_cookie2(**fields)
+      else:
+        logging.info('Ignoring request already handled by {handler}.'.format(**fields))
       continue
     # Skip requests for resources via certain sources.
-    query = urllib.parse.parse_qs(query_str)
+    query = urllib.parse.parse_qs(fields['query_str'])
     via = query.get('via', ('',))[0]
     if via in ignore_via:
-      logging.info('Ignoring request with via='+via)
+      logging.info('Ignoring request with via={}.'.format(via))
       continue
     # Skip requests by certain user agents.
     ignore = False
     for ua in ignore_ua:
-      if user_agent and user_agent.startswith(ua):
+      if fields['user_agent'] and fields['user_agent'].startswith(ua):
         ignore = True
         break
     if ignore:
-      logging.info('Ignoring request from user agent "{}"'.format(user_agent))
+      logging.info('Ignoring request from user agent "{user_agent}"'.format(**fields))
       continue
     # Get the Visitor matching these identifiers or create one.
-    visitor = traffic.lib.get_or_create_visitor(ip, cookies, user_agent)
+    visitor = traffic.lib.get_or_create_visitor(fields['ip'], fields['cookies'],
+                                                fields['user_agent'], make_cookies=False)
     # Create this Visit and save it.
     visit = Visit(
-      timestamp=datetime.fromtimestamp(timestamp, tz=pytz.utc),
-      method=method,
-      scheme=scheme,
-      host=host,
-      path=path,
-      query_str=query_str,
-      referrer=referrer,
+      timestamp=datetime.fromtimestamp(fields['timestamp'], tz=pytz.utc),
+      method=fields['method'],
+      scheme=fields['scheme'],
+      host=fields['host'],
+      path=fields['path'],
+      query_str=fields['query_str'],
+      referrer=fields['referrer'],
       visitor=visitor
     )
     visit.save()
@@ -140,55 +143,76 @@ def watch(ignore_via=(), ignore_ua=()):
 
 
 def parse_log_line(line_raw):
-    """Fields, as their nginx variable names:
-    msec, remote_addr, request_method, scheme, http_host, request_uri, uri, args, http_referer,
-    status, bytes_sent, http_user_agent, http_cookie"""
+    """Fields, as their nginx variable names and the alias I use in this code:
+    The numbers in the columns are how many times I've seen the value be "-" or "" in my logs.
+        nginx             my name             "-"      ""
+    0:  $msec             timestamp             0       0
+    1:  $remote_addr      ip                    0       0
+    2:  $request_method   method             8874       0
+    3:  $scheme           scheme                0       0
+    4:  $http_host        host              14532       6
+    5:  $request_uri      full_path          8892       0
+    6:  $uri              nginx_path         8874      18
+    7:  $args             nginx_query_str  837480       0
+    8:  $http_referer     referrer         743706      30
+    9:  $status           code                  0       0
+    10: $bytes_sent       size                  0       0
+    11: $http_user_agent  user_agent        24577     126
+    12: $http_cookie      cookies          718739     157
+    13: $handler          handler               ?       ?   (a custom variable from my conf)
+    14: $uid_set          uid_set               ?       ?"""
+    field_names = ('timestamp', 'ip', 'method', 'scheme', 'host', 'full_path', 'nginx_path',
+                   'nginx_query_str', 'referrer', 'code', 'size', 'user_agent', 'cookies_str',
+                   'handler', 'uid_set')
     line = line_raw.rstrip('\r\n')
     logging.debug(line)
-    fields = line.split('\t')
-    if len(fields) != 15:
-      logging.warn('Invalid number of fields in log line. Expected 15, got {}:\n{}'
-                   .format(len(fields), line))
+    field_values = line.split('\t')
+    if len(field_values) != len(field_names):
+      logging.warn('Invalid number of fields in log line. Expected {}, got {}:\n{}'
+                   .format(len(field_names), len(field_values), line))
       return None
-    # Replace '-' with the appropriate null value for the field.
-    for i, field in enumerate(fields):
-      if field == '-':
-        if i == 8 or i == 11:
-           # referrer and user_agent fields
-          fields[i] = None
+    # Store the values in the log entry in a dict.
+    fields = {}
+    for name, value in zip(field_names, field_values):
+      if value == '-':
+        # Replace '-' with the appropriate null value for the field.
+        if value == 'referrer' or value == 'user_agent':
+          fields[name] = None
         else:
-          fields[i] = ''
-    # Break the fields into individual variables.
-    (timestamp, ip, method, scheme, host, full_path, nginx_path, nginx_query_str, referrer, code,
-     size, user_agent, cookies, handler, uid_set) = fields
+          fields[name] = ''
+      else:
+        fields[name] = value
     # Timestamp
     try:
-      timestamp = float(timestamp)
+      fields['timestamp'] = float(fields['timestamp'])
     except ValueError:
-      logging.warn('Invalid (non-float) timestamp: "{}".'.format(timestamp))
+      logging.warn('Invalid (non-float) timestamp: "{timestamp}".'.format(**fields))
       return None
     # HTTP response code
     try:
-      code = int(code)
+      fields['code'] = int(fields['code'])
     except ValueError:
-      if code != '':
-        logging.warn('Non-integer, non-"-" HTTP response code: "{}".'.format(code))
+      if fields['code'] != '':
+        logging.warn('Non-integer, non-"-" HTTP response code: "{code}".'.format(**fields))
     # Cookies
-    cookie1 = get_cookie(cookies, COOKIE1_NAME)
-    cookie2 = get_cookie(cookies, COOKIE2_NAME)
-    if uid_set and cookie2 is None:
-      logging.info('Cookie2 is blank but Nginx recorded a $uid_set of "{}".'.format(uid_set))
-      cookie2 = parse_uid_field(uid_set, COOKIE2_NAME)
-    cookies = (cookie1, cookie2)
+    cookie1 = get_cookie(fields['cookies_str'], COOKIE1_NAME)
+    cookie2 = get_cookie(fields['cookies_str'], COOKIE2_NAME)
+    if fields['uid_set'] and cookie2 is None:
+      logging.info('cookie2 is blank but Nginx recorded a $uid_set of "{}".'
+                   .format(fields['uid_set']))
+      cookie2 = parse_uid_field(fields['uid_set'], COOKIE2_NAME)
+      fields['uid_was_set'] = True
+    else:
+      fields['uid_was_set'] = False
+    fields['cookies'] = (cookie1, cookie2)
     # Path, query string.
-    fields = urllib.parse.urlparse(full_path)
-    path = fields[2]
-    params = fields[3]
-    query_str = fields[4]
+    url_parts = urllib.parse.urlparse(fields['full_path'])
+    fields['path'] = url_parts[2]
+    params = url_parts[3]
     if params:
-      path += ';'+params
-    return (timestamp, ip, method, scheme, host, path, query_str, referrer, user_agent, cookies,
-            nginx_path, handler)
+      fields['path'] += ';'+params
+    fields['query_str'] = url_parts[4]
+    return fields
 
 
 def parse_uid_field(uid_set, cookie_name=COOKIE2_NAME):
@@ -213,6 +237,58 @@ def get_cookie(cookie_line, cookie_name=COOKIE1_NAME):
   cookie = parser.get(cookie_name)
   if cookie:
     return cookie.value
+  else:
+    return None
+
+
+def add_cookie2(timestamp=None, ip=None, cookies=None, path=None, query_str=None, referrer=None,
+                user_agent=None, **kwargs):
+  import traffic.lib
+  if not (timestamp and ip and cookies):
+    return
+  cookie1, cookie2 = cookies
+  # Build a set of characteristics to use to find in the database the same request Nginx saw.
+  selectors = {'visitor__ip':ip}
+  if path:
+    selectors['path'] = path
+  if query_str:
+    selectors['query_str'] = query_str
+  if referrer:
+    selectors['referrer'] = referrer
+  if user_agent:
+    selectors['visitor__user_agent'] = user_agent
+  if cookie1:
+    selectors['visitor__cookie1'] = cookie1
+  visit = find_visit_by_timestamp(timestamp, selectors)
+  if not visit:
+    logging.warn('Looked in the traffic database but could not find the visit corresponding to the '
+                 'request logged by Nginx.')
+    return
+  if not visit.visitor.cookie2:
+    visit.visitor.cookie2 = cookie2
+    visit.visitor.save()
+    logging.info('Successfully identified the visit corresponding to the Nginx request and added '
+                 'the cookie.')
+  return
+
+
+def find_visit_by_timestamp(timestamp, selectors={}, tolerance=0.05, max_tries=8):
+  from traffic.models import Visit
+  tries = 0
+  visits = ()
+  while len(visits) != 1 and tries < max_tries:
+    start = datetime.fromtimestamp(timestamp-tolerance, tz=pytz.utc)
+    end = datetime.fromtimestamp(timestamp+tolerance, tz=pytz.utc)
+    visits = Visit.objects.filter(timestamp__range=(start, end), **selectors)
+    tries += 1
+    if len(visits) == 0:
+      # If we didn't find anything, widen the timestamp tolerance.
+      tolerance = tolerance*2
+    elif len(visits) > 1:
+      # If we found too many, shorten the timestamp tolerance a little.
+      tolerance = tolerance/1.25
+  if len(visits) == 1:
+    return visits[0]
   else:
     return None
 

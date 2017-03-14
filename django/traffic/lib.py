@@ -1,10 +1,11 @@
 from .models import Visit, Visitor, User
-import logging
 import string
 import random
 import base64
 import struct
 import socket
+import logging
+log = logging.getLogger(__name__)
 
 #TODO: Grab info about the IP address at the time. Stuff like the ISP, ASN, and geoip data.
 #      That stuff can change, especially as IPv4 addresses are bought and sold increasingly.
@@ -47,6 +48,7 @@ def add_visit(request, response, side_effects=None):
   visit.save()
   # Set cookie1 if it wasn't already. Don't need to set cookie2, since Nginx takes care of that.
   if cookies[0] is None and visitor.cookie1 is not None:
+    log.info('Setting visitors_v1 to {!r}.'.format(visitor.cookie1))
     response.set_cookie('visitors_v1', visitor.cookie1, max_age=COOKIE_EXPIRATION)
   # Let the caller get the visitor and/or visit objects we just created.
   # If we were to return these values directly instead of through this side effect, we couldn't
@@ -60,12 +62,13 @@ def add_visit(request, response, side_effects=None):
   return response
 
 
-def get_or_create_visitor(ip, cookies, user_agent):
-  cookie1, cookie2 = normalize_cookies(cookies)
+def get_or_create_visitor(ip, cookies, user_agent, make_cookies=True):
+  cookie1, cookie2 = cookies
   visitor, user, label = get_visitor_user_label(ip, user_agent, cookie1, cookie2)
   if not user:
     user = User()
     user.save()
+    log.info('Created new User (id {})'.format(user.id))
   if visitor:
     # Fill in the cookie1 or cookie2 field on the Visitor if it's blank.
     # This effectively corrects data already recorded, in case the Visitor didn't receive both
@@ -74,17 +77,23 @@ def get_or_create_visitor(ip, cookies, user_agent):
     # be very careful: only do this if the other cookie is present, meaning we can be sure enough
     # we've identified the same Visitor.
     if visitor.cookie1 is None and visitor.cookie2 is not None:
-      if cookie1 is None:
+      if cookie1 is None and make_cookies:
         cookie1 = make_cookie1()
-      visitor.cookie1 = cookie1
-      visitor.save()
-    elif visitor.cookie1 is None and visitor.cookie2 is not None and cookie2 is not None:
+        log.info('Saw a repeat Visitor with a visitors_v2 of {!r} but no visitors_v1. Assigning '
+                 '{!r}..'.format(visitor.cookie2, cookie1))
+      if cookie1 is not None:
+        visitor.cookie1 = cookie1
+        visitor.save()
+    elif visitor.cookie2 is None and visitor.cookie1 is not None and cookie2 is not None:
       #TODO: Obtain the cookie2 that Nginx set in its response, if possible.
+      log.info('Saw a repeat Visitor with a visitors_v1 of {!r} but no visitors_v2. Assigning '
+               '{!r}..'.format(visitor.cookie1, cookie2))
       visitor.cookie2 = cookie2
       visitor.save()
   else:
-    if cookie1 is None:
+    if cookie1 is None and make_cookies:
       cookie1 = make_cookie1()
+      log.info('Created a new visitors_v1 ({!r}) for a new Visitor.'.format(cookie1))
     #TODO: Obtain the cookie2 that Nginx set in its response, if possible.
     visitor = Visitor(
       ip=ip,
@@ -95,20 +104,8 @@ def get_or_create_visitor(ip, cookies, user_agent):
       user=user
     )
     visitor.save()
+    log.info('Created a new Visitor (id {}).'.format(visitor.id))
   return visitor
-
-
-def normalize_cookies(cookies):
-  if len(cookies) == 0:
-    cookie1 = None
-    cookie2 = None
-  elif len(cookies) == 1:
-    cookie1 = cookies[0]
-    cookie2 = None
-  elif len(cookies) >= 2:
-    cookie1 = cookies[0]
-    cookie2 = cookies[1]
-  return (cookie1, cookie2)
 
 
 def get_visitor_user_label(ip, user_agent, cookie1, cookie2):
@@ -130,32 +127,37 @@ def get_visitor_user_label(ip, user_agent, cookie1, cookie2):
 
 def get_exact_visitor(ip, user_agent, cookie1, cookie2):
   """Get a Visitor by exact match."""
+  log.info('Searching for an exact match for ip: {!r}, visitors_v1: {!r}, visitors_v2: {!r}, and '
+           'user_agent: {!r}..'.format(ip, cookie1, cookie2, user_agent))
   try:
     # An exact match?
     visitor = Visitor.objects.get(ip=ip, user_agent=user_agent, cookie1=cookie1, cookie2=cookie2)
-    logging.info('This Visitor already exists (id {}).'.format(visitor.id))
+    log.info('This Visitor already exists (id {}).'.format(visitor.id))
   except Visitor.MultipleObjectsReturned:
     # Multiple matches? This shouldn't happen, but just pick the first one, then.
     #TODO: Determine more intelligently which visitor to use.
-    logging.warn('Multiple visitors found with ip {}, cookie1 {}, cookie2 {}, and user_agent {}.'
-                 .format(repr(ip), repr(cookie1), repr(cookie2), repr(user_agent)))
     visitor = Visitor.objects.filter(ip=ip, user_agent=user_agent, cookie1=cookie1, cookie2=cookie2)[0]
+    log.warn('Multiple Visitors found. Using first one (id {})'.format(visitor.id))
   except Visitor.DoesNotExist:
+    log.info('No exact match found.')
     visitor = None
   return visitor
 
 
 def get_visitors_by_cookie(cookie1, cookie2):
+  log.info('Searching for an inexact match for visitors_v1: {!r} or visitors_v2: {!r}.'
+           .format(cookie1, cookie2))
+  visitors = None
   if cookie1 is not None:
     visitors = Visitor.objects.filter(cookie1=cookie1)
+    if visitors:
+      log.info('Found {} Visitor(s) with visitors_v1 == {!r}'.format(len(visitors), cookie1))
   if cookie2 is not None and not visitors:
     visitors = Visitor.objects.filter(cookie2=cookie2)
-  if visitors:
-    logging.info('This Visitor does not exist, but one with the same cookie does (visitor id {}, '
-                 'user id {}).'.format(visitors[0].id, visitors[0].user.id))
-  else:
-    logging.info('This Visitor does not exist, and no Visitors with these cookies have been seen '
-                 'before. Creating a new one..')
+    if visitors:
+      log.info('Found {} Visitor(s) with visitors_v2 == {!r}'.format(len(visitors), cookie2))
+  if not visitors:
+    log.info('Found no Visitor with either cookie.')
   return visitors
 
 
