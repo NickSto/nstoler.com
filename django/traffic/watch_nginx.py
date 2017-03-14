@@ -146,8 +146,8 @@ def parse_log_line(line_raw):
     line = line_raw.rstrip('\r\n')
     logging.debug(line)
     fields = line.split('\t')
-    if len(fields) != 14:
-      logging.warn('Invalid number of fields in log line. Expected 14, got {}:\n{}'
+    if len(fields) != 15:
+      logging.warn('Invalid number of fields in log line. Expected 15, got {}:\n{}'
                    .format(len(fields), line))
       return None
     # Replace '-' with the appropriate null value for the field.
@@ -158,8 +158,9 @@ def parse_log_line(line_raw):
           fields[i] = None
         else:
           fields[i] = ''
+    # Break the fields into individual variables.
     (timestamp, ip, method, scheme, host, full_path, nginx_path, nginx_query_str, referrer, code,
-     size, user_agent, cookies, handler) = fields
+     size, user_agent, cookies, handler, uid_set) = fields
     # Timestamp
     try:
       timestamp = float(timestamp)
@@ -175,6 +176,9 @@ def parse_log_line(line_raw):
     # Cookies
     cookie1 = get_cookie(cookies, COOKIE1_NAME)
     cookie2 = get_cookie(cookies, COOKIE2_NAME)
+    if uid_set and cookie2 is None:
+      logging.info('Cookie2 is blank but Nginx recorded a $uid_set of "{}".'.format(uid_set))
+      cookie2 = parse_uid_field(uid_set, COOKIE2_NAME)
     cookies = (cookie1, cookie2)
     # Path, query string.
     fields = urllib.parse.urlparse(full_path)
@@ -185,6 +189,19 @@ def parse_log_line(line_raw):
       path += ';'+params
     return (timestamp, ip, method, scheme, host, path, query_str, referrer, user_agent, cookies,
             nginx_path, handler)
+
+
+def parse_uid_field(uid_set, cookie_name=COOKIE2_NAME):
+  """Parse the $uid_set field from Nginx's logs and, if valid, translate its value into the
+  corresponding cookie value."""
+  import traffic.lib
+  fields = uid_set.split('=')
+  if len(fields) != 2:
+    return None
+  name, uid = fields
+  if name != cookie_name:
+    return None
+  return traffic.lib.encode_cookie(uid)
 
 
 def get_cookie(cookie_line, cookie_name=COOKIE1_NAME):
