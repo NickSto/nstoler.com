@@ -117,7 +117,10 @@ def get_visitor_user_label(ip, user_agent, cookie1, cookie2):
     visitors = get_visitors_by_cookie(cookie1, cookie2)
     if visitors:
       # Take the label for the new visitor from the existing ones.
-      label = get_common_start([visitor.label for visitor in visitors])
+      labels = [visitor.label for visitor in visitors]
+      label = get_common_start(labels)
+      log.info('Using the label {!r}, derived from existing label(s): "{}"'
+               .format(label, '", "'.join(labels)))
       return None, visitors[0].user, label
     else:
       return None, None, ''
