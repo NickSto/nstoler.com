@@ -109,7 +109,7 @@ def watch(log_file=None, ignore_via=(), ignore_ua=()):
     if not fields:
       continue
     # Skip requests that weren't served directly by Nginx.
-    if fields['handler'] != 'nginx':
+    if fields['handler'] == 'django':
       if fields['uid_was_set']:
         logging.info('Request served by {}, but $uid_set is present, indicating it\'s a first-time '
                      'visit to a dynamic page. Adding the visitors_v2 value {!r} to the Visitor..'
