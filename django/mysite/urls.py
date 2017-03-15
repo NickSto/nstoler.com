@@ -22,8 +22,6 @@ urlpatterns = [
   url(r'^traffic/', include('traffic.urls')),
   url(r'^admin/', include('myadmin.urls')),
   # url(r'^wikihistory/', include('wikihistory.urls')),
-  url(r'^p/', include('notepad.urls')),  # Old notepad url.
-  url(r'^n/', include('notepad.urls')),  # Same.
   # If nothing else matches, send it to notepad.
   url(r'', include('notepad.urls')),
 ]
