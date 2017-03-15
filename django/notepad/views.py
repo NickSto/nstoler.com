@@ -7,6 +7,9 @@ from traffic.lib import add_visit
 from myadmin.lib import get_admin_cookie
 import random as rand
 import string
+import logging
+log = logging.getLogger(__name__)
+
 
 def view(request, page_name):
   params = request.GET
@@ -38,6 +41,7 @@ def view(request, page_name):
     context = {'page':page_name, 'notes':notes, 'admin':admin}
     return add_visit(request, render(request, 'notepad/notes.tmpl', context))
 
+
 def _format_note(content):
   if content:
     lines = content.splitlines()
@@ -52,11 +56,12 @@ def _format_note(content):
     lines_formatted.append(line)
   return lines_formatted
 
+
 def add(request, page_name):
   params = request.POST
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were added to the main "notepad" page.
-  response = redirect('notepad:view', page_name)
+  response = redirect('notepad:view', page_name)  # +'#bottom'
   traffic_data = {'visit':1}
   response = add_visit(request, response, side_effects=traffic_data)
   if params['site'] == '':
@@ -75,6 +80,7 @@ def add(request, page_name):
     note.save()
   return response
 
+
 def delete(request, page_name):
   params = request.POST
   response = redirect('notepad:view', page_name)
@@ -90,8 +96,8 @@ def delete(request, page_name):
         try:
           note = Note.objects.get(pk=note_id)
         except Note.DoesNotExist:
-          logging.info('Visitor "{}"" tried to delete non-existent note #{}.'
-                       .format(traffic_data['visit'].visitor, note_id))
+          log.info('Visitor "{}"" tried to delete non-existent note #{}.'
+                   .format(traffic_data['visit'].visitor, note_id))
           continue
         note.deleted = True
         note.deleting_visit = traffic_data['visit']
@@ -100,10 +106,12 @@ def delete(request, page_name):
   #TODO: Check if the notes were deleted from the main "notepad" page.
   return response
 
+
 def random(request):
   alphabet = string.ascii_lowercase
   page_name = ''.join([rand.choice(alphabet) for i in range(5)])
   return add_visit(request, redirect('notepad:view', page_name))
+
 
 def monitor(request):
   format = request.GET.get('format')
