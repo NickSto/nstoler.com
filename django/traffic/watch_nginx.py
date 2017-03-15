@@ -18,8 +18,8 @@ import django.conf
 
 COOKIE1_NAME = 'visitors_v1'
 COOKIE2_NAME = 'visitors_v2'
-ARG_DEFAULTS = {'site':'mysite', 'ignore_via':('html','css'), 'log':sys.stderr, 'volume':logging.ERROR,
-                'ignore_ua':('Pingdom.com_bot_version','Functional Tester')}
+ARG_DEFAULTS = {'site':'mysite', 'ignore_via':('html','css','js'), 'volume':logging.ERROR,
+                'log':sys.stderr, 'ignore_ua':('Pingdom.com_bot_version','Functional Tester')}
 DESCRIPTION = """"""
 
 def make_argparser():
