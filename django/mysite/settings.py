@@ -163,7 +163,7 @@ LOGGING = {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': '/var/www/logs/django.log',
-            'maxBytes': 500000,
+            'maxBytes': 1000000,
             'backupCount': 99999,
             'formatter': 'standard',
         },
@@ -171,8 +171,8 @@ LOGGING = {
             'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             'filename': '/var/www/logs/django_sql.log',
-            'maxBytes': 500000,
-            'backupCount': 99999,
+            'maxBytes': 1000000,
+            'backupCount': 10,
             'formatter': 'standard',
         },
         'console':{
@@ -216,5 +216,7 @@ LOGGING = {
 # Sensitive or site-specific settings I don't want in version control.
 # Put "protected_settings.py" in the BASE_DIR. These will override any settings in this file.
 # Credit to Steven Armstrong for idea: https://code.djangoproject.com/wiki/SplitSettings
-if os.path.isfile('protected_settings.py'):
+try:
     from protected_settings import *
+except ImportError:
+    pass
