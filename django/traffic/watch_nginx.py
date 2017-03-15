@@ -8,6 +8,7 @@ import sys
 import errno
 import logging
 import argparse
+import subprocess
 import http.cookies
 import urllib.parse
 from datetime import datetime
@@ -20,13 +21,14 @@ COOKIE2_NAME = 'visitors_v2'
 ARG_DEFAULTS = {'site':'mysite', 'ignore_via':('html','css'), 'log':sys.stderr, 'volume':logging.ERROR,
                 'ignore_ua':('Pingdom.com_bot_version','Functional Tester')}
 DESCRIPTION = """"""
-# tail -n 0 --follow=name traffic1.log 2>/dev/null | ./watch_nginx.py
 
 def make_argparser():
 
   parser = argparse.ArgumentParser(description=DESCRIPTION)
   parser.set_defaults(**ARG_DEFAULTS)
 
+  parser.add_argument('log_file', metavar='path/to/traffic2.log', nargs='?',
+    help='Nginx traffic log file. Omit to read from stdin.')
   parser.add_argument('-v', '--ignore-via',
     help='Ignore requests with a "via" query string parameter matching any of these values. '
          'This is a system to filter out requests for resources included in the HTML of pages, '
@@ -56,7 +58,7 @@ def main(argv):
 
   list_args = process_list_args(args, ('ignore_via', 'ignore_ua'))
 
-  watch(**list_args)
+  watch(log_file=args.log_file, **list_args)
 
 
 def init_logging(log_stream, log_level):
@@ -90,12 +92,19 @@ def process_list_args(args, list_args):
   return processed_values
 
 
-def watch(ignore_via=(), ignore_ua=()):
+def watch(log_file=None, ignore_via=(), ignore_ua=()):
   logging.debug('Called watch(ignore_via={!r}, ignore_ua={!r})'.format(ignore_via, ignore_ua))
   from traffic.models import Visit
   import traffic.lib
 
-  for line in sys.stdin:
+  if log_file is None:
+    stream = sys.stdin
+  else:
+    tail_proc = subprocess.Popen(['tail', '-n', '0', '--follow=name', log_file],
+                                 stdout=subprocess.PIPE, universal_newlines=True)
+    stream = tail_proc.stdout
+
+  for line in stream:
     fields = parse_log_line(line)
     if not fields:
       continue
