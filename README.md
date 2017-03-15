@@ -1,4 +1,4 @@
-# personal-site
+# nstoler.com
 
 Currently, my personal site is stuck in the 90's, and is based on Perl CGI. I also wrote it in 2011 with only a year of programming experience, so there are some funny practices.
 
