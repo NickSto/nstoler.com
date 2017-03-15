@@ -1,3 +1,6 @@
 [submodule "assemblo"]
 	path = static/assemblo
 	url = https://github.com/NickSto/assemblo.git
+[submodule "django/wikihistory"]
+	path = django/wikihistory
+	url = https://github.com/NickSto/wikihistory.git
