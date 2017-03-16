@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
 from django.conf import settings
 from .models import Note, Page
@@ -61,7 +62,8 @@ def add(request, page_name):
   params = request.POST
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were added to the main "notepad" page.
-  response = redirect('notepad:view', page_name)  # +'#bottom'
+  view_url = reverse('notepad:view', args=(page_name,))
+  response = HttpResponseRedirect(view_url+'#bottom')
   traffic_data = {'visit':1}
   response = add_visit(request, response, side_effects=traffic_data)
   if params['site'] == '':
@@ -83,7 +85,8 @@ def add(request, page_name):
 
 def delete(request, page_name):
   params = request.POST
-  response = redirect('notepad:view', page_name)
+  view_url = reverse('notepad:view', args=(page_name,))
+  response = HttpResponseRedirect(view_url+'#bottom')
   traffic_data = {'visit':1}
   response = add_visit(request, response, side_effects=traffic_data)
   if params['site'] == '':
