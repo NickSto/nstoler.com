@@ -12,8 +12,8 @@ class Note(models.Model):
   visit = models.OneToOneField('traffic.Visit', models.SET_NULL, null=True, blank=True)
   protected = models.BooleanField(default=False)  # Only admin can delete.
   deleted = models.BooleanField(default=False)
-  deleting_visit = models.OneToOneField('traffic.Visit', models.SET_NULL, null=True, blank=True,
-                                        related_name='deleted_note')
+  deleting_visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True,
+                                     related_name='deleted_note')
   def __str__(self):
     deleted = ''
     if self.deleted:
