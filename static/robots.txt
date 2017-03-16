@@ -1,0 +1,13 @@
+# www.robotstxt.org/
+# www.google.com/support/webmasters/bin/answer.py?hl=en&answer=156449
+
+# Disable indexing Notepad pages. Since they can be any url, best to define
+# them by what they're not.
+User-agent: *
+Disallow: /
+Allow: /$
+Allow: /notepad$
+Allow: /assemblo$
+Allow: /wikihistory$
+Allow: /yourgenome$
+Allow: /traffic$
