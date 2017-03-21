@@ -249,7 +249,7 @@ def is_robot(visit):
 
 
 def is_robot_ua(user_agent):
-  if user_agent == '':
+  if user_agent is None or user_agent == '':
     return True
   # Does the user_agent contain a known bot name in the standard position?
   fieldsA = user_agent.split('compatible; ')
