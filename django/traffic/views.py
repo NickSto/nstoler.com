@@ -5,6 +5,8 @@ from django.conf import settings
 from .lib import add_visit, is_robot
 from .models import Visit
 from myadmin.lib import get_admin_cookie
+import logging
+log = logging.getLogger(__name__)
 
 PER_PAGE_DEFAULT = 50
 
@@ -32,17 +34,15 @@ def monitor(request):
   per_page = int(params.get('per_page', PER_PAGE_DEFAULT))
   include = params.get('include')
   hide = params.get('hide')
+  if page < 1:
+    page = 1
   # Calculate start and end of visits to request.
-  #TODO: Make accurate when hide=robots. Currently the start is the same as without it.
   if include == 'me':
     total_visits = Visit.objects.count()
   else:
     total_visits = Visit.objects.exclude(visitor__user__id=1).count()
-  start_from_last = (page-1)*per_page + 1
-  end_from_last = page*per_page
-  start = total_visits - end_from_last
-  if start < 0:
-    start = 0
+  start = (page-1)*per_page + 1
+  end = page*per_page
   # Is this page beyond the last possible one?
   if page*per_page - total_visits >= per_page:
     # Then redirect to the last possible page.
@@ -50,9 +50,9 @@ def monitor(request):
     return add_visit(request, redirect(_construct_monitor_path(new_page, include, hide, per_page)))
   # Obtain visits list from database.
   if include == 'me':
-    visits_unbounded = Visit.objects.all()[start:]
+    visits_unbounded = Visit.objects.order_by('-id')[start:]
   else:
-    visits_unbounded = Visit.objects.exclude(visitor__user__id=1)[start:]
+    visits_unbounded = Visit.objects.exclude(visitor__user__id=1).order_by('-id')[start:]
   # Exclude robots, if requested.
   if hide == 'robots':
     visits = []
@@ -72,7 +72,7 @@ def monitor(request):
     hide_param = '&hide='+hide
   else:
     hide_param = ''
-  if total_visits > end_from_last:
+  if total_visits > end:
     next_page = page+1
   else:
     next_page = None
@@ -80,12 +80,12 @@ def monitor(request):
     'current': page,
     'prev': page-1,
     'next': next_page,
-    'start': start_from_last,
-    'end': start_from_last+len(visits)-1,
+    'start': start,
+    'end': end,
     'include_param': include_param,
     'hide_param': hide_param,
     # 'debug': debug,
-    'visits': reversed(visits),
+    'visits': visits,
   }
   return add_visit(request, render(request, 'traffic/monitor.tmpl', context))
 
