@@ -225,3 +225,40 @@ def encode_cookie(uid):
   binary_cookie = struct.pack('!4I', *unsigned_ints)
   cookie_bytes = base64.b64encode(binary_cookie)
   return str(cookie_bytes, 'utf8')
+
+
+# Bot detection:
+# These names occur in a known location in the user_agent string: After "compatible; " and before
+# "/" or ";", e.g.: Mozilla/5.0 (compatible; Exabot/3.0; +http://www.exabot.com/go/robot)
+UA_BOT_NAMES = ('Googlebot', 'bingbot', 'Baiduspider', 'YandexBot', 'Yahoo! Slurp', 'AhrefsBot',
+                'Exabot', 'Uptimebot', 'MJ12bot', 'Yeti', 'SeznamBot', 'DotBot', 'spbot', 'Ezooms',
+                'BLEXBot', 'SiteExplorer', 'SISTRIX Crawler', 'SEOkicks-Robot', 'WBSearchBot',
+                'SemrushBot')
+# For these, the user_agent string begins with the bot name, followed by a "/".
+UA_BOT_STARTSWITH = ('Sogou web spider', 'TurnitinBot', 'Wotbox', 'SeznamBot', 'Aboundex',
+                     'msnbot-media')
+
+
+def is_robot(visit):
+  visitor = visit.visitor
+  if not (visit.host or visit.query_str or visit.referrer or visitor.user_agent or visitor.cookie1
+          or visitor.cookie2) and (visit.path == '/' or visit.path == ''):
+    return True
+  else:
+    return is_robot_ua(visitor.user_agent)
+
+
+def is_robot_ua(user_agent):
+  # Does the user_agent contain a known bot name in the standard position?
+  fieldsA = user_agent.split('compatible; ')
+  if len(fieldsA) >= 2:
+    fieldsB = fieldsA[1].split('/')
+    fieldsC = fieldsB[0].split(';')
+    if fieldsC[0] in UA_BOT_NAMES:
+      return True
+  # Does the user_agent start with a known bot name?
+  fields = user_agent.split('/')
+  if fields[0] in UA_BOT_STARTSWITH:
+    return True
+  # It's not a known bot.
+  return False

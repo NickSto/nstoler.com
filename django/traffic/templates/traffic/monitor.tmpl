@@ -27,21 +27,30 @@
 				<ul>
 					{% if prev %}
 					<li>
-						<a href="monitor?p={{ prev }}{{ include_me }}">previous page</a>
+						<a href="monitor?p={{ prev }}{{ include_param }}{{ hide_param }}">&nbsp;&lt;&nbsp;</a>
 					</li>
 					{% endif %}
-					{% if include_me %}
+					{% if include_param %}
 						<li>
-							<a href="monitor?p={{ current }}">hide me</a>
+							<a href="monitor?p={{ current }}{{ hide_param }}">hide me</a>
 						</li>
 					{% else %}
 						<li>
-							<a href="monitor?p={{ current }}&amp;include=me">include me</a>
+							<a href="monitor?p={{ current }}&amp;include=me{{ hide_param }}">include me</a>
+						</li>
+					{% endif %}
+					{% if hide_param %}
+						<li>
+							<a href="monitor?p={{ current }}{{ include_param }}">show robots</a>
+						</li>
+					{% else %}
+						<li>
+							<a href="monitor?p={{ current }}{{ include_param }}&amp;hide=robots">hide robots</a>
 						</li>
 					{% endif %}
 					{% if next %}
 					<li>
-						<a href="monitor?p={{ next }}{{ include_me }}">next page</a>
+						<a href="monitor?p={{ next }}{{ include_param }}{{ hide_param }}">&nbsp;&gt;&nbsp;</a>
 					</li>
 					{% endif %}
 				</ul>
@@ -113,21 +122,30 @@
 			<ul>
 				{% if prev %}
 				<li>
-					<a href="monitor?p={{ prev }}{{ include_me }}">previous page</a>
+					<a href="monitor?p={{ prev }}{{ include_param }}{{ hide_param }}">&nbsp;&lt;&nbsp;</a>
 				</li>
 				{% endif %}
-				{% if include_me %}
+				{% if include_param %}
 					<li>
-						<a href="monitor?p={{ current }}">hide me</a>
+						<a href="monitor?p={{ current }}{{ hide_param }}">hide me</a>
 					</li>
 				{% else %}
 					<li>
-						<a href="monitor?p={{ current }}&amp;include=me">include me</a>
+						<a href="monitor?p={{ current }}&amp;include=me{{ hide_param }}">include me</a>
+					</li>
+				{% endif %}
+				{% if hide_param %}
+					<li>
+						<a href="monitor?p={{ current }}{{ include_param }}">show robots</a>
+					</li>
+				{% else %}
+					<li>
+						<a href="monitor?p={{ current }}{{ include_param }}&amp;hide=robots">hide robots</a>
 					</li>
 				{% endif %}
 				{% if next %}
 				<li>
-					<a href="monitor?p={{ next }}{{ include_me }}">next page</a>
+					<a href="monitor?p={{ next }}{{ include_param }}{{ hide_param }}">&nbsp;&gt;&nbsp;</a>
 				</li>
 				{% endif %}
 			</ul>
