@@ -33,13 +33,13 @@ def monitor(request):
   include = params.get('include')
   hide = params.get('hide')
   # Calculate start and end of visits to request.
+  #TODO: Make accurate when hide=robots. Currently the start is the same as without it.
   if include == 'me':
     total_visits = Visit.objects.count()
   else:
     total_visits = Visit.objects.exclude(visitor__user__id=1).count()
   start_from_last = (page-1)*per_page + 1
   end_from_last = page*per_page
-  end = total_visits - start_from_last + 1
   start = total_visits - end_from_last
   if start < 0:
     start = 0
@@ -50,12 +50,19 @@ def monitor(request):
     return add_visit(request, redirect(_construct_monitor_path(new_page, include, hide, per_page)))
   # Obtain visits list from database.
   if include == 'me':
-    visits = Visit.objects.all()[start:end]
+    visits_unbounded = Visit.objects.all()[start:]
   else:
-    visits = Visit.objects.exclude(visitor__user__id=1)[start:end]
+    visits_unbounded = Visit.objects.exclude(visitor__user__id=1)[start:]
   # Exclude robots, if requested.
   if hide == 'robots':
-    visits = [visit for visit in visits if not is_robot(visit)]
+    visits = []
+    for visit in visits_unbounded:
+      if not is_robot(visit):
+        visits.append(visit)
+      if len(visits) >= per_page:
+        break
+  else:
+    visits = visits_unbounded[:per_page]
   # Calculate some data for the template.
   if include:
     include_param = '&include='+include
