@@ -18,8 +18,9 @@ import django.conf
 
 COOKIE1_NAME = 'visitors_v1'
 COOKIE2_NAME = 'visitors_v2'
-ARG_DEFAULTS = {'site':'mysite', 'ignore_via':('html','css','js'), 'volume':logging.ERROR,
-                'log':sys.stderr, 'ignore_ua':('Pingdom.com_bot_version','Functional Tester')}
+ARG_DEFAULTS = {'log_file':sys.stdin, 'site':'mysite', 'ignore_via':('html','css','js'),
+                'volume':logging.ERROR, 'log':sys.stderr,
+                'ignore_ua':('Pingdom.com_bot_version','Functional Tester')}
 DESCRIPTION = """"""
 
 def make_argparser():
@@ -58,7 +59,7 @@ def main(argv):
 
   list_args = process_list_args(args, ('ignore_via', 'ignore_ua'))
 
-  watch(log_file=args.log_file, **list_args)
+  watch(args.log_file, **list_args)
 
 
 def init_logging(log_stream, log_level):
@@ -92,15 +93,14 @@ def process_list_args(args, list_args):
   return processed_values
 
 
-def watch(log_file=None, ignore_via=(), ignore_ua=()):
-  logging.debug('Called watch(ignore_via={!r}, ignore_ua={!r})'.format(ignore_via, ignore_ua))
+def watch(source, ignore_via=(), ignore_ua=()):
+  logging.debug('Called watch({}, ignore_via={!r}, ignore_ua={!r})'
+                .format(source, ignore_via, ignore_ua))
   from traffic.models import Visit
   import traffic.lib
 
-  if log_file is None:
-    stream = sys.stdin
-  else:
-    tail_proc = subprocess.Popen(['tail', '-n', '0', '--follow=name', log_file],
+  if source is not sys.stdin:
+    tail_proc = subprocess.Popen(['tail', '-n', '0', '--follow=name', source],
                                  stdout=subprocess.PIPE, universal_newlines=True)
     stream = tail_proc.stdout
 
