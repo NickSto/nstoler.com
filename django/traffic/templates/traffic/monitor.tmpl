@@ -23,38 +23,17 @@
 					{% endfor %}
 				</table>
 			{% endif %}
-			<nav class="nav-options">
-				<ul>
-					{% if prev %}
-					<li>
-						<a href="monitor?p={{ prev }}{{ include_param }}{{ hide_param }}">&nbsp;&lt;&nbsp;</a>
-					</li>
-					{% endif %}
-					{% if include_param %}
-						<li>
-							<a href="monitor?p={{ current }}{{ hide_param }}">hide me</a>
-						</li>
-					{% else %}
-						<li>
-							<a href="monitor?p={{ current }}&amp;include=me{{ hide_param }}">include me</a>
-						</li>
-					{% endif %}
-					{% if hide_param %}
-						<li>
-							<a href="monitor?p={{ current }}{{ include_param }}">show robots</a>
-						</li>
-					{% else %}
-						<li>
-							<a href="monitor?p={{ current }}{{ include_param }}&amp;hide=robots">hide robots</a>
-						</li>
-					{% endif %}
-					{% if next %}
-					<li>
-						<a href="monitor?p={{ next }}{{ include_param }}{{ hide_param }}">&nbsp;&gt;&nbsp;</a>
-					</li>
-					{% endif %}
-				</ul>
-			</nav>
+			{% if links %}
+				<nav class="nav-options">
+					<ul>
+						{% for text, href in links %}
+							<li>
+								<a href="{{ href }}">{{ text }}</a>
+							</li>
+						{% endfor %}
+					</ul>
+				</nav>
+			{% endif %}
 		</header>
 		
 		<section id="notepad">
@@ -118,42 +97,22 @@
 				{% endfor %}
 			</div>
 		</section>
-		<nav class="nav-options">
-			<ul>
-				{% if prev %}
-				<li>
-					<a href="monitor?p={{ prev }}{{ include_param }}{{ hide_param }}">&nbsp;&lt;&nbsp;</a>
-				</li>
-				{% endif %}
-				{% if include_param %}
-					<li>
-						<a href="monitor?p={{ current }}{{ hide_param }}">hide me</a>
-					</li>
-				{% else %}
-					<li>
-						<a href="monitor?p={{ current }}&amp;include=me{{ hide_param }}">include me</a>
-					</li>
-				{% endif %}
-				{% if hide_param %}
-					<li>
-						<a href="monitor?p={{ current }}{{ include_param }}">show robots</a>
-					</li>
-				{% else %}
-					<li>
-						<a href="monitor?p={{ current }}{{ include_param }}&amp;hide=robots">hide robots</a>
-					</li>
-				{% endif %}
-				{% if next %}
-				<li>
-					<a href="monitor?p={{ next }}{{ include_param }}{{ hide_param }}">&nbsp;&gt;&nbsp;</a>
-				</li>
-				{% endif %}
-			</ul>
-		</nav>
-		<div class="after">
-			<p><a href="clean">Clean</a> database</p>
-			<p><a href="export-visits">Export</a> all visits</p>
-		</div>
+		{% if links %}
+			<nav class="nav-options">
+				<ul>
+					{% for text, href in links %}
+						<li>
+							<a href="{{ href }}">{{ text }}</a>
+						</li>
+					{% endfor %}
+				</ul>
+			</nav>
+		{% endif %}
+		{% if admin %}
+			<div class="after">
+				<p><a href="export-visits">Export</a> all visits</p>
+			</div>
+		{% endif %}
 {% endblock content %}
 
 

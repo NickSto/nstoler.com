@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.conf import settings
-from .lib import add_visit, is_robot
+from .lib import add_visit, is_robot, add_visit_get_todo_cookies, set_todo_cookies
 from .models import Visit
 from myadmin.lib import get_admin_cookie
 import logging
@@ -19,25 +19,41 @@ def monitor_redirect(request):
   return add_visit(request, redirect(path, permanent=True))
 
 #TODO: A view to set a Visitor.label or Visitor.is_me, so I can do it via a link in the monitor.
-#TODO: Let any user see the monitor, but restrict to their own visits.
-#      Generalize "include=me" to apply to any user, and only allow an admin to see all users.
 
+#TODO: Clean up this mess.
 def monitor(request):
   # Only allow access to admin users over HTTPS.
+  todo_cookies, visit = add_visit_get_todo_cookies(request)
+  this_user = visit.visitor.user.id
   admin_cookie = get_admin_cookie(request)
-  if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
-    text = 'This page is only for admin users visiting via HTTPS.'
-    return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
+  if admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS):
+    user = None
+    admin = True
+  else:
+    user = visit.visitor.user.id
+    admin = False
   # Get query parameters.
   params = request.GET
   page = int(params.get('p', 1))
   per_page = int(params.get('per_page', PER_PAGE_DEFAULT))
   include = params.get('include')
   hide = params.get('hide')
+  if admin and 'user' in params:
+    user = int(params['user'])
   if page < 1:
     page = 1
+  # Create a params dict for rendering new links.
+  new_params = params.copy()
+  new_params['p'] = page
+  new_params['per_page'] = per_page
+  if admin:
+    default_user = None
+  else:
+    default_user = this_user
   # Calculate start and end of visits to request.
-  if include == 'me':
+  if user is not None:
+    total_visits = Visit.objects.filter(visitor__user__id=user).count()
+  elif include == 'me':
     total_visits = Visit.objects.count()
   else:
     total_visits = Visit.objects.exclude(visitor__user__id=1).count()
@@ -46,15 +62,19 @@ def monitor(request):
   # Is this page beyond the last possible one?
   if page*per_page - total_visits >= per_page:
     # Then redirect to the last possible page.
-    new_page = (total_visits-1) // per_page + 1
-    return add_visit(request, redirect(_construct_monitor_path(new_page, include, hide, per_page)))
+    new_params['p'] = (total_visits-1) // per_page + 1
+    query_str = _construct_query_str(new_params, {'user':default_user})
+    response = redirect(reverse('traffic:monitor')+query_str)
+    return set_todo_cookies(todo_cookies, response)
   # Obtain visits list from database.
-  if include == 'me':
+  if user is not None:
+    visits_unbounded = Visit.objects.filter(visitor__user__id=user).order_by('-id')[start:]
+  elif include == 'me':
     visits_unbounded = Visit.objects.order_by('-id')[start:]
   else:
     visits_unbounded = Visit.objects.exclude(visitor__user__id=1).order_by('-id')[start:]
   # Exclude robots, if requested.
-  if hide == 'robots':
+  if hide == 'robots' and user is None:
     visits = []
     for visit in visits_unbounded:
       if not is_robot(visit):
@@ -62,43 +82,70 @@ def monitor(request):
       if len(visits) >= per_page:
         break
   else:
-    visits = visits_unbounded[:per_page]
-  # Calculate some data for the template.
-  if include:
-    include_param = '&include='+include
-  else:
-    include_param = ''
-  if hide:
-    hide_param = '&hide='+hide
-  else:
-    hide_param = ''
-  if total_visits > end:
-    next_page = page+1
-  else:
-    next_page = None
-  context = {
-    'current': page,
-    'prev': page-1,
-    'next': next_page,
-    'start': start,
-    'end': end,
-    'include_param': include_param,
-    'hide_param': hide_param,
-    # 'debug': debug,
-    'visits': visits,
-  }
-  return add_visit(request, render(request, 'traffic/monitor.tmpl', context))
-
-
-def _construct_monitor_path(page, include, hide, per_page):
-  #TODO: Use a different solution instead of re-building the prettified query string.
-  path = reverse('traffic:monitor')
+    visits = list(visits_unbounded[:per_page])
+  # Add this visit to the start of the list, if it's not there but should be.
+  if start == 1 and (user == this_user or include == 'me'):
+    if len(visits) == 0:
+      log.warn('No visits. Adding this one..')
+      visits = [visit]
+    elif visits[0].id != visit.id:
+      log.warn('Adding this visit to the start..')
+      visits = [visit] + visits[:per_page-1]
+  # Construct the navigation links.
+  link_data = []
   if page > 1:
-    path += '?p='+str(page)
-  if include == 'me':
-    path += '&include=me'
-  if hide == 'robots':
-    path += '&hide=robots'
-  if per_page != PER_PAGE_DEFAULT:
-    path += '&per_page='+str(per_page)
-  return path
+    link_data.append((' < ', 'p', page-1))
+  if admin:
+    if include == 'me':
+      link_data.append(('hide me', 'include', None))
+    else:
+      link_data.append(('include me', 'include', 'me'))
+  if admin:
+    if hide == 'robots':
+      link_data.append(('show robots', 'hide', None))
+    else:
+      link_data.append(('hide robots', 'hide', 'robots'))
+  if total_visits > end:
+    link_data.append((' > ', 'p', page+1))
+  links = _construct_links(link_data, new_params, {'user':default_user})
+  context = {
+    'visits': visits,
+    'admin':admin,
+    'start': start,
+    'end': min(end, start+len(visits)-1),
+    'links': links,
+  }
+  response = render(request, 'traffic/monitor.tmpl', context)
+  return set_todo_cookies(todo_cookies, response)
+
+
+def _construct_links(link_data, params, extra_defaults):
+  base = reverse('traffic:monitor')
+  links = []
+  for text, param, value in link_data:
+    params_tmp = params.copy()
+    params_tmp[param] = value
+    href = base+_construct_query_str(params_tmp, extra_defaults)
+    links.append((text, href))
+  return links
+
+
+def _construct_query_str(params, extra_defaults):
+  """Construct the query string, omitting default values and with parameters in a predetermined
+  order."""
+  defaults = {'p':1, 'user':1, 'include':None, 'hide':None, 'per_page':PER_PAGE_DEFAULT}
+  defaults.update(extra_defaults)
+  query_str = ''
+  param_list = ['p', 'user', 'include', 'hide', 'per_page']
+  for param in params:
+    if param not in param_list:
+      param_list.append(param)
+  for param in param_list:
+    value = params.get(param)
+    if value is not None and value != defaults[param]:
+      if query_str:
+        joiner = '&'
+      else:
+        joiner = '?'
+      query_str += '{}{}={}'.format(joiner, param, value)
+  return query_str
