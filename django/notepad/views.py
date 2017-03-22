@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
 from django.conf import settings
 from .models import Note, Page
-from traffic.lib import add_visit
+from traffic.lib import add_visit, add_visit_get_todo_cookies, set_todo_cookies
 from myadmin.lib import get_admin_cookie
 import random as rand
 import string
@@ -63,9 +63,7 @@ def add(request, page_name):
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were added to the main "notepad" page.
   view_url = reverse('notepad:view', args=(page_name,))
-  response = HttpResponseRedirect(view_url+'#bottom')
-  traffic_data = {'visit':1}
-  response = add_visit(request, response, side_effects=traffic_data)
+  todo_cookies, visit = add_visit_get_todo_cookies(request)
   if params['site'] == '':
     try:
       page = Page.objects.get(name=page_name)
@@ -77,18 +75,17 @@ def add(request, page_name):
     note = Note(
       page=page,
       content=params['content'],
-      visit=traffic_data['visit']
+      visit=visit
     )
     note.save()
-  return response
+  response = HttpResponseRedirect(view_url+'#bottom')
+  return set_todo_cookies(todo_cookies, response)
 
 
 def delete(request, page_name):
   params = request.POST
   view_url = reverse('notepad:view', args=(page_name,))
-  response = HttpResponseRedirect(view_url+'#bottom')
-  traffic_data = {'visit':1}
-  response = add_visit(request, response, side_effects=traffic_data)
+  todo_cookies, visit = add_visit_get_todo_cookies(request)
   if params['site'] == '':
     for key in params:
       if key.startswith('note_'):
@@ -100,14 +97,15 @@ def delete(request, page_name):
           note = Note.objects.get(pk=note_id)
         except Note.DoesNotExist:
           log.info('Visitor "{}"" tried to delete non-existent note #{}.'
-                   .format(traffic_data['visit'].visitor, note_id))
+                   .format(visit.visitor, note_id))
           continue
         note.deleted = True
-        note.deleting_visit = traffic_data['visit']
+        note.deleting_visit = visit
         note.save()
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were deleted from the main "notepad" page.
-  return response
+  response = HttpResponseRedirect(view_url+'#bottom')
+  return set_todo_cookies(todo_cookies, response)
 
 
 def random(request):

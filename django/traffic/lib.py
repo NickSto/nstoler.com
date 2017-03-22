@@ -30,7 +30,7 @@ def get_cookies(request):
   return (cookie1, cookie2)
 
 
-def add_visit(request, response, side_effects=None):
+def add_visit_get_todo_cookies(request):
   cookies = get_cookies(request)
   headers = request.META
   ip = headers.get('REMOTE_ADDR')
@@ -46,20 +46,23 @@ def add_visit(request, response, side_effects=None):
     visitor=visitor
   )
   visit.save()
-  # Set cookie1 if it wasn't already. Don't need to set cookie2, since Nginx takes care of that.
   if cookies[0] is None and visitor.cookie1 is not None:
-    log.info('Setting visitors_v1 to {!r}.'.format(visitor.cookie1))
-    response.set_cookie('visitors_v1', visitor.cookie1, max_age=COOKIE_EXPIRATION)
-  # Let the caller get the visitor and/or visit objects we just created.
-  # If we were to return these values directly instead of through this side effect, we couldn't
-  # use the quick idiom of
-  #   return add_visit(request, render(request, 'notepad/notes.tmpl', context))
-  if side_effects is not None:
-    if 'visitor' in side_effects:
-      side_effects['visitor'] = visitor
-    if 'visit' in side_effects:
-      side_effects['visit'] = visit
+    todo_cookies = {'visitors_v1':visitor.cookie1}
+  else:
+    todo_cookies = {}
+  return todo_cookies, visit
+
+
+def set_todo_cookies(todo_cookies, response):
+  for cookie_name, cookie_value in todo_cookies.items():
+    log.info('Setting {} to {!r}.'.format(cookie_name, cookie_value))
+    response.set_cookie(cookie_name, cookie_value, max_age=COOKIE_EXPIRATION)
   return response
+
+
+def add_visit(request, response, side_effects=None):
+  todo_cookies, visit = add_visit_get_todo_cookies(request)
+  return set_todo_cookies(todo_cookies, response)
 
 
 def get_or_create_visitor(ip, cookies, user_agent, make_cookies=True):
