@@ -110,7 +110,7 @@
 		{% endif %}
 		{% if admin %}
 			<div class="after">
-				<p><a href="export-visits">Export</a> all visits</p>
+				<p><a href="{% url 'misc:export' %}">Export database</a></p>
 			</div>
 		{% endif %}
 {% endblock content %}

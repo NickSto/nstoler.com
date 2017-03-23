@@ -11,4 +11,6 @@ urlpatterns = [
   url(r'^userinfo$', views.userinfo, name='userinfo'),
   url(r'^setcookie/$', RedirectView.as_view(url='../setcookie', permanent=True)),
   url(r'^setcookie$', views.setcookie, name='setcookie'),
+  url(r'^export/$', RedirectView.as_view(url='../export', permanent=True)),
+  url(r'^export$', views.export, name='export'),
 ]

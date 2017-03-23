@@ -4,7 +4,24 @@ from django.conf import settings
 from myadmin.lib import get_admin_cookie
 from traffic.lib import add_visit
 import collections
+import subprocess
 import os
+
+
+def export(request):
+  admin_cookie = get_admin_cookie(request)
+  if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
+    text = 'Error: This page is restricted to the admin over HTTPS.'
+    return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
+  db_name = settings.DATABASES['default']['NAME']
+  command = ['pg_dump', '-d', db_name, '-E', 'UTF-8', '-Z', '5']
+  with open(os.devnull, 'w') as devnull:
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=devnull)
+    response = add_visit(request, HttpResponse(content_type='application/gzip'))
+    response['Content-Disposition'] = 'attachment; filename="database.sql.gz"'
+    for line in process.stdout:
+      response.write(line)
+  return response
 
 
 def env(request):
