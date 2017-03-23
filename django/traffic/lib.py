@@ -60,7 +60,7 @@ def set_todo_cookies(todo_cookies, response):
   return response
 
 
-def add_visit(request, response, side_effects=None):
+def add_visit(request, response):
   todo_cookies, visit = add_visit_get_todo_cookies(request)
   return set_todo_cookies(todo_cookies, response)
 

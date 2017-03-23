@@ -2,7 +2,10 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
 from myadmin.lib import get_admin_cookie
+from traffic.lib import add_visit
+import collections
 import os
+
 
 def env(request):
   # Only allow showing details about the server environment to the admin over HTTPS.
@@ -14,4 +17,16 @@ def env(request):
         text += '{}:\t{}\n'.format(key, request.META[key])
   else:
     text = 'Error: This page is restricted to the admin over HTTPS.'
-  return HttpResponse(text, content_type='text/plain; charset=UTF-8')
+  return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
+
+
+def userinfo(request):
+  headers = request.META
+  info = collections.OrderedDict()
+  info['IP address'] = headers.get('REMOTE_ADDR')
+  info['User Agent'] = headers.get('HTTP_USER_AGENT')
+  info['Referrer'] = headers.get('HTTP_REFERER')
+  info['visitors_v1'] = request.COOKIES.get('visitors_v1')
+  info['visitors_v2'] = request.COOKIES.get('visitors_v2')
+  text = '\n'.join(['{}:\t{!r}'.format(key, value) for key, value in info.items()])
+  return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
