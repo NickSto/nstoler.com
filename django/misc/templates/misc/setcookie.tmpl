@@ -1,0 +1,47 @@
+{% extends 'html5boilerplate1.0.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}Mess with your cookies!{% endblock %}
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'misc/css/setcookie.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+    <section>
+      <noscript>
+        <h4>Notice: Javascript is required for this page's functionality.</h4>
+      </noscript>
+    </section>
+    <section>
+      <h5>Your current cookies:</h5>
+      <table id="currentCookies">
+        {% for name, value in cookies %}
+          <tr><td class="name">{{ name }}</td><td class="value">{{ value }}</td></tr>
+        {% endfor %}
+      </table>
+    </section>
+    <section>
+      <h3>Edit a cookie:</h3>
+      <div class="form_bit">
+        <label for="cookieName">Cookie name:</label>
+      </div>
+      <div class="form_bit">
+        <input id="cookieName" class="text" name="cookieName" type="text" value="{{ default_name }}">
+      </div>
+      <div class="form_bit">
+        <label for="cookieValue">Cookie value:</label>
+      </div>
+      <div class="form_bit">
+        <input id="cookieValue" class="text" name="cookieValue" type="text" value="{{ default_value }}">
+      </div>
+      <div class="form_bit">
+        <input id="set" type="submit" value="Set">
+        <input id="delete" type="submit" value="Delete">
+      </div>
+    </section>
+{% endblock content %}
+
+{% block javascript %}
+  <script src="{% static 'misc/js/setcookie.js' %}?via=html"></script>
+{% endblock %}

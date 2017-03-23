@@ -9,4 +9,6 @@ urlpatterns = [
   url(r'^env$', views.env, name='env'),
   url(r'^userinfo/$', RedirectView.as_view(url='../userinfo', permanent=True)),
   url(r'^userinfo$', views.userinfo, name='userinfo'),
+  url(r'^setcookie/$', RedirectView.as_view(url='../setcookie', permanent=True)),
+  url(r'^setcookie$', views.setcookie, name='setcookie'),
 ]
