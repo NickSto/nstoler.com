@@ -86,10 +86,10 @@ def monitor(request):
   # Add this visit to the start of the list, if it's not there but should be.
   if start == 1 and (user == this_user or (user is None and include == 'me')):
     if len(visits) == 0:
-      log.warn('No visits. Adding this one..')
+      log.info('No visits. Adding this one..')
       visits = [this_visit]
     elif visits[0].id != this_visit.id:
-      log.warn('Adding this visit to the start..')
+      log.info('Adding this visit to the start..')
       visits = [this_visit] + visits[:per_page-1]
   # Construct the navigation links.
   link_data = []
