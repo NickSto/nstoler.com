@@ -13,7 +13,7 @@ function setAction() {
   var name = document.querySelector('#cookieName').value;
   var value = document.querySelector('#cookieValue').value;
   if (name) {
-    setCookie(name, value, '/');
+    setCookie(name, value, '/', undefined, 20);
   }
   var cookies = parseCookies(document.cookie);
   displayCookies(cookies);
@@ -29,23 +29,19 @@ function deleteAction() {
 }
 
 function nameAutofill(event) {
-  var newData = this.textContent;
-  var dataType = this.className;
-  if (dataType == 'name') {
-    var formElement = document.querySelector('#cookieName');
-  } else if (dataType == 'value') {
-    var formElement = document.querySelector('#cookieValue');
-  }
-  formElement.value = newData;
+  var name = this.children[0].textContent;
+  var value = this.children[1].textContent;
+  var nameInput = document.querySelector('#cookieName');
+  nameInput.value = name;
+  var valueInput = document.querySelector('#cookieValue');
+  valueInput.value = value;
 };
 
 function addNameAutofills() {
   var table = document.querySelector('#currentCookies tbody');
   for (var i = 0; i < table.children.length; i++) {
     var row = table.children[i];
-    for (var j = 0; j < row.children.length; j++) {
-      row.children[j].addEventListener('click', nameAutofill);
-    }
+    row.addEventListener('click', nameAutofill);
   }
 }
 
@@ -115,20 +111,58 @@ function parseCookies(cookiesStr) {
   return cookies;
 }
 
-function setCookie(cookieName, cookieValue, path, expires) {
+function setCookie(cookieName, cookieValue, path, domain, expires) {
   var cookieStr = cookieName+'='+cookieValue;
-  if (typeof expires === 'string') {
-    cookieStr += '; expires='+expires;
-  }
   if (typeof path === 'string') {
     cookieStr += '; path='+path;
+  } else {
+    cookieStr += '; path=/';
+  }
+  if (typeof domain === 'string') {
+    cookieStr += '; domain='+domain;
+  } else {
+    cookieStr += '; domain=.'+getTLD(location.hostname);
+  }
+  if (typeof expires === 'number') {
+    cookieStr += '; expires='+expiresToStr(expires);
   }
   console.log('Setting cookie to "'+cookieStr+'"');
   document.cookie = cookieStr;
 }
 
 function deleteCookie(cookieName, path) {
-  setCookie(cookieName, '', path, 'Thu, 01 Jan 1970 00:00:01 UTC');
+  // Try carpet bombing approach to get cookie deleted, no matter how specific its domain.
+  var subdomains = location.hostname.split('.');
+  var domain = '.'+subdomains[subdomains.length-1];
+  var domains = [];
+  for (var i = subdomains.length-2; i >= 0; i--) {
+    domain = subdomains[i] + domain;
+    domains.unshift(domain);
+    domain = '.' + domain;
+    domains.unshift(domain);
+  }
+  for (var i = 0; i < domains.length; i++) {
+    setCookie(cookieName, '', path, domains[i], -1);
+  }
+}
+
+function expiresToStr(years) {
+  var date = new Date();
+  date.setTime(date.getTime()+(years*365.2425*24*60*60*1000));
+  return date.toUTCString();
+}
+
+function getTLD(domain) {
+  // "test.nstoler.com" -> "nstoler.com"
+  // "localhost" -> "localhost"
+  // "bbc.co.uk" -> "co.uk" :(
+  var subdomains = domain.split('.');
+  var n = subdomains.length;
+  if (n == 1) {
+    return domain;
+  } else {
+    return subdomains[n-2]+'.'+subdomains[n-1];
+  }
 }
 
 main();
