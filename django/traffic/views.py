@@ -23,14 +23,14 @@ def monitor_redirect(request):
 #TODO: Clean up this mess.
 def monitor(request):
   # Only allow access to admin users over HTTPS.
-  todo_cookies, visit = add_visit_get_todo_cookies(request)
-  this_user = visit.visitor.user.id
+  todo_cookies, this_visit = add_visit_get_todo_cookies(request)
+  this_user = this_visit.visitor.user.id
   admin_cookie = get_admin_cookie(request)
   if admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS):
     user = None
     admin = True
   else:
-    user = visit.visitor.user.id
+    user = this_visit.visitor.user.id
     admin = False
   # Get query parameters.
   params = request.GET
@@ -60,7 +60,7 @@ def monitor(request):
   start = (page-1)*per_page + 1
   end = page*per_page
   # Is this page beyond the last possible one?
-  if page*per_page - total_visits >= per_page:
+  if total_visits > 0 and page*per_page - total_visits >= per_page:
     # Then redirect to the last possible page.
     new_params['p'] = (total_visits-1) // per_page + 1
     query_str = _construct_query_str(new_params, {'user':default_user})
@@ -84,13 +84,13 @@ def monitor(request):
   else:
     visits = list(visits_unbounded[:per_page])
   # Add this visit to the start of the list, if it's not there but should be.
-  if start == 1 and (user == this_user or include == 'me'):
+  if start == 1 and (user == this_user or (user is None and include == 'me')):
     if len(visits) == 0:
       log.warn('No visits. Adding this one..')
-      visits = [visit]
-    elif visits[0].id != visit.id:
+      visits = [this_visit]
+    elif visits[0].id != this_visit.id:
       log.warn('Adding this visit to the start..')
-      visits = [visit] + visits[:per_page-1]
+      visits = [this_visit] + visits[:per_page-1]
   # Construct the navigation links.
   link_data = []
   if page > 1:
