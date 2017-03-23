@@ -5,6 +5,7 @@ function main() {
   setButton.addEventListener('click', setAction);
   var deleteButton = document.querySelector('#delete');
   deleteButton.addEventListener('click', deleteAction);
+  displayCookies(parseCookies(document.cookie));
   addNameAutofills();
 }
 
