@@ -17,6 +17,7 @@ def add_note(page_name, content, deleted=False, visit=None):
     page.save()
   note = Note(page=page, content=content, deleted=deleted, visit=visit)
   note.save()
+  return note
 
 def test_view_note(tester, page, content):
   add_note(page, content)
@@ -30,7 +31,6 @@ def test_view_note(tester, page, content):
       tester.assertEqual(len(note_tuple), 2)
       if len(note_tuple) == 2:
         note, lines = note_tuple
-        tester.assertEqual(note.id, 1)
         tester.assertEqual(lines, [content])
 
 def test_add_note(tester, page, content):
@@ -38,28 +38,26 @@ def test_add_note(tester, page, content):
   post_data = {'page':page, 'site':'', 'content':content}
   response = tester.client.post(path, post_data)
   location = reverse('notepad:view', args=(page,))
-  tester.assertEqual(response.get('Location'), location)
+  tester.assertEqual(response.get('Location'), location+'#bottom')
   tester.assertEqual(response.status_code, 302)
-  try:
-    note = Note.objects.get(pk=1)
-    missing = False
-  except Note.DoesNotExist:
-    missing = True
-  tester.assertEqual(missing, False)
-  if not missing:
+  notes = Note.objects.all()
+  tester.assertEqual(len(notes), 1)
+  if len(notes) > 0:
+    note = notes[0]
     tester.assertEqual(note.content, content)
     tester.assertEqual(note.page.name, page)
 
 def test_delete_note(tester, page, content):
-  add_note(page, content)
+  note = add_note(page, content)
+  tester.assertEqual(Note.objects.count(), 1)
   path = reverse('notepad:delete', args=(page,))
-  post_data = {'page':page, 'site':'', 'note_1':'on'}
+  post_data = {'page':page, 'site':'', 'note_'+str(note.id):'on'}
   response = tester.client.post(path, post_data)
   location = reverse('notepad:view', args=(page,))
-  tester.assertEqual(response.get('Location'), location)
+  tester.assertEqual(response.get('Location'), location+'#bottom')
   tester.assertEqual(response.status_code, 302)
   try:
-    note = Note.objects.get(pk=1)
+    note = Note.objects.get(pk=note.id)
     missing = False
   except Note.DoesNotExist:
     missing = True

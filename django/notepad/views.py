@@ -96,7 +96,7 @@ def delete(request, page_name):
         try:
           note = Note.objects.get(pk=note_id)
         except Note.DoesNotExist:
-          log.info('Visitor "{}"" tried to delete non-existent note #{}.'
+          log.info('Visitor "{}" tried to delete non-existent note #{}.'
                    .format(visit.visitor, note_id))
           continue
         note.deleted = True
