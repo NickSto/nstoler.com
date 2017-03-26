@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
 from django.conf import settings
 from .models import Note, Page
-from traffic.lib import add_visit, add_visit_get_todo_cookies, set_todo_cookies
+from traffic.lib import add_visit, add_and_get_visit, set_todo_cookies
 from myadmin.lib import get_admin_cookie
 import random as rand
 import string
@@ -12,6 +12,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
+@add_visit
 def view(request, page_name):
   params = request.GET
   format = params.get('format')
@@ -36,11 +37,10 @@ def view(request, page_name):
       lines = _format_note(note.content)
       notes.append((note, lines))
   if format == 'plain':
-    response = HttpResponse(text, content_type='text/plain; charset=UTF-8')
-    return add_visit(request, response)
+    return HttpResponse(text, content_type='text/plain; charset=UTF-8')
   else:
     context = {'page':page_name, 'notes':notes, 'admin':admin}
-    return add_visit(request, render(request, 'notepad/notes.tmpl', context))
+    return render(request, 'notepad/notes.tmpl', context)
 
 
 def _format_note(content):
@@ -58,12 +58,12 @@ def _format_note(content):
   return lines_formatted
 
 
-def add(request, page_name):
+@add_and_get_visit
+def add(request, visit, page_name):
   params = request.POST
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were added to the main "notepad" page.
   view_url = reverse('notepad:view', args=(page_name,))
-  todo_cookies, visit = add_visit_get_todo_cookies(request)
   if params['site'] == '':
     try:
       page = Page.objects.get(name=page_name)
@@ -78,14 +78,13 @@ def add(request, page_name):
       visit=visit
     )
     note.save()
-  response = HttpResponseRedirect(view_url+'#bottom')
-  return set_todo_cookies(todo_cookies, response)
+  return HttpResponseRedirect(view_url+'#bottom')
 
 
-def delete(request, page_name):
+@add_and_get_visit
+def delete(request, visit, page_name):
   params = request.POST
   view_url = reverse('notepad:view', args=(page_name,))
-  todo_cookies, visit = add_visit_get_todo_cookies(request)
   if params['site'] == '':
     for key in params:
       if key.startswith('note_'):
@@ -104,27 +103,28 @@ def delete(request, page_name):
         note.save()
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were deleted from the main "notepad" page.
-  response = HttpResponseRedirect(view_url+'#bottom')
-  return set_todo_cookies(todo_cookies, response)
+  return HttpResponseRedirect(view_url+'#bottom')
 
 
+@add_visit
 def random(request):
   alphabet = string.ascii_lowercase
   page_name = ''.join([rand.choice(alphabet) for i in range(5)])
-  return add_visit(request, redirect('notepad:view', page_name))
+  return redirect('notepad:view', page_name)
 
 
+@add_visit
 def monitor(request):
   format = request.GET.get('format')
   # Only show global list of pages to the admin over HTTPS.
   admin_cookie = get_admin_cookie(request)
   if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
     text = 'You are not authorized for this content.'
-    return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
+    return HttpResponse(text, content_type='text/plain; charset=UTF-8')
   pages = Page.objects.order_by('name')
   if format == 'plain':
     text = '\n'.join([page.name for page in pages])
-    return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
+    return HttpResponse(text, content_type='text/plain; charset=UTF-8')
   else:
     context = {'pages':pages}
-    return add_visit(request, render(request, 'notepad/monitor.tmpl', context))
+    return render(request, 'notepad/monitor.tmpl', context)

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.conf import settings
-from .lib import add_visit, is_robot, add_visit_get_todo_cookies, set_todo_cookies
+from .lib import add_visit, add_and_get_visit, set_todo_cookies, is_robot
 from .models import Visit
 from myadmin.lib import get_admin_cookie
 import logging
@@ -10,20 +10,21 @@ log = logging.getLogger(__name__)
 
 PER_PAGE_DEFAULT = 50
 
+@add_visit
 def monitor_redirect(request):
   """Redirect to the monitor() view, preserving the query string."""
   path = reverse('traffic:monitor')
   query_string = request.META.get('QUERY_STRING') or request.GET.urlencode()
   if query_string:
     path += '?'+query_string
-  return add_visit(request, redirect(path, permanent=True))
+  return redirect(path, permanent=True)
 
 #TODO: A view to set a Visitor.label or Visitor.is_me, so I can do it via a link in the monitor.
 
 #TODO: Clean up this mess.
-def monitor(request):
+@add_and_get_visit
+def monitor(request, this_visit):
   # Only allow access to admin users over HTTPS.
-  todo_cookies, this_visit = add_visit_get_todo_cookies(request)
   this_user = this_visit.visitor.user.id
   admin_cookie = get_admin_cookie(request)
   if admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS):
@@ -64,8 +65,7 @@ def monitor(request):
     # Then redirect to the last possible page.
     new_params['p'] = (total_visits-1) // per_page + 1
     query_str = _construct_query_str(new_params, {'user':default_user})
-    response = redirect(reverse('traffic:monitor')+query_str)
-    return set_todo_cookies(todo_cookies, response)
+    return redirect(reverse('traffic:monitor')+query_str)
   # Obtain visits list from database.
   if user is not None:
     visits_unbounded = Visit.objects.filter(visitor__user__id=user).order_by('-id')[start:]
@@ -115,8 +115,7 @@ def monitor(request):
     'end': min(end, start+len(visits)-1),
     'links': links,
   }
-  response = render(request, 'traffic/monitor.tmpl', context)
-  return set_todo_cookies(todo_cookies, response)
+  return render(request, 'traffic/monitor.tmpl', context)
 
 
 def _construct_links(link_data, params, extra_defaults):

@@ -27,6 +27,8 @@ doesn't offer great protection. I may re-evaluate this trade-off later.
 #TODO: Mark visitors_v1 HTTPS only, or use a different, HTTPS-only cookie.
 #TODO: Add a sub-navigation bar to go between login, logout, and hash generation.
 
+
+@add_visit
 def auth_form(request, action):
   result = request.GET.get('result')
   if result:
@@ -40,7 +42,7 @@ def auth_form(request, action):
       'back_text': 'Go back',
       'back_link': back_link,
     }
-    return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))
+    return render(request, 'myadmin/auth_result.tmpl', context)
   elif action == 'hash':
     context = {
       'title':'Get password hash',
@@ -62,8 +64,10 @@ def auth_form(request, action):
       'action':'login',
       'get_password':True,
     }
-  return add_visit(request, render(request, 'myadmin/auth_form.tmpl', context))
+  return render(request, 'myadmin/auth_form.tmpl', context)
 
+
+@add_visit
 def submit(request, action):
   if action == 'login':
     return _submit_login(request)
@@ -71,6 +75,7 @@ def submit(request, action):
     return _submit_logout(request)
   elif action == 'hash':
     return _submit_hash(request)
+
 
 def _submit_login(request):
   password = request.POST['password']
@@ -103,7 +108,8 @@ def _submit_login(request):
     result = 'badpass'
   path = reverse('myadmin:auth_form', args=('login',))
   path += '?result='+result
-  return add_visit(request, HttpResponseRedirect(path))
+  return HttpResponseRedirect(path)
+
 
 def _submit_logout(request):
   admin_cookie = get_admin_cookie(request)
@@ -114,7 +120,8 @@ def _submit_logout(request):
     result = 'redundant'
   path = reverse('myadmin:auth_form', args=('logout',))
   path += '?result='+result
-  return add_visit(request, HttpResponseRedirect(path))
+  return HttpResponseRedirect(path)
+
 
 def _submit_hash(request):
   password = request.POST['password']
@@ -132,7 +139,8 @@ def _submit_hash(request):
   # Safe to return a response directly to this POST instead of redirecting because it doesn't
   # actually change anything on the server. We're just using a POST because it's potentially
   # sensitive data so we don't want it in the query url as a query string.
-  return add_visit(request, HttpResponse(text, content_type='text/plain; charset=UTF-8'))
+  return HttpResponse(text, content_type='text/plain; charset=UTF-8')
+
 
 def _get_hash(password):
   pwd_bytes = bytes(password, 'utf8')
@@ -142,6 +150,7 @@ def _get_hash(password):
   #      https://docs.python.org/3.5/library/hashlib.html
   digest = hashlib.pbkdf2_hmac(HASH, pwd_bytes, salt, ITERATIONS)
   return binascii.hexlify(digest)
+
 
 def _display_result(request, action, result):
   if action == 'login':
@@ -185,4 +194,4 @@ def _display_result(request, action, result):
         'back_text': 'Try again',
       }
     context['back_link'] = reverse('myadmin:auth_form', args=('logout',))
-  return add_visit(request, render(request, 'myadmin/auth_result.tmpl', context))
+  return render(request, 'myadmin/auth_result.tmpl', context)
