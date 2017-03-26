@@ -1,4 +1,5 @@
 from .models import Visit, Visitor, User
+import functools
 import string
 import random
 import base64
@@ -16,6 +17,30 @@ log = logging.getLogger(__name__)
 
 ALPHABET1 = string.ascii_lowercase + string.ascii_uppercase + string.digits + '+-'
 COOKIE_EXPIRATION = 10*365*24*60*60  # 10 years
+
+
+# Decorator.
+def add_visit(view):
+  """Wrap a view with a function that logs the visit."""
+  #TODO: This might be better written as middleware, but I'll have to look into it.
+  @functools.wraps(view)
+  def wrapped_view(request, *nargs, **kwargs):
+    todo_cookies, visit = add_visit_get_todo_cookies(request)
+    response = view(request, *nargs, **kwargs)
+    return set_todo_cookies(todo_cookies, response)
+  return wrapped_view
+
+
+# Decorator.
+def add_and_get_visit(view):
+  """Wrap a view with a function that logs the visit and provides it as an argument to the view."""
+  #TODO: This might be better written as middleware, but I'll have to look into it.
+  @functools.wraps(view)
+  def wrapped_view(request, *nargs, **kwargs):
+    todo_cookies, visit = add_visit_get_todo_cookies(request)
+    response = view(request, visit, *nargs, **kwargs)
+    return set_todo_cookies(todo_cookies, response)
+  return wrapped_view
 
 
 def make_cookie1():
@@ -58,11 +83,6 @@ def set_todo_cookies(todo_cookies, response):
     log.info('Setting {} to {!r}.'.format(cookie_name, cookie_value))
     response.set_cookie(cookie_name, cookie_value, max_age=COOKIE_EXPIRATION)
   return response
-
-
-def add_visit(request, response):
-  todo_cookies, visit = add_visit_get_todo_cookies(request)
-  return set_todo_cookies(todo_cookies, response)
 
 
 def get_or_create_visitor(ip, cookies, user_agent, make_cookies=True):
