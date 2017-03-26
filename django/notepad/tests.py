@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from .models import Note, Page
+from traffic.models import Visit
 
 TEST_PAGE = 'xwasebwnav'
 TEST_CONTENT = 'rsjhlsvoda'
@@ -18,6 +19,9 @@ def add_note(page_name, content, deleted=False, visit=None):
   note = Note(page=page, content=content, deleted=deleted, visit=visit)
   note.save()
   return note
+
+
+# Generic test functions for re-using with different input data.
 
 def test_view_note(tester, page, content):
   add_note(page, content)
@@ -101,3 +105,40 @@ class NoteDeleteTests(TestCase):
 
   def test_delete_unicode_note(self):
     test_delete_note(self, UNICODE_CONTENT, UNICODE_CONTENT)
+
+
+#TODO: Move these to traffic.tests.
+class NoteTrafficTests(TestCase):
+
+  def test_add_first_visit(self):
+    user_agent = 'tester'
+    page_url = reverse('notepad:view', args=(TEST_PAGE,))
+    response = self.client.get(page_url, HTTP_USER_AGENT=user_agent)
+    cookie1 = response.cookies.get('visitors_v1')
+    self.assertIsNotNone(cookie1)
+    visits = Visit.objects.all()
+    self.assertEqual(len(visits), 1)
+    if len(visits) > 0:
+      visit = visits[0]
+      self.assertEqual(visit.path, page_url)
+      self.assertEqual(visit.visitor.user_agent, user_agent)
+      self.assertEqual(visit.visitor.cookie1, cookie1.value)
+      # visitors_v2 is only added by Nginx, which is not running in the test.
+      # In any case, it would have to be added later by watch_nginx.py.
+      self.assertIsNone(visit.visitor.cookie2)
+
+  def test_add_visit(self):
+    user_agent = 'tester'
+    cookie1 = 'zkZsrdMr8HdooDda'
+    cookie2 = 'isXNNVjX6+U+5CtqAwVZAg=='
+    cookie_header = 'visitors_v1='+cookie1+'; visitors_v2='+cookie2
+    page_url = reverse('notepad:view', args=(TEST_PAGE,))
+    self.client.get(page_url, HTTP_COOKIE=cookie_header, HTTP_USER_AGENT=user_agent)
+    visits = Visit.objects.all()
+    self.assertEqual(len(visits), 1)
+    if len(visits) > 0:
+      visit = visits[0]
+      self.assertEqual(visit.path, page_url)
+      self.assertEqual(visit.visitor.cookie1, cookie1)
+      self.assertEqual(visit.visitor.cookie2, cookie2)
+      self.assertEqual(visit.visitor.user_agent, user_agent)
