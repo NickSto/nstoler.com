@@ -57,6 +57,13 @@ function main {
   python3 manage.py migrate
 }
 
+# DELETE FROM traffic_visit;
+# DELETE FROM traffic_visitor;
+# DELETE FROM traffic_user;
+# ALTER SEQUENCE traffic_visit_id_seq RESTART WITH 1;
+# ALTER SEQUENCE traffic_visitor_id_seq RESTART WITH 1;
+# ALTER SEQUENCE traffic_user_id_seq RESTART WITH 1;
+
 function fail {
   echo "$@" >&2
   exit 1
