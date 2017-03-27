@@ -54,6 +54,11 @@
 								<span class="datum ip">
 									<a href="http://whatismyipaddress.com/ip/{{ visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ visit.visitor.ip }}</a>
 								</span>
+								{% if admin %}
+									<span class="datum">
+										<a href="{% url 'traffic:monitor' %}?user={{ visit.visitor.user.id }}">User {{ visit.visitor.user.id }}</a>
+									</span>
+								{% endif %}
 							</p>
 							<p>
 								<span class="datum time">
