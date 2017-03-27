@@ -5,7 +5,7 @@ from django.template.defaultfilters import escape, urlize
 from django.conf import settings
 from .models import Note, Page
 from traffic.lib import add_visit, add_and_get_visit, set_todo_cookies
-from myadmin.lib import get_admin_cookie
+from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 import random as rand
 import string
 import logging
@@ -114,13 +114,9 @@ def random(request):
 
 
 @add_visit
+@require_admin_and_privacy
 def monitor(request):
   format = request.GET.get('format')
-  # Only show global list of pages to the admin over HTTPS.
-  admin_cookie = get_admin_cookie(request)
-  if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
-    text = 'You are not authorized for this content.'
-    return HttpResponse(text, content_type='text/plain; charset=UTF-8')
   pages = Page.objects.order_by('name')
   if format == 'plain':
     text = '\n'.join([page.name for page in pages])
