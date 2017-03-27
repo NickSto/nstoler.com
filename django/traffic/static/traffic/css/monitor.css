@@ -1,26 +1,53 @@
+
+.youarehere {
+	padding: 0 0 5px 10px;
+}
+
 .nav-options {
-	padding: 10px 15px 20px 15px;
+	padding: 5px 15px 30px 0;
 }
 
 .nav-options ul li {
 	border: 1px solid rgb(200,200,200);
 }
 
+@media (min-width: 1330px) {
+	#description {
+		float: right;
+		width: 300px;
+		margin-left: 10px;
+	}
+}
+
+#description {
+	background-color: #FFFFFF;
+	border: 1px solid rgb(200,200,200);
+	margin-bottom: 10px;
+}
+
+#description > div {
+	padding: 0 10px 10px 10px;
+}
+
+#description h3 {
+	padding: 10px 0 5px 0;
+}
+
+#description li {
+	line-height: 1.4em;
+}
+
 #visits {
 	background-color: #FFFFFF;
 	border: 1px solid rgb(200,200,200);
-	margin: 2px 10px;
-	width: 920px;
+	margin: 0;
+	width: 950px;
+	overflow: hidden;
 }
 
 .visit {
 	clear: both;
-	padding: 3px 0;
-}
-
-.after {
-	clear: both;
-	padding-top: 10px;
+	padding: 3px 5px;
 }
 
 .visit + .visit {
@@ -37,12 +64,12 @@
 
 .pane1 {
 	float: left;
-	width: 210px;
+	width: 240px;
 }
 
 .pane2 {
 	float: right;
-	width: 700px;
+	width: 690px;
 }
 
 .datum {
@@ -57,4 +84,9 @@
 
 .label {
 	font-weight: bold;
+}
+
+.after {
+	clear: both;
+	padding-top: 10px;
 }

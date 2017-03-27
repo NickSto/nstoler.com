@@ -19,6 +19,7 @@ from django.contrib import admin
 urlpatterns = [
   # url(r'^admin/', include(admin.site.urls)),
   url(r'^misc/', include('misc.urls')),
+  url(r'^traffic$', include('traffic.urls')),  #TODO: Combine with traffic/
   url(r'^traffic/', include('traffic.urls')),
   url(r'^admin/', include('myadmin.urls')),
   url(r'^wikihistory/', include('wikihistory.urls')),

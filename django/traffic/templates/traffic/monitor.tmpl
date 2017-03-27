@@ -9,34 +9,43 @@
 
 
 {% block content %}
-		<header>
-			<h1 id="title">Traffic Monitor</h1>
-			<p class="youarehere">
-			{% if end %}
-				Visits {{ start }} to {{ end }}
-			{% endif %}
-			</p>
-			{% if debug %}
-				<table>
-					{% for key, value in debug.items %}
-						<tr><td>{{ key }}:</td><td>{{ value }}</td></tr>
-					{% endfor %}
-				</table>
-			{% endif %}
-			{% if links %}
-				<nav class="nav-options">
+		<h1 id="title">Traffic Monitor</h1>
+
+		<section id="data">
+			<header>
+				<p class="youarehere">
+				{% if end %}
+					Visits {{ start }} to {{ end }}
+				{% endif %}
+				</p>
+				{% if links %}
+					<nav class="nav-options">
+						<ul>
+							{% for text, href in links %}
+								<li>
+									<a href="{{ href }}">{{ text }}</a>
+								</li>
+							{% endfor %}
+						</ul>
+					</nav>
+				{% endif %}
+			</header>
+
+			<aside id="description">
+				<div>
+					<h3>What is this?</h3>
+					<p>The display for the custom traffic monitoring system I wrote for my site.</p>
+					<h3>Why?</h3>
 					<ul>
-						{% for text, href in links %}
-							<li>
-								<a href="{{ href }}">{{ text }}</a>
-							</li>
-						{% endfor %}
+						<li>Existing free traffic monitoring services are limited (at least, they were when I wrote this).</li>
+						<li>I wanted to be able to customize it for my site.</li>
+						<li>And, most importantly, I wanted to learn how they work. What's more fun than messing around with cookies, after all?</li>
 					</ul>
-				</nav>
-			{% endif %}
-		</header>
-		
-		<section id="notepad">
+					<h3>What does it show?</h3>
+					<p>This is the list of all the visits to my site from your browser. If you were an admin, you'd see all visits from all users (or a specific user you pick).</p>
+				</div>
+			</aside>
+
 			<div id="visits">
 				{% for visit in visits %}
 					<article class="visit">
@@ -48,7 +57,7 @@
 							</p>
 							<p>
 								<span class="datum time">
-									{{ visit.timestamp }}
+									{{ visit.timestamp }} UTC
 								</span>
 							</p>
 						</section>
@@ -96,26 +105,23 @@
 					</article>
 				{% endfor %}
 			</div>
+			{% if links %}
+				<footer>
+					<nav class="nav-options">
+						<ul>
+							{% for text, href in links %}
+								<li>
+									<a href="{{ href }}">{{ text }}</a>
+								</li>
+							{% endfor %}
+						</ul>
+					</nav>
+				</footer>
+			{% endif %}
 		</section>
-		{% if links %}
-			<nav class="nav-options">
-				<ul>
-					{% for text, href in links %}
-						<li>
-							<a href="{{ href }}">{{ text }}</a>
-						</li>
-					{% endfor %}
-				</ul>
-			</nav>
-		{% endif %}
 		{% if admin %}
 			<div class="after">
 				<p><a href="{% url 'misc:export' %}">Export database</a></p>
 			</div>
 		{% endif %}
 {% endblock content %}
-
-
-{% block javascript %}
-  <!-- <script src="{% static 'traffic/js/main.js' %}"?via=html></script> -->
-{% endblock %}
