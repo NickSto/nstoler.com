@@ -58,7 +58,7 @@ def monitor(request, this_visit):
     total_visits = Visit.objects.count()
   else:
     total_visits = Visit.objects.exclude(visitor__user__id=1).count()
-  start = (page-1)*per_page + 1
+  start = (page-1)*per_page
   end = page*per_page
   # Is this page beyond the last possible one?
   if total_visits > 0 and page*per_page - total_visits >= per_page:
@@ -84,7 +84,7 @@ def monitor(request, this_visit):
   else:
     visits = list(visits_unbounded[:per_page])
   # Add this visit to the start of the list, if it's not there but should be.
-  if start == 1 and (user == this_user or (user is None and include == 'me')):
+  if start == 0 and (user == this_user or (user is None and include == 'me')):
     if len(visits) == 0:
       log.info('No visits. Adding this one..')
       visits = [this_visit]
@@ -111,7 +111,7 @@ def monitor(request, this_visit):
   context = {
     'visits': visits,
     'admin':admin,
-    'start': start,
+    'start': start+1,
     'end': min(end, start+len(visits)-1),
     'links': links,
   }
