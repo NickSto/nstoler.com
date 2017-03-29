@@ -96,7 +96,7 @@ def process_list_args(args, list_args):
 def watch(source, ignore_via=(), ignore_ua=()):
   logging.debug('Called watch({}, ignore_via={!r}, ignore_ua={!r})'
                 .format(source, ignore_via, ignore_ua))
-  from traffic.models import Visit
+  import traffic.models
   import traffic.lib
 
   if source is not sys.stdin:
@@ -111,9 +111,9 @@ def watch(source, ignore_via=(), ignore_ua=()):
     # Skip requests that weren't served directly by Nginx.
     if fields['handler'] == 'django':
       if fields['uid_was_set']:
-        logging.info('Request served by {}, but $uid_set is present, indicating it\'s a first-time '
-                     'visit to a dynamic page. Adding the visitors_v2 value {!r} to the Visitor..'
-                     .format(fields['handler'], fields['cookies'][1]))
+        logging.info('Request served by {handler}, but $uid_set is present, indicating it\'s a '
+                     'first-time visit to a dynamic page. Adding the {} value {cookies[1]!r} to '
+                     'the Visitor..'.format(COOKIE2_NAME, **fields))
         add_cookie2(**fields)
       else:
         logging.info('Ignoring request already handled by {handler}.'.format(**fields))
@@ -137,7 +137,7 @@ def watch(source, ignore_via=(), ignore_ua=()):
     visitor = traffic.lib.get_or_create_visitor(fields['ip'], fields['cookies'],
                                                 fields['user_agent'], make_cookies=False)
     # Create this Visit and save it.
-    visit = Visit(
+    visit = traffic.models.Visit(
       timestamp=datetime.fromtimestamp(fields['timestamp'], tz=pytz.utc),
       method=fields['method'],
       scheme=fields['scheme'],
@@ -276,19 +276,22 @@ def add_cookie2(timestamp=None, ip=None, cookies=None, path=None, query_str=None
   if not visit.visitor.cookie2:
     visit.visitor.cookie2 = cookie2
     visit.visitor.save()
+    cookie = traffic.lib.get_or_create_cookie('set', COOKIE2_NAME, cookie2)
+    visit.cookies_set.add(cookie)
+    visit.save()
     logging.info('Successfully identified the visit corresponding to the Nginx request and added '
                  'the cookie.')
   return
 
 
 def find_visit_by_timestamp(timestamp, selectors={}, tolerance=0.05, max_tries=8):
-  from traffic.models import Visit
+  import traffic.models
   tries = 0
   visits = ()
   while len(visits) != 1 and tries < max_tries:
     start = datetime.fromtimestamp(timestamp-tolerance, tz=pytz.utc)
     end = datetime.fromtimestamp(timestamp+tolerance, tz=pytz.utc)
-    visits = Visit.objects.filter(timestamp__range=(start, end), **selectors)
+    visits = traffic.models.Visit.objects.filter(timestamp__range=(start, end), **selectors)
     tries += 1
     if len(visits) == 0:
       # If we didn't find anything, widen the timestamp tolerance.
