@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import Visit, Visitor, User
+from .models import Visit, Visitor, User, Cookie
 import functools
 import string
 import random
@@ -9,6 +9,8 @@ import socket
 import logging
 log = logging.getLogger(__name__)
 
+#TODO: Fix bug where no visitors_v1 is set when a user visits http://nstoler.com/notepad, receives a
+#      301 to https, and retrieves the https url.
 #TODO: Grab info about the IP address at the time. Stuff like the ISP, ASN, and geoip data.
 #      That stuff can change, especially as IPv4 addresses are bought and sold increasingly.
 #      Maybe run a daemon separate from Django to do it in the background, to not hold up the
@@ -17,7 +19,7 @@ log = logging.getLogger(__name__)
 #      https://stat.ripe.net/docs/data_api (semi-official, but ASN only)
 
 ALPHABET1 = string.ascii_lowercase + string.ascii_uppercase + string.digits + '+-'
-COOKIE_EXPIRATION = 10*365*24*60*60  # 10 years
+COOKIE_MAX_AGE = 10*365*24*60*60  # 10 years
 
 
 # Decorator.
@@ -44,18 +46,6 @@ def add_and_get_visit(view):
   return wrapped_view
 
 
-def make_cookie1():
-  # Make a legacy visitors_v1 cookie:
-  # 16 random characters chosen from my own base64-like alphabet I chose long ago.
-  return ''.join([random.choice(ALPHABET1) for i in range(16)])
-
-
-def get_cookies(request):
-  cookie1 = request.COOKIES.get('visitors_v1')
-  cookie2 = request.COOKIES.get('visitors_v2')
-  return (cookie1, cookie2)
-
-
 def add_visit_get_todo_cookies(request):
   cookies = get_cookies(request)
   headers = request.META
@@ -72,18 +62,66 @@ def add_visit_get_todo_cookies(request):
     visitor=visitor
   )
   visit.save()
+  todo_cookies = []
   if cookies[0] is None and visitor.cookie1 is not None:
-    todo_cookies = {'visitors_v1':visitor.cookie1}
-  else:
-    todo_cookies = {}
+    todo_cookies.append({'name':'visitors_v1', 'value':visitor.cookie1, 'max_age':COOKIE_MAX_AGE})
+  cookies_got, cookies_set = create_got_set_cookies(request.COOKIES, todo_cookies)
+  visit.cookies_got.add(*cookies_got)
+  visit.cookies_set.add(*cookies_set)
+  visit.save()
   return todo_cookies, visit
 
 
 def set_todo_cookies(todo_cookies, response):
-  for cookie_name, cookie_value in todo_cookies.items():
-    log.info('Setting {} to {!r}.'.format(cookie_name, cookie_value))
-    response.set_cookie(cookie_name, cookie_value, max_age=COOKIE_EXPIRATION)
+  for cookie in todo_cookies:
+    log.info('Setting {name} to {value!r}.'.format(**cookie))
+    kwargs = {}
+    for key in ('max_age', 'expires', 'path', 'domain', 'secure', 'httponly'):
+      if key in cookie:
+        kwargs[key] = cookie[key]
+    response.set_cookie(cookie['name'], cookie['value'], **kwargs)
   return response
+
+
+def make_cookie1():
+  # Make a legacy visitors_v1 cookie:
+  # 16 random characters chosen from my own base64-like alphabet I chose long ago.
+  return ''.join([random.choice(ALPHABET1) for i in range(16)])
+
+
+def get_cookies(request):
+  cookie1 = request.COOKIES.get('visitors_v1')
+  cookie2 = request.COOKIES.get('visitors_v2')
+  return (cookie1, cookie2)
+
+
+def create_got_set_cookies(request_cookies, todo_cookies):
+  cookies_got = []
+  for name, value in request_cookies.items():
+    cookies_got.append(get_or_create_cookie('got', name, value))
+  cookies_set = []
+  for cookie in todo_cookies:
+    cookies_set.append(get_or_create_cookie('set', **cookie))
+  return cookies_got, cookies_set
+
+
+def get_or_create_cookie(direction, name=None, value=None, **attributes):
+  matches = Cookie.objects.filter(direction=direction, name=name, value=value, **attributes)
+  if name.startswith('visitors_v'):
+    attr_str = ', '.join([key+'='+str(val) for key, val in attributes.items()])
+    if attr_str:
+      attr_str = ' ('+attr_str+')'
+  if matches:
+    if name.startswith('visitors_v'):
+      log.info('Found {} existing cookies matching {} cookie {}={}{}'
+               .format(len(matches), direction, name, value, attr_str))
+    return matches[0]
+  else:
+    if name.startswith('visitors_v'):
+      log.info('No match for {} cookie {}={}{}'.format(direction, name, value, attr_str))
+    cookie = Cookie(direction=direction, name=name, value=value, **attributes)
+    cookie.save()
+    return cookie
 
 
 def get_or_create_visitor(ip, cookies, user_agent, make_cookies=True):

@@ -2,6 +2,24 @@ from django.db import models
 from django.utils import timezone
 import urllib.parse
 
+
+class Cookie(models.Model):
+  name = models.CharField(max_length=4096)
+  value = models.CharField(max_length=4096)
+  direction = models.CharField(max_length=3, choices=(('set','set'), ('got','got')))
+  max_age = models.IntegerField(null=True, blank=True)
+  expires = models.DateTimeField(null=True, blank=True)
+  path = models.CharField(max_length=1023)
+  domain = models.CharField(max_length=127)
+  secure = models.NullBooleanField()
+  def __str__(self):
+    return '{}: {}'.format(self.name, self.value)
+  def __repr__(self):
+    fields = ('name', 'value', 'max_age', 'expires', 'path', 'domain', 'secure')
+    class_name, args_str = generic_repr(self, fields)
+    return '{}({})'.format(class_name, args_str)
+
+
 # An actual person. Could include many visitors (different devices).
 class User(models.Model):
   label = models.CharField(max_length=200)
@@ -38,6 +56,8 @@ class Visit(models.Model):
   path = models.CharField(max_length=4095)
   query_str = models.CharField(max_length=4095)
   referrer = models.URLField(max_length=4095, null=True, blank=True)
+  cookies_got = models.ManyToManyField(Cookie, related_name='visits_getting')
+  cookies_set = models.ManyToManyField(Cookie, related_name='visits_setting')
   visitor = models.ForeignKey(Visitor, models.PROTECT)
   def __str__(self):
     return '{}: {}'.format(self.timestamp, self.url)
