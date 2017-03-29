@@ -112,7 +112,7 @@ def monitor(request, this_visit):
     'visits': visits,
     'admin':admin,
     'start': start+1,
-    'end': min(end, start+len(visits)-1),
+    'end': min(end, start+len(visits)),
     'links': links,
   }
   return render(request, 'traffic/monitor.tmpl', context)
