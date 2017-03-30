@@ -9,8 +9,6 @@ import socket
 import logging
 log = logging.getLogger(__name__)
 
-#TODO: Fix bug where no visitors_v1 is set when a user visits http://nstoler.com/notepad, receives a
-#      301 to https, and retrieves the https url.
 #TODO: Grab info about the IP address at the time. Stuff like the ISP, ASN, and geoip data.
 #      That stuff can change, especially as IPv4 addresses are bought and sold increasingly.
 #      Maybe run a daemon separate from Django to do it in the background, to not hold up the
@@ -170,7 +168,7 @@ def get_visitor_user_and_label(ip, user_agent, cookie1, cookie2):
   visitor = get_exact_visitor(ip, user_agent, cookie1, cookie2)
   if visitor is None:
     # If no exact match, use the cookie(s) to look for similar Visitors.
-    visitors = get_visitors_by_cookie(cookie1, cookie2)
+    visitors = get_visitors_by_cookie((cookie1, cookie2))
     if visitors:
       user, label = pick_user_and_label(visitors)
       return None, user, label
@@ -202,26 +200,50 @@ def get_exact_visitor(ip, user_agent, cookie1, cookie2):
   return visitor
 
 
-def get_visitors_by_cookie(cookie1, cookie2):
+def get_visitors_by_cookie(cookies):
   """Search for Visitors by cookie (an "inexact" match).
-  Try matching by cookie1 first. If cookie1 is None, or no match is found, try cookie2.
+  First, look for Visitors where the cookie1 or cookie2 fields match, in that order. If either
+  cookie is None, skip trying to match on it.
+  Then try looking for Visitors with Visits where either cookie was set (in Visit.cookies_set).
   Returns a list of matching Visitors."""
-  if cookie1 is None and cookie2 is None:
-    return None
-  log.info('Searching for an inexact match for visitors_v1: {!r} or visitors_v2: {!r}.'
-           .format(cookie1, cookie2))
-  visitors = None
-  if cookie1 is not None:
-    visitors = Visitor.objects.filter(cookie1=cookie1)
-    if visitors:
-      log.info('Found {} Visitor(s) with visitors_v1 == {!r}'.format(len(visitors), cookie1))
-  if cookie2 is not None and not visitors:
-    visitors = Visitor.objects.filter(cookie2=cookie2)
-    if visitors:
-      log.info('Found {} Visitor(s) with visitors_v2 == {!r}'.format(len(visitors), cookie2))
+  if len(cookies) == 2:
+    log.info('Searching for an inexact match for visitors_v1: {!r} or visitors_v2: {!r}.'
+             .format(cookies[0], cookies[1]))
+  # Look for a Visitor with matching cookie1 or cookie2 fields.
+  visitors = get_visitors_by_cookie_property(cookies)
+  if not visitors:
+    visitors = get_visitors_by_cookies_set(cookies)
   if not visitors:
     log.info('Found no Visitor with either cookie.')
   return visitors
+
+
+def get_visitors_by_cookie_property(cookies):
+  """Find Visitors whose cookie1 or cookie2 fields match one of the given cookies."""
+  for i, cookie in enumerate(cookies):
+    if cookie is not None:
+      num = str(i+1)
+      cookie_selector = {'cookie'+num:cookie}
+      visitors = Visitor.objects.filter(**cookie_selector)
+      if visitors:
+        log.info('Found {} Visitor(s) with visitors_v{} == {!r}'
+                 .format(len(visitors), num, cookie))
+        return visitors
+  return ()
+
+
+def get_visitors_by_cookies_set(cookies):
+  """Look for Visitors where we previously set either cookie to them in an HTTP response.
+  A hit means we set the cookie on a previous visit, and now the client is sending it back to us
+  (confirming that it accepted it!)."""
+  for cookie in cookies:
+    if cookie is not None:
+      visitors = Visitor.objects.filter(visit__cookies_set__value=cookie)
+      if visitors:
+        log.info('Found {} Visitor(s) where the cookie {!r} was set in an HTTP response.'
+                 .format(len(visitors), cookie))
+        return visitors
+  return ()
 
 
 def pick_user_and_label(visitors):
