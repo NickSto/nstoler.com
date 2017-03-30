@@ -15,7 +15,7 @@ class Cookie(models.Model):
   def __str__(self):
     return '{}: {}'.format(self.name, self.value)
   def __repr__(self):
-    fields = ('name', 'value', 'max_age', 'expires', 'path', 'domain', 'secure')
+    fields = ('name', 'value', 'direction', 'max_age', 'expires', 'path', 'domain', 'secure')
     class_name, args_str = generic_repr(self, fields)
     return '{}({})'.format(class_name, args_str)
 
@@ -37,6 +37,9 @@ class Visitor(models.Model):
   user_agent = models.CharField(max_length=200, null=True, blank=True)
   label = models.CharField(max_length=200)
   user = models.ForeignKey(User, models.PROTECT)
+  # Version 1: The cookies are the old, loosely-defined type.
+  # Version 2: The cookies are strictly ones sent by the client.
+  version = models.SmallIntegerField()
   def __str__(self):
     data = {'ip':self.ip, 'cookie':self.cookie1, 'user_agent':self.user_agent}
     data['label'] = ''
@@ -105,6 +108,7 @@ class IpInfo(models.Model):
 
 
 def generic_repr(obj, attr_names):
+  #TODO: Use obj._meta.fields
   args = []
   for attr_name in attr_names:
     if hasattr(obj, attr_name):

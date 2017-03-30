@@ -110,11 +110,10 @@ def watch(source, ignore_via=(), ignore_ua=()):
       continue
     # Skip requests that weren't served directly by Nginx.
     if fields['handler'] == 'django':
-      if fields['uid_was_set']:
-        logging.info('Request served by {handler}, but $uid_set is present, indicating it\'s a '
-                     'first-time visit to a dynamic page. Adding the {} value {cookies[1]!r} to '
-                     'the Visitor..'.format(COOKIE2_NAME, **fields))
-        add_cookie2(**fields)
+      if fields['uid_set']:
+        logging.info('Request served by django, but $uid_set is present. Adding this cookie to '
+                     'Visit.cookies_set, since django didn\'t see it.')
+        add_cookie2_to_old_visit(**fields)
       else:
         logging.info('Ignoring request already handled by {handler}.'.format(**fields))
       continue
@@ -134,8 +133,8 @@ def watch(source, ignore_via=(), ignore_ua=()):
       logging.info('Ignoring request from user agent "{user_agent}"'.format(**fields))
       continue
     # Get the Visitor matching these identifiers or create one.
-    visitor = traffic.lib.get_or_create_visitor(fields['ip'], fields['cookies'],
-                                                fields['user_agent'], make_cookies=False)
+    main_cookies = get_cookie_values(fields['cookies'], COOKIE1_NAME, COOKIE2_NAME)
+    visitor = traffic.lib.get_or_create_visitor(fields['ip'], main_cookies, fields['user_agent'])
     # Create this Visit and save it.
     visit = traffic.models.Visit(
       timestamp=datetime.fromtimestamp(fields['timestamp'], tz=pytz.utc),
@@ -147,6 +146,16 @@ def watch(source, ignore_via=(), ignore_ua=()):
       referrer=fields['referrer'],
       visitor=visitor
     )
+    visit.save()
+    # Set the cookies for the visit.
+    cookies_got = create_cookies_got(fields['cookies'])
+    visit.cookies_got.add(*cookies_got)
+    if fields['uid_set']:
+      cookie = get_cookie_from_uid(fields['uid_set'])
+      if cookie:
+        visit.cookies_set.add(cookie)
+        logging.info('$uid_set is present. Added {}={} to the Visit.'
+                     .format(cookie.name, cookie.value))
     visit.save()
     logging.info('Created visit {}.'.format(visit.id))
 
@@ -204,16 +213,11 @@ def parse_log_line(line_raw):
       if fields['code'] != '':
         logging.warn('Non-integer, non-"-" HTTP response code: "{code}".'.format(**fields))
     # Cookies
-    cookie1 = get_cookie(fields['cookies_str'], COOKIE1_NAME)
-    cookie2 = get_cookie(fields['cookies_str'], COOKIE2_NAME)
-    if fields['uid_set'] and cookie2 is None:
-      logging.info('cookie2 is blank but Nginx recorded a $uid_set of "{}".'
-                   .format(fields['uid_set']))
-      cookie2 = parse_uid_field(fields['uid_set'], COOKIE2_NAME)
-      fields['uid_was_set'] = True
-    else:
-      fields['uid_was_set'] = False
-    fields['cookies'] = (cookie1, cookie2)
+    fields['cookies'] = http.cookies.SimpleCookie()
+    try:
+      fields['cookies'].load(fields['cookies_str'])
+    except http.cookies.CookieError:
+      pass
     # Path, query string.
     url_parts = urllib.parse.urlparse(fields['full_path'])
     fields['path'] = url_parts[2]
@@ -224,38 +228,48 @@ def parse_log_line(line_raw):
     return fields
 
 
-def parse_uid_field(uid_set, cookie_name=COOKIE2_NAME):
+def get_cookie_values(cookies, *cookie_names):
+  cookie_values = []
+  for cookie_name in cookie_names:
+    if cookie_name in cookies:
+      cookie_values.append(cookies.get(cookie_name).value)
+    else:
+      cookie_values.append(None)
+  return cookie_values
+
+
+def create_cookies_got(cookies):
+  import traffic.lib
+  cookies_got = []
+  for name, morsel in cookies.items():
+    cookie = traffic.lib.get_or_create_cookie('got', name, morsel.value)
+    cookies_got.append(cookie)
+  return cookies_got
+
+
+def get_cookie_from_uid(uid):
+  import traffic.lib
+  cookie_name, cookie_value = parse_uid_field(uid)
+  return traffic.lib.get_or_create_cookie('set', cookie_name, cookie_value)
+
+
+def parse_uid_field(uid_set):
   """Parse the $uid_set field from Nginx's logs and, if valid, translate its value into the
   corresponding cookie value."""
   import traffic.lib
   fields = uid_set.split('=')
   if len(fields) != 2:
+    logging.warn('Error parsing $uid_set "{}".'.format(uid_set))
     return None
   name, uid = fields
-  if name != cookie_name:
-    return None
-  return traffic.lib.encode_cookie(uid)
+  return name, traffic.lib.encode_cookie(uid)
 
 
-def get_cookie(cookie_line, cookie_name=COOKIE1_NAME):
-  parser = http.cookies.SimpleCookie()
-  try:
-    parser.load(cookie_line)
-  except http.cookies.CookieError:
-    return None
-  cookie = parser.get(cookie_name)
-  if cookie:
-    return cookie.value
-  else:
-    return None
-
-
-def add_cookie2(timestamp=None, ip=None, cookies=None, path=None, query_str=None, referrer=None,
-                user_agent=None, **kwargs):
+def add_cookie2_to_old_visit(uid_set=None, timestamp=None, ip=None, cookies=None, path=None,
+                             query_str=None, referrer=None, user_agent=None, **kwargs):
   import traffic.lib
-  if not (timestamp and ip and cookies):
+  if not (timestamp and ip and uid_set):
     return
-  cookie1, cookie2 = cookies
   # Build a set of characteristics to use to find in the database the same request Nginx saw.
   selectors = {'visitor__ip':ip}
   if path:
@@ -266,21 +280,18 @@ def add_cookie2(timestamp=None, ip=None, cookies=None, path=None, query_str=None
     selectors['referrer'] = referrer
   if user_agent:
     selectors['visitor__user_agent'] = user_agent
-  if cookie1:
-    selectors['visitor__cookie1'] = cookie1
+  if cookies and COOKIE1_NAME in cookies:
+    selectors['visitor__cookie1'] = cookies.get(COOKIE1_NAME).value
   visit = find_visit_by_timestamp(timestamp, selectors)
   if not visit:
     logging.warn('Looked in the traffic database but could not find the visit corresponding to the '
                  'request logged by Nginx.')
     return
-  if not visit.visitor.cookie2:
-    visit.visitor.cookie2 = cookie2
-    visit.visitor.save()
-    cookie = traffic.lib.get_or_create_cookie('set', COOKIE2_NAME, cookie2)
-    visit.cookies_set.add(cookie)
-    visit.save()
-    logging.info('Successfully identified the visit corresponding to the Nginx request and added '
-                 'the cookie.')
+  cookie2 = get_cookie_from_uid(uid_set)
+  visit.cookies_set.add(cookie2)
+  visit.save()
+  logging.info('Successfully identified the visit corresponding to the Nginx request and added '
+               'cookie {}.'.format(cookie2))
   return
 
 
@@ -299,8 +310,13 @@ def find_visit_by_timestamp(timestamp, selectors={}, tolerance=0.05, max_tries=8
     elif len(visits) > 1:
       # If we found too many, shorten the timestamp tolerance a little.
       tolerance = tolerance/1.25
+  logging.info('Tried {} times to find a Visit corresponding to the Nginx one we saw, and found {} '
+               'Visit(s).'.format(tries, len(visits)))
   if len(visits) == 1:
-    return visits[0]
+    visit = visits[0]
+    logging.info('The timestamp difference (nginx - django) was {} sec.'
+                 .format(timestamp-visit.timestamp.timestamp()))
+    return visit
   else:
     return None
 

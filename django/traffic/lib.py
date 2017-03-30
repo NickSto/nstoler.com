@@ -28,9 +28,9 @@ def add_visit(view):
   #TODO: This might be better written as middleware, but I'll have to look into it.
   @functools.wraps(view)
   def wrapped_view(request, *nargs, **kwargs):
-    todo_cookies, visit = add_visit_get_todo_cookies(request)
+    visit = get_or_create_visit_and_visitor(request)
     response = view(request, *nargs, **kwargs)
-    return set_todo_cookies(todo_cookies, response)
+    return set_cookies(visit, response)
   return wrapped_view
 
 
@@ -40,53 +40,21 @@ def add_and_get_visit(view):
   #TODO: This might be better written as middleware, but I'll have to look into it.
   @functools.wraps(view)
   def wrapped_view(request, *nargs, **kwargs):
-    todo_cookies, visit = add_visit_get_todo_cookies(request)
+    visit = get_or_create_visit_and_visitor(request)
     response = view(request, visit, *nargs, **kwargs)
-    return set_todo_cookies(todo_cookies, response)
+    return set_cookies(visit, response)
   return wrapped_view
 
 
-def add_visit_get_todo_cookies(request):
-  cookies = get_cookies(request)
+def get_or_create_visit_and_visitor(request):
+  """Do the actual work of logging the visit. Return the Visit object."""
+  cookies_got = get_cookies(request)
   headers = request.META
   ip = headers.get('REMOTE_ADDR')
   user_agent = headers.get('HTTP_USER_AGENT')
-  visitor = get_or_create_visitor(ip, cookies, user_agent)
-  visit = Visit(
-    method=request.method,
-    scheme=request.scheme,
-    host=request.get_host(),
-    path=request.path_info,
-    query_str=request.META.get('QUERY_STRING') or request.GET.urlencode(),
-    referrer=headers.get('HTTP_REFERER'),
-    visitor=visitor
-  )
-  visit.save()
-  todo_cookies = []
-  if cookies[0] is None and visitor.cookie1 is not None:
-    todo_cookies.append({'name':'visitors_v1', 'value':visitor.cookie1, 'max_age':COOKIE_MAX_AGE})
-  cookies_got, cookies_set = create_got_set_cookies(request.COOKIES, todo_cookies)
-  visit.cookies_got.add(*cookies_got)
-  visit.cookies_set.add(*cookies_set)
-  visit.save()
-  return todo_cookies, visit
-
-
-def set_todo_cookies(todo_cookies, response):
-  for cookie in todo_cookies:
-    log.info('Setting {name} to {value!r}.'.format(**cookie))
-    kwargs = {}
-    for key in ('max_age', 'expires', 'path', 'domain', 'secure', 'httponly'):
-      if key in cookie:
-        kwargs[key] = cookie[key]
-    response.set_cookie(cookie['name'], cookie['value'], **kwargs)
-  return response
-
-
-def make_cookie1():
-  # Make a legacy visitors_v1 cookie:
-  # 16 random characters chosen from my own base64-like alphabet I chose long ago.
-  return ''.join([random.choice(ALPHABET1) for i in range(16)])
+  visitor = get_or_create_visitor(ip, cookies_got, user_agent)
+  visit = create_visit(request, visitor)
+  return visit
 
 
 def get_cookies(request):
@@ -95,13 +63,46 @@ def get_cookies(request):
   return (cookie1, cookie2)
 
 
-def create_got_set_cookies(request_cookies, todo_cookies):
+def set_cookies(visit, response):
+  for cookie in visit.cookies_set.all():
+    log.info('Setting {} to {!r}.'.format(cookie.name, cookie.value))
+    cookie_attributes = {}
+    for field in ('max_age', 'expires', 'path', 'domain', 'secure', 'httponly'):
+      if hasattr(cookie, field):
+        cookie_attributes[field] = getattr(cookie, field)
+    response.set_cookie(cookie.name, cookie.value, **cookie_attributes)
+  return response
+
+
+def create_visit(request, visitor):
+  visit = Visit(
+    method=request.method,
+    scheme=request.scheme,
+    host=request.get_host(),
+    path=request.path_info,
+    query_str=request.META.get('QUERY_STRING') or request.GET.urlencode(),
+    referrer=request.META.get('HTTP_REFERER'),
+    visitor=visitor
+  )
+  visit.save()
+  # Take care of the cookies received and sent.
+  cookies_got, cookies_set = create_cookies_got_set(request.COOKIES)
+  visit.cookies_got.add(*cookies_got)
+  visit.cookies_set.add(*cookies_set)
+  visit.save()
+  return visit
+
+
+def create_cookies_got_set(request_cookies):
   cookies_got = []
   for name, value in request_cookies.items():
     cookies_got.append(get_or_create_cookie('got', name, value))
-  cookies_set = []
-  for cookie in todo_cookies:
-    cookies_set.append(get_or_create_cookie('set', **cookie))
+  if request_cookies.get('visitors_v1') is None:
+    cookie1_properties = {'name':'visitors_v1', 'value':make_cookie1(), 'max_age':COOKIE_MAX_AGE}
+    cookie1 = get_or_create_cookie('set', **cookie1_properties)
+    cookies_set = [cookie1]
+  else:
+    cookies_set = []
   return cookies_got, cookies_set
 
 
@@ -124,69 +125,55 @@ def get_or_create_cookie(direction, name=None, value=None, **attributes):
     return cookie
 
 
-def get_or_create_visitor(ip, cookies, user_agent, make_cookies=True):
-  cookie1, cookie2 = cookies
-  visitor, user, label = get_visitor_user_label(ip, user_agent, cookie1, cookie2)
+def make_cookie1():
+  # Make a legacy visitors_v1 cookie:
+  # 16 random characters chosen from my own base64-like alphabet I chose long ago.
+  return ''.join([random.choice(ALPHABET1) for i in range(16)])
+
+
+def get_or_create_visitor(ip, cookies_got, user_agent):
+  """Find a Visitor by ip, user_agent, and cookies sent (only visitors_v1/2).
+  If no exact match for the Visitor is found, create one. In that case, if a Visitor with a matching
+  cookie can be found, assume it's the same User."""
+  cookie1, cookie2 = cookies_got
+  visitor, user, label = get_visitor_user_and_label(ip, user_agent, cookie1, cookie2)
   if not user:
     user = User()
     user.save()
     log.info('Created new User (id {})'.format(user.id))
-  if visitor:
-    # Fill in the cookie1 or cookie2 field on the Visitor if it's blank.
-    # This effectively corrects data already recorded, in case the Visitor didn't receive both
-    # cookies on the previous visit. This can happen if the Visitor's first visit was to a static
-    # page, getting Nginx's cookie2 but no cookie1 from Django. But since this is rewriting history,
-    # be very careful: only do this if the other cookie is present, meaning we can be sure enough
-    # we've identified the same Visitor.
-    if visitor.cookie1 is None and visitor.cookie2 is not None:
-      if cookie1 is None and make_cookies:
-        cookie1 = make_cookie1()
-        log.info('Saw a repeat Visitor with a visitors_v2 of {!r} but no visitors_v1. Assigning '
-                 '{!r}..'.format(visitor.cookie2, cookie1))
-      if cookie1 is not None:
-        visitor.cookie1 = cookie1
-        visitor.save()
-    elif visitor.cookie2 is None and visitor.cookie1 is not None and cookie2 is not None:
-      #TODO: Obtain the cookie2 that Nginx set in its response, if possible.
-      log.info('Saw a repeat Visitor with a visitors_v1 of {!r} but no visitors_v2. Assigning '
-               '{!r}..'.format(visitor.cookie1, cookie2))
-      visitor.cookie2 = cookie2
-      visitor.save()
-  else:
-    if cookie1 is None and make_cookies:
-      cookie1 = make_cookie1()
-      log.info('Created a new visitors_v1 ({!r}) for a new Visitor.'.format(cookie1))
-    #TODO: Obtain the cookie2 that Nginx set in its response, if possible.
+  if not visitor:
     visitor = Visitor(
       ip=ip,
       user_agent=user_agent,
       cookie1=cookie1,
       cookie2=cookie2,
       label=label,
-      user=user
+      user=user,
+      version=2,
     )
     visitor.save()
     log.info('Created a new Visitor (id {}).'.format(visitor.id))
   return visitor
 
 
-def get_visitor_user_label(ip, user_agent, cookie1, cookie2):
-  """Look for an existing Visitor matching the current one."""
+def get_visitor_user_and_label(ip, user_agent, cookie1, cookie2):
+  """Look for an existing Visitor matching the current one.
+  Returns:
+  visitor: Only an exact match (identical ip, user_agent, cookie1, and cookie2 fields).
+    If multiple Visitors match, return the first one. If none match, return None.
+  user: If an exact match, the User for that Visitor. If no exact match, look for Visitors with a
+    matching cookie. If any are found, return the User for the first Visitor. Otherwise, return None.
+  label: If an exact match, return the label for that Visitor. If no exact match, find Visitors with
+    a matching cookie and return the common start of their labels. Otherwise, return an empty string.
+  """
   # Does this Visitor already exist?
   visitor = get_exact_visitor(ip, user_agent, cookie1, cookie2)
   if visitor is None:
     # If no exact match, use the cookie(s) to look for similar Visitors.
     visitors = get_visitors_by_cookie(cookie1, cookie2)
     if visitors:
-      # Take the label for the new visitor from the existing ones.
-      labels = [visitor.label for visitor in visitors]
-      label = get_common_start(labels)
-      ellipsis = ', ...'
-      if len(labels) <= 5:
-        ellipsis = ''
-      log.info('Using the label {!r}, derived from existing label(s): "{}"{}'
-               .format(label, '", "'.join(labels[:5]), ellipsis))
-      return None, visitors[0].user, label
+      user, label = pick_user_and_label(visitors)
+      return None, user, label
     else:
       return None, None, ''
   else:
@@ -194,7 +181,10 @@ def get_visitor_user_label(ip, user_agent, cookie1, cookie2):
 
 
 def get_exact_visitor(ip, user_agent, cookie1, cookie2):
-  """Get a Visitor by exact match."""
+  """Get a Visitor by exact match.
+  It will find any Visitor with the same ip, user_agent, cookie1, and cookie2. If any of these are
+  None, the field in the Visitor must be null too. If more than one match is found, the first will
+  be returned. Returns None if no matches are found."""
   log.info('Searching for an exact match for ip: {!r}, visitors_v1: {!r}, visitors_v2: {!r}, and '
            'user_agent: {!r}..'.format(ip, cookie1, cookie2, user_agent))
   try:
@@ -213,6 +203,11 @@ def get_exact_visitor(ip, user_agent, cookie1, cookie2):
 
 
 def get_visitors_by_cookie(cookie1, cookie2):
+  """Search for Visitors by cookie (an "inexact" match).
+  Try matching by cookie1 first. If cookie1 is None, or no match is found, try cookie2.
+  Returns a list of matching Visitors."""
+  if cookie1 is None and cookie2 is None:
+    return None
   log.info('Searching for an inexact match for visitors_v1: {!r} or visitors_v2: {!r}.'
            .format(cookie1, cookie2))
   visitors = None
@@ -227,6 +222,18 @@ def get_visitors_by_cookie(cookie1, cookie2):
   if not visitors:
     log.info('Found no Visitor with either cookie.')
   return visitors
+
+
+def pick_user_and_label(visitors):
+  # Take the label for the new visitor from the existing ones.
+  labels = [visitor.label for visitor in visitors]
+  label = get_common_start(labels)
+  ellipsis = ', ...'
+  if len(labels) <= 5:
+    ellipsis = ''
+  log.info('Using the label {!r}, derived from existing label(s): "{}"{}'
+           .format(label, '", "'.join(labels[:5]), ellipsis))
+  return visitors[0].user, label
 
 
 def get_common_start(labels):

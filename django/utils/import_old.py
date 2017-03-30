@@ -202,7 +202,8 @@ def transfer_traffic(cursor, save=False, limit=None, resume=None):
                                        cookie1=cookie,
                                        user=user,
                                        label=label,
-                                       user_agent=user_agent)
+                                       user_agent=user_agent,
+                                       version=1)
       visitor.save()
       visitor_ids[visitor_id] = visitor
     scheme, host, path, query_str = parse_page(row['page'])

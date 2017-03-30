@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
 from django.conf import settings
 from .models import Note, Page
-from traffic.lib import add_visit, add_and_get_visit, set_todo_cookies
+from traffic.lib import add_visit, add_and_get_visit
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 import random as rand
 import string

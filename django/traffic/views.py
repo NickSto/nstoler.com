@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.conf import settings
-from .lib import add_visit, add_and_get_visit, set_todo_cookies, is_robot
+from .lib import add_visit, add_and_get_visit, is_robot
 from .models import Visit
 from myadmin.lib import get_admin_cookie
 import logging
