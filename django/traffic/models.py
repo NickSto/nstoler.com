@@ -1,12 +1,13 @@
 from django.db import models
 from django.utils import timezone
+from utils import ModelMixin
 import urllib.parse
 
 
-class Cookie(models.Model):
+class Cookie(ModelMixin, models.Model):
+  direction = models.CharField(max_length=3, choices=(('set','set'), ('got','got')))
   name = models.CharField(max_length=4096)
   value = models.CharField(max_length=4096)
-  direction = models.CharField(max_length=3, choices=(('set','set'), ('got','got')))
   max_age = models.IntegerField(null=True, blank=True)
   expires = models.DateTimeField(null=True, blank=True)
   path = models.CharField(max_length=1023)
@@ -14,23 +15,16 @@ class Cookie(models.Model):
   secure = models.NullBooleanField()
   def __str__(self):
     return '{}: {}'.format(self.name, self.value)
-  def __repr__(self):
-    fields = ('name', 'value', 'direction', 'max_age', 'expires', 'path', 'domain', 'secure')
-    class_name, args_str = generic_repr(self, fields)
-    return '{}({})'.format(class_name, args_str)
 
 
 # An actual person. Could include many visitors (different devices).
-class User(models.Model):
+class User(ModelMixin, models.Model):
   label = models.CharField(max_length=200)
   def __str__(self):
     return self.label
-  def __repr__(self):
-    class_name, args_str = generic_repr(self, ('id', 'label',))
-    return '{}({})'.format(class_name, args_str)
 
 
-class Visitor(models.Model):
+class Visitor(ModelMixin, models.Model):
   ip = models.GenericIPAddressField()
   cookie1 = models.CharField(max_length=24, null=True, blank=True)
   cookie2 = models.CharField(max_length=24, null=True, blank=True)
@@ -46,12 +40,9 @@ class Visitor(models.Model):
     if self.label:
       data['label'] = ' ({})'.format(self.label)
     return '{ip}{label} "{cookie}": {user_agent}'.format(**data)
-  def __repr__(self):
-    class_name, args_str = generic_repr(self, ('ip', 'cookie1', 'cookie2', 'label', 'user_agent'))
-    return '{}({})'.format(class_name, args_str)
 
 
-class Visit(models.Model):
+class Visit(ModelMixin, models.Model):
   timestamp = models.DateTimeField(default=timezone.now)
   method = models.CharField(max_length=8)
   scheme = models.CharField(max_length=8)
@@ -64,9 +55,6 @@ class Visit(models.Model):
   visitor = models.ForeignKey(Visitor, models.PROTECT)
   def __str__(self):
     return '{}: {}'.format(self.timestamp, self.url)
-  def __repr__(self):
-    class_name, args_str = generic_repr(self, ('timestamp', 'method', 'url', 'referrer'))
-    return '{}({})'.format(class_name, args_str)
   @property
   def url(self):
     url = urllib.parse.urlunparse((self.scheme, self.host, self.path, None, self.query_str, None))
@@ -83,11 +71,16 @@ class Visit(models.Model):
     self.host = host
     self.path = path
     self.query_str = query_str
+  def __repr__(self):
+    class_name, args = self.generic_repr_bits(first_fields=('id', 'url'),
+                                              skip_fields=('scheme', 'host', 'path', 'query_str'))
+    args_strs = [key+'='+value for key, value in args if key is not None]
+    return '{}({})'.format(class_name, ', '.join(args_strs))
 
 
 # Since this data can change, there can be multiple entries for the same IP address, as it changes
 # over time.
-class IpInfo(models.Model):
+class IpInfo(ModelMixin, models.Model):
   ip = models.GenericIPAddressField(db_index=True)
   label = models.CharField(max_length=200)
   version = models.SmallIntegerField(choices=((4,'4'), (6,'6')))
@@ -100,20 +93,3 @@ class IpInfo(models.Model):
   town = models.CharField(max_length=127)
   zip = models.CharField(max_length=31)
   timestamp = models.DateTimeField(default=timezone.now)  # When this info was current.
-  def __repr__(self):
-    fields = ('ip', 'label', 'version', 'timestamp', 'asn', 'isp', 'latitude', 'longitude',
-              'country', 'region', 'town', 'zip')
-    class_name, args_str = generic_repr(self, fields)
-    return '{}({})'.format(class_name, args_str)
-
-
-def generic_repr(obj, attr_names):
-  #TODO: Use obj._meta.fields
-  args = []
-  for attr_name in attr_names:
-    if hasattr(obj, attr_name):
-      value = getattr(obj, attr_name)
-      if value is not None and value != '':
-        args.append('{}={!r}'.format(attr_name, value))
-  class_name = type(obj).__name__
-  return class_name, ', '.join(args)
