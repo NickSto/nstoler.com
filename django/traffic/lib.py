@@ -182,9 +182,13 @@ def get_exact_visitor(ip, user_agent, cookie1, cookie2):
   """Get a Visitor by exact match.
   It will find any Visitor with the same ip, user_agent, cookie1, and cookie2. If any of these are
   None, the field in the Visitor must be null too. If more than one match is found, the first will
-  be returned. Returns None if no matches are found."""
+  be returned. Returns None if no matches are found.
+  Note, though, that this requires at least one cookie. Nothing will be returned otherwise."""
   log.info('Searching for an exact match for ip: {!r}, visitors_v1: {!r}, visitors_v2: {!r}, and '
            'user_agent: {!r}..'.format(ip, cookie1, cookie2, user_agent))
+  if cookie1 is None and cookie2 is None:
+    log.info('Both cookies are None. Can\'t get an exact match with just ip and user_agent.')
+    return None
   try:
     # An exact match?
     visitor = Visitor.objects.get(ip=ip, user_agent=user_agent, cookie1=cookie1, cookie2=cookie2)
