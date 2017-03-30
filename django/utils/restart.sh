@@ -22,6 +22,7 @@ function main {
     www_root="$WWW_ROOT_DEFAULT"
   fi
 
+  #TODO: Print the git commit to an "updates" log file (when it changes).
   cd "$www_root/logs"
   printf "Restarting Nginx..\n"
   sudo service nginx restart
