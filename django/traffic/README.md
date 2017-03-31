@@ -24,10 +24,10 @@ Object model
 ------------
 Disclaimer: The object model may seem a little odd, which is partially due to its legacy dating back to my site's days in Perl CGI on a shared hosting provider.
 
-### Visit
+#### Visit
 The basic unit of the system. Records a single HTTP request, with information like the url, the referrer, and timestamp. It also records the cookies the client sent and the ones the server sent back.
 
-### Visitor
+#### Visitor
 This is an object storing client-specific information. A new Visitor is created for every unique combination of ip address, user agent, and the two main cookies. If a new HTTP request occurs with the same information as an existing Visitor, the Visit is linked with the existing Visitor. If it changed, a new Visitor is created.
 
 The rules for when the cookie fields were set used to be complex. The `version` field can be used to tell whether the new or old rules were being used when the Visitor was created.
@@ -38,7 +38,7 @@ The rules for when the cookie fields were set used to be complex. The `version` 
 
 One issue with the Visitor object that's only become more important with the new cookie rules is the fact that the immutable Visitor identifiers (ip, user_agent, cookies) can change. A simple browser upgrade will change the user agent, creating a new Visitor. On a client's first visit, the created Visitor will have no cookies. On the very next request, the client sends our cookies back, creating a new Visitor with these cookies. I'd like a way to link Visitors which are clearly the same person. That's where the next level in the hierarchy comes in:
 
-### User
+#### User
 
 This object is a later addition that aims to represent a real person. Its main use is to link Visitors with different identifying attributes but the same cookies. So when a person takes their laptop to a different ip address, the Visitor that will be created will be linked to the same User as their previous Visitor. The same happens in the above scenario where a client visits for the first time, sending no cookies, but then on the next request sends back the cookies the server just sent them. The administrator (hi) is also free to link up Visitors they know are the same person (e.g. Visitors for someone's laptop and phone browsers).
 
@@ -52,3 +52,5 @@ I'm not sure how serious to consider this bug. It requires the somewhat unlikely
 Possible solutions include not making Visitors unique for the same (ip, user_agent, cookies) combination. Or, specifically, allowing creation of a new Visitor when the cookies are null and all I have is an ip and user agent. This doesn't sound too bad at first, but then that means if a bot that doesn't respect cookies (very common) keeps hitting my site, it will keep being assigned new Visitors and Users. Even though it'd be pretty easy to link all the visits by ip and user_agent, which would give a pretty low false positive rate.
 
 Maybe the solution here is to stop trying to fit all this correlation into the object model. Instead, play the safe route and split Visitors who only share an ip and user_agent, then add tools to the Monitor so I can click and get a list of all visits from the same ip/user_agent combo.
+
+**Update**: This is now fixed using the solution in the last paragraph (except the Monitor tools part).
