@@ -15,11 +15,12 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+import traffic.views
 
 urlpatterns = [
   # url(r'^admin/', include(admin.site.urls)),
   url(r'^misc/', include('misc.urls')),
-  url(r'^traffic$', include('traffic.urls')),  #TODO: Combine with traffic/
+  url(r'^traffic$', traffic.views.monitor, name='traffic_monitor'),
   url(r'^traffic/', include('traffic.urls')),
   url(r'^admin/', include('myadmin.urls')),
   url(r'^wikihistory/', include('wikihistory.urls')),

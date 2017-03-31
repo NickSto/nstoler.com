@@ -13,7 +13,7 @@ PER_PAGE_DEFAULT = 50
 @add_visit
 def monitor_redirect(request):
   """Redirect to the monitor() view, preserving the query string."""
-  path = reverse('traffic:monitor')
+  path = reverse('traffic_monitor')
   query_string = request.META.get('QUERY_STRING') or request.GET.urlencode()
   if query_string:
     path += '?'+query_string
@@ -65,7 +65,7 @@ def monitor(request, this_visit):
     # Then redirect to the last possible page.
     new_params['p'] = (total_visits-1) // per_page + 1
     query_str = _construct_query_str(new_params, {'user':default_user})
-    return redirect(reverse('traffic:monitor')+query_str)
+    return redirect(reverse('traffic_monitor')+query_str)
   # Obtain visits list from database.
   if user is not None:
     visits_unbounded = Visit.objects.filter(visitor__user__id=user).order_by('-id')[start:]
@@ -119,7 +119,7 @@ def monitor(request, this_visit):
 
 
 def _construct_links(link_data, params, extra_defaults):
-  base = reverse('traffic:monitor')
+  base = reverse('traffic_monitor')
   links = []
   for text, param, value in link_data:
     params_tmp = params.copy()
