@@ -1,8 +1,8 @@
 *.pyc
 __pycache__
-django/.venv
-django/protected_settings.py
-django/db.sqlite*
+.venv
+protected_settings.py
+db.sqlite*
 static/img/
 static/media/
 *.sublime-project
