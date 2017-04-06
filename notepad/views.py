@@ -34,28 +34,13 @@ def view(request, page_name):
     if format == 'plain':
       text += note.content
     else:
-      lines = _format_note(note.content)
-      notes.append((note, lines))
+      content_formatted = urlize(escape(note.content))
+      notes.append((note, content_formatted))
   if format == 'plain':
     return HttpResponse(text, content_type='text/plain; charset=UTF-8')
   else:
     context = {'page':page_name, 'notes':notes, 'admin':admin}
-    return render(request, 'notepad/notes.tmpl', context)
-
-
-def _format_note(content):
-  if content:
-    lines = content.splitlines()
-  else:
-    lines = ['']
-  lines_formatted = []
-  for line in lines:
-    line = escape(line)
-    line = urlize(line)
-    if line == '':
-      line = ' '
-    lines_formatted.append(line)
-  return lines_formatted
+    return render(request, 'notepad/view.tmpl', context)
 
 
 @add_and_get_visit

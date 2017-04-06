@@ -1,0 +1,68 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}{{ page }} - Notepad{% endblock %}
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'notepad/css/view.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+      <h2 id="title">Notepad</h2>
+
+      <div class="buttons">
+        <a class="btn btn-default" href="#bottom">To bottom</a>
+        <a class="btn btn-default" href="{% url 'notepad:random' %}">Random page</a>
+      </div>
+      <form name='delete_notes' method='post' action="{% url 'notepad:delete' page %}">
+        {% csrf_token %}
+        <ul id="notes" class="list-group">
+          <li class="list-group-item">
+            <h3 class="page-name">{{ page }}</h3>
+          </li>
+          {% for note, content in notes %}
+            {% if forloop.last %}
+              <a id="bottom"></a>
+            {% endif %}
+            <li id="note_{{ note.id }}" class="note list-group-item">
+              <input type="checkbox" class="checkbox" name="note_{{ note.id }}">
+              {% autoescape off %}
+                <div class="content">{{ content }}</div>
+              {% endautoescape %}
+              <div class="clearfix"></div>
+            </li>
+          {% empty %}
+            <li class="note list-group-item">
+              <div class="content">Nothing here yet!
+Try adding something with the form below!</div>
+              <div class="clearfix"></div>
+            </li>
+          {% endfor %}
+        </ul>
+
+        <footer class="buttons">
+          <input type="hidden" name="page" value="{{ page }}">
+          <div class="ruhuman">
+            <label for="site">Site:</label>
+            <input type="text" name="site">
+          </div>
+          <input type="submit" id="delete" class="btn btn-default" value="Delete selected notes">
+        </footer>
+      </form>
+
+      <section id="add_note">
+        <h4 class="instruction">Add a Note</h4>
+        <form name='add_note' method='post' action="{% url 'notepad:add' page %}" >
+          {% csrf_token %}
+          <input type="hidden" name="page" value="{{ page }}">
+          <div class="ruhuman">
+            <label for="site">Site:</label>
+            <input type="text" name="site">
+          </div>
+          <div class="field">
+            <textarea name="content" rows='3'></textarea>
+          </div>
+          <input type="submit" class="btn btn-default" value="Submit">
+        </form>
+      </section>
+{% endblock content %}
