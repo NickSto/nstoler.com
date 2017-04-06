@@ -22,10 +22,27 @@
   margin-bottom: 10px;
 }
 
-.content {
+pre.content {
   float: right;
   width: calc(100% - 25px);
   white-space: pre-wrap;
+  /* Un-style the pre element. This is part of a workaround for a longstanding, not-totally-fixed
+   * Firefox bug (https://bugzilla.mozilla.org/show_bug.cgi?id=116083) where setting
+   * "white-space: pre-wrap" gives the right visual effect, but on copy/paste, all whitespace is
+   * lost in some situations. Instead, I'm using a <pre> tag which always copies the right content,
+   * and removing all the pre-specific features I don't want. Also, remove all the styling Bootstrap
+   * applies to <pre>'s.
+   */
+  word-break: normal;
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size: 14px;
+  line-height: 1.42857142857;
+  color: #333;
+  border: none;
+  border-radius: 0;
+  background-color: #fff;
+  padding: 0;
+  margin: 0;
 }
 
 .clearfix {

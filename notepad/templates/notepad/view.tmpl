@@ -27,7 +27,7 @@
             <li id="note_{{ note.id }}" class="note list-group-item">
               <input type="checkbox" class="checkbox" name="note_{{ note.id }}">
               {% autoescape off %}
-                <div class="content">{{ content }}</div>
+                <pre class="content">{{ content }}</pre>
               {% endautoescape %}
               <div class="clearfix"></div>
             </li>
