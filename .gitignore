@@ -11,6 +11,4 @@ static/media/
 1.0/protect/*.tsv
 *.log
 *.log.gz
-static/css
-static/js
 static/.well-known
