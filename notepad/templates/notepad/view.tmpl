@@ -26,6 +26,46 @@
             {% endif %}
             <li id="note_{{ note.id }}" class="note list-group-item">
               <input type="checkbox" class="checkbox" name="note_{{ note.id }}">
+              {% if admin %}
+                <div class="admin">
+                  <table class="table table-bordered table-condensed">
+                    <tr class="labels">
+                      <td>id</td>
+                      <td>deleted</td>
+                      {% if note.visit %}
+                        <td>added</td>
+                        <td>IP</td>
+                        {% if note.visit.visitor.label %}
+                          <td>label</td>
+                        {% endif %}
+                        <td>user</td>
+                        <td>cookie</td>
+                      {% endif %}
+                    </tr>
+                    <tr class="values">
+                      <td>{{ note.id }}</td>
+                      <td>{{ note.deleted }}</td>
+                      {% if note.visit %}
+                        <td>{{ note.visit.timestamp }} UTC</td>
+                        <td>
+                          <a href="http://whatismyipaddress.com/ip/{{ note.visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ note.visit.visitor.ip }}</a>
+                        </td>
+                        {% if note.visit.visitor.label %}
+                          <td>{{ note.visit.visitor.label }}</td>
+                        {% endif %}
+                        <td><a href="{% url 'traffic_monitor' %}?user={{ note.visit.visitor.user.id }}">{{ note.visit.visitor.user.id }}</a></td>
+                        <td>{{ note.visit.visitor.cookie1 }}</td>
+                      {% endif %}
+                    </tr>
+                    {% if note.visit %}
+                      <tr>
+                        <td class="labels">user agent</td>
+                        <td class="values" colspan="6">{{ note.visit.visitor.user_agent }}</td>
+                      </tr>
+                    {% endif %}
+                  </table>
+                </div>
+              {% endif %}
               {% autoescape off %}
                 <pre class="content">{{ content }}</pre>
               {% endautoescape %}
