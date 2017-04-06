@@ -29,7 +29,7 @@ function main {
   # Shut everything down.
   printf "Shutting processes down..\n"
   set +e
-  sudo pkill -9 -f "$www_root/nstoler.com/django/traffic/watch_nginx.py"
+  sudo pkill -9 -f "$www_root/nstoler.com/traffic/watch_nginx.py"
   sudo pkill -9 uwsgi
   set -e
   # Start everything back up.
@@ -38,8 +38,8 @@ function main {
     > "$www_root/logs/uwsgi.stdout.log" \
     2> "$www_root/logs/uwsgi.stderr.log" &
   sudo -u www nohup run-one-constantly \
-    "$www_root/nstoler.com/django/.venv/bin/python" \
-    "$www_root/nstoler.com/django/traffic/watch_nginx.py" -v html,css,js \
+    "$www_root/nstoler.com/.venv/bin/python" \
+    "$www_root/nstoler.com/traffic/watch_nginx.py" -v html,css,js \
     -l "$www_root/logs/watch_nginx.log" \
     "$www_root/logs/traffic2.log" \
     > "$www_root/logs/watch_nginx.stdout.log" \
