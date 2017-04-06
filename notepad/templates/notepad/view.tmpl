@@ -51,7 +51,6 @@ Try adding something with the form below!</div>
       </form>
 
       <section id="add_note">
-        <h4 class="instruction">Add a Note</h4>
         <form name='add_note' method='post' action="{% url 'notepad:add' page %}" >
           {% csrf_token %}
           <input type="hidden" name="page" value="{{ page }}">
@@ -59,8 +58,11 @@ Try adding something with the form below!</div>
             <label for="site">Site:</label>
             <input type="text" name="site">
           </div>
-          <div class="field">
-            <textarea name="content" rows='3'></textarea>
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <label for="content" class="panel-title">Add a Note</label>
+            </div>
+            <textarea name="content" class="panel-body" rows='3'></textarea>
           </div>
           <input type="submit" class="btn btn-default" value="Submit">
         </form>
