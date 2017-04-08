@@ -95,19 +95,19 @@ def monitor(request, this_visit):
   # Construct the navigation links.
   link_data = []
   if page > 1:
-    link_data.append((' < ', 'p', page-1))
+    link_data.append(('< Later', 'p', page-1))
   if admin:
     if include == 'me':
-      link_data.append(('hide me', 'include', None))
+      link_data.append(('Hide me', 'include', None))
     else:
-      link_data.append(('include me', 'include', 'me'))
+      link_data.append(('Include me', 'include', 'me'))
   if admin:
     if hide == 'robots':
-      link_data.append(('show robots', 'hide', None))
+      link_data.append(('Show robots', 'hide', None))
     else:
-      link_data.append(('hide robots', 'hide', 'robots'))
+      link_data.append(('Hide robots', 'hide', 'robots'))
   if total_visits > end:
-    link_data.append((' > ', 'p', page+1))
+    link_data.append(('Earlier >', 'p', page+1))
   links = _construct_links(link_data, new_params, {'user':default_user})
   context = {
     'visits': visits,
