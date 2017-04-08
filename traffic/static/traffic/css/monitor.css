@@ -71,6 +71,13 @@
 #description ul {
   margin-left: -20px;
 }
+#description li {
+  font-size: 80%;
+}
+#description li span {
+  padding-left: 5px;
+  font-size: 125%;
+}
 
 .visit {
   padding: 10px 10px 1px 10px;
