@@ -21,3 +21,10 @@ li.list-group-item.header {
   margin-left: 10px;
 }
 
+@media (max-width: 400px) {
+  #selfie {
+    float: none !important;
+    display: block;
+    margin: 10px auto;
+  }
+}
