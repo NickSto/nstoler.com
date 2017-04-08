@@ -1,132 +1,149 @@
-{% extends 'html5boilerplate1.0.tmpl' %}
+{% extends 'bootstrap.tmpl' %}
 {% load staticfiles %}
 
 {% block title %}Traffic Monitor{% endblock %}
 
 {% block stylesheet %}
-	<link rel="stylesheet" href="{% static 'traffic/css/monitor.css' %}?via=html">
+    <link rel="stylesheet" href="{% static 'traffic/css/monitor.css' %}?via=html">
 {% endblock %}
 
 
 {% block content %}
-		<h1 id="title">Traffic Monitor</h1>
 
-		<section id="data">
-			<header>
-				<p class="youarehere">
-				{% if end %}
-					Visits {{ start }} to {{ end }}
-				{% endif %}
-				</p>
-				{% if links %}
-					<nav class="nav-options">
-						<ul>
-							{% for text, href in links %}
-								<li>
-									<a href="{{ href }}">{{ text }}</a>
-								</li>
-							{% endfor %}
-						</ul>
-					</nav>
-				{% endif %}
-			</header>
+      {% if links %}
+        <div class="sidebar">
+            <ul class="nav nav-sidebar">
+              {% for text, href in links %}
+                <li>
+                  <a href="{{ href }}">{{ text }}</a>
+                </li>
+              {% endfor %}
+            </ul>
+        </div>
+      {% endif %}
 
-			<aside id="description">
-				<div>
-					<h3>What is this?</h3>
-					<p>The display for the custom traffic monitoring system I wrote for my site.</p>
-					<h3>Why?</h3>
-					<ul>
-						<li>Existing free traffic monitoring services are limited (at least, they were when I wrote this).</li>
-						<li>I wanted to be able to customize it for my site.</li>
-						<li>And, most importantly, I wanted to learn how they work. What's more fun than messing around with cookies, after all?</li>
-					</ul>
-					<h3>What does it show?</h3>
-					<p>This is the list of all the visits to my site from your browser. If you were an admin, you'd see all visits from all users (or a specific user you pick).</p>
-				</div>
-			</aside>
+      <section id="main" {% if links %}class="has-sidebar"{% endif %}>
 
-			<div id="visits">
-				{% for visit in visits %}
-					<article class="visit">
-						<section class="pane1">
-							<p>
-								<span class="datum ip">
-									<a href="http://whatismyipaddress.com/ip/{{ visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ visit.visitor.ip }}</a>
-								</span>
-								{% if admin %}
-									<span class="datum">
-										<a href="{% url 'traffic:monitor' %}?user={{ visit.visitor.user.id }}">User {{ visit.visitor.user.id }}</a>
-									</span>
-								{% endif %}
-							</p>
-							<p>
-								<span class="datum time">
-									{{ visit.timestamp }} UTC
-								</span>
-							</p>
-						</section>
-						<section class="pane2">
-							<p>
-								{% if visit.url %}
-									<span class="datum">
-										<span class="label">page:&nbsp;</span>
-											<a href="{{ visit.url }}" target="_blank">{{ visit.url }}</a>
-									</span>
-								{% endif %}
-								{% if visit.visitor.cookie1 is not None %}
-									<span class="datum">
-										<span class="label">cookie:&nbsp;</span>{{ visit.visitor.cookie1 }}
-									</span>
-								{% endif %}
-								{% if visit.visitor.label %}
-									<span class="datum">
-										<span class="label">label:&nbsp;</span>{{ visit.visitor.label }}
-									</span>
-								{% endif %}
-								{% if visit.referrer %}
-									<span class="datum">
-										<span class="label">referrer:&nbsp;</span>
-											<a href="{{ visit.referrer }}" rel="nofollow noreferrer" target="_blank">{{ visit.referrer }}</a>
-									</span>
-								{% endif %}
-							</p>
-							<p>
-								{% if visit.visitor.user_agent is not None %}
-									<span class="datum">
-										<span class="label">user-agent: </span>{{ visit.visitor.user_agent }}
-									</span>
-								{% endif %}
-							</p>
-						</section>
-					</article>
-				{% empty %}
-					<article class="visit">
-						<section class="pane1">
-							<span class="datum">
-								No visits to display!
-							</span>
-						</section>
-					</article>
-				{% endfor %}
-			</div>
-			{% if links %}
-				<footer>
-					<nav class="nav-options">
-						<ul>
-							{% for text, href in links %}
-								<li>
-									<a href="{{ href }}">{{ text }}</a>
-								</li>
-							{% endfor %}
-						</ul>
-					</nav>
-				</footer>
-			{% endif %}
-		</section>
-		{% if admin %}
-			<div class="after">
-				<p><a href="{% url 'misc:export' %}">Export database</a></p>
-			</div>
-		{% endif %}
+        <h2 id="title">Traffic Monitor</h2>
+
+        <aside id="description" class="panel">
+          <div class="panel-heading">
+            <h3>About</h3>
+          </div>
+          <div class="panel-body">
+            <h4>What is this?</h4>
+            <p>The display for the custom traffic monitoring system I wrote for my site.</p>
+            <h4>Why?</h4>
+            <ul>
+              <li>Existing free traffic monitoring services are limited (at least, they were when I wrote this).</li>
+              <li>I wanted to be able to customize it for my site.</li>
+              <li>And, most importantly, I wanted to learn how they work. What's more fun than messing around with cookies, after all?</li>
+            </ul>
+            <h4>What does it show?</h4>
+            <p>This is the list of all the visits to my site from your browser. If you were an admin, you'd see all visits from all users (or a specific user you pick).</p>
+          </div>
+        </aside>
+
+        <ul id="visits" class="list-group">
+
+          <li class="list-group-item header">
+            <h3>Visits
+              <small>
+                {% if end %}
+                  {{ start }} to {{ end }}
+                {% endif %}
+              </small>
+            </h3>
+          </li>
+
+          {% for visit in visits %}
+            <li class="visit list-group-item">
+              <table class="pane1 table-bordered table-condensed">
+                <tr>
+                  <th class="name">
+                    User
+                  </th>
+                  <td class="value">
+                    <a href="/traffic/?user={{ visit.visitor.user.id }}">{{ visit.visitor.user.id }}</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    IP
+                  </th>
+                  <td class="value ip">
+                    <a href="http://whatismyipaddress.com/ip/{{ visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ visit.visitor.ip }}</a>
+                  </td>
+                </tr>
+                {% if visit.visitor.cookie1 %}
+                  <tr>
+                    <th class="name">
+                      Cookie
+                    </th>
+                    <td class="value">
+                      {{ visit.visitor.cookie1 }}
+                    </td>
+                  </tr>
+                {% endif %}
+                {% if visit.visitor.label %}
+                  <tr>
+                    <th class="name">
+                      Label
+                    </th>
+                    <td class="value">
+                      {{ visit.visitor.label }}
+                    </td>
+                  </tr>
+                {% endif %}
+                <tr>
+                  <th class="name">
+                    User Agent
+                  </th>
+                  <td class="value">
+                    {{ visit.visitor.user_agent }}
+                  </td>
+                </tr>
+              </table>
+              <table class="pane2 table-bordered table-condensed">
+                <tr>
+                  <th class="name">
+                    Time
+                  </th>
+                  <td class="value time">
+                    {{ visit.timestamp }} UTC
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    URL
+                  </th>
+                  <td class="value">
+                    <a href="{{ visit.url }}" target="_blank">
+                      {{ visit.url }}
+                    </a>
+                  </td>
+                </tr>
+                {% if visit.referrer %}
+                  <tr>
+                    <th class="name">
+                      Referrer
+                    </th>
+                    <td class="value">
+                      <a href="{{ visit.referrer }}" target="_blank" rel="nofollow noreferrer">
+                        {{ visit.referrer }}
+                      </a>
+                    </td>
+                  </tr>
+                {% endif %}
+              </table>
+              <div class="clearfix"></div>
+            </li>
+          {% endfor %}
+        </ul>
+
+        {% if admin %}
+          <a class="btn btn-default" href="/misc/export">Export database</a>
+        {% endif %}
+
+      </section>
 {% endblock content %}

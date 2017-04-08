@@ -1,92 +1,145 @@
 
-.youarehere {
-	padding: 0 0 5px 10px;
+/*
+ * Sidebar
+ */
+
+/* Hide the sidebar when the viewport is too small. */
+.sidebar {
+  display: none;
+}
+#main {
+  padding: 20px;
 }
 
-.nav-options {
-	padding: 5px 15px 30px 0;
+@media (min-width: 768px) {
+  .sidebar {
+    width: 120px;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 500;
+    display: block;
+    padding: 51px 20px;
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    background-color: #f5f5f5;
+    border-right: 1px solid #eee;
+  }
+  #main.has-sidebar {
+    padding-right: 20px;
+    padding-left: 20px;
+    margin-left: 120px;
+  }
 }
 
-.nav-options ul li {
-	border: 1px solid rgb(200,200,200);
+/* Sidebar navigation */
+.nav-sidebar {
+  margin-right: -21px; /* 20px padding + 1px border */
+  margin-bottom: 20px;
+  margin-left: -20px;
+}
+.nav-sidebar > li > a {
+  padding-right: 20px;
+  padding-left: 20px;
+  color: #777;
 }
 
-@media (min-width: 1330px) {
-	#description {
-		float: right;
-		width: 300px;
-		margin-left: 10px;
-	}
+
+/*
+ * Main content
+ */
+
+/* Make the aside a right-floated sidebar when the viewport is wide enough. */
+@media (min-width: 1340px) {
+  #description {
+    float: right;
+    width: 250px;
+    margin-left: 10px;
+  }
+  #visits {
+    overflow: hidden;
+    width: calc(100% - 285px);
+  }
 }
 
-#description {
-	background-color: #FFFFFF;
-	border: 1px solid rgb(200,200,200);
-	margin-bottom: 10px;
+#title {
+  margin: 20px 0 84px 0;
+  text-align: center;
 }
 
-#description > div {
-	padding: 0 10px 10px 10px;
-}
-
-#description h3 {
-	padding: 10px 0 5px 0;
-}
-
-#description li {
-	line-height: 1.4em;
-}
-
-#visits {
-	background-color: #FFFFFF;
-	border: 1px solid rgb(200,200,200);
-	margin: 0;
-	width: 950px;
-	overflow: hidden;
+#description ul {
+  margin-left: -20px;
 }
 
 .visit {
-	clear: both;
-	padding: 3px 5px;
+  padding: 10px 10px 1px 10px;
+  border-style: none solid none;
 }
 
-.visit + .visit {
-	border-top: 1px solid rgb(200,200,200);
+.visit:nth-child(2) {
+  border-style: solid solid none;
 }
 
-#visits > .visit:last-child {
-	height: 75px;
+.visit:last-child {
+  border-style: none solid solid;
+  padding-bottom: 10px;
 }
 
-.visit section {
-	padding: 2px;
+.visit table {
+  background-color: #fff;
+  width: calc(50% - 5px);
+  border-radius: 4px;
+}
+
+.visit .name {
+  background-color: #f5f5f5;
+  font-weight: normal;
 }
 
 .pane1 {
-	float: left;
-	width: 240px;
+  float: left;
 }
-
 .pane2 {
-	float: right;
-	width: 690px;
+  float: right;
 }
 
-.datum {
-	margin-right: 10px;
-	line-height: 1.8em;
-	display: inline;
+.pane1 .name {
+  width: 95px;
+}
+.pane1 .value {
+  width: calc(100% - 95px);
 }
 
-.ip, .time {
-	font-size: 110%;
+.pane2 .name {
+  width: 70px;
+}
+.pane2 .value {
+  width: calc(100% - 70px);
 }
 
-.label {
-	font-weight: bold;
-}
-
-.after {
-	clear: both;
-	padding-top: 10px;
+/* When the viewport is narrow enough that both tables don't fit alongside each other, artificially
+ * join them into one table. This happens on original-sized iPhones.
+ */
+@media (max-width: 768px) {
+  .visit table {
+    width: 100%;
+  }
+  .pane1, .pane2 {
+    float: none;
+  }
+  .pane2 .name {
+    width: 95px;
+  }
+  .pane2 .value {
+    width: calc(100% - 95px);
+  }
+  .pane2, .pane2 > tbody > tr:first-child > td, .pane2 > tbody > tr:first-child > th {
+    border-top: none;
+  }
+  .visit .value {
+    word-break: break-all;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
 }

@@ -9,3 +9,19 @@
 .ruhuman {
   display: none;
 }
+
+.list-group-item.header, .panel-heading {
+  background-color: #f5f5f5;
+}
+
+.list-group-item.header > *, .panel-heading > * {
+  margin-top: 10px;
+}
+
+.panel {
+  border: 1px solid #ddd;
+}
+
+.panel-heading {
+  border-bottom: 1px solid #ddd;
+}
