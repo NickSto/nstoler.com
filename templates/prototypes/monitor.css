@@ -1,0 +1,145 @@
+
+/*
+ * Sidebar
+ */
+
+/* Hide the sidebar when the viewport is too small. */
+.sidebar {
+  display: none;
+}
+#main {
+  padding: 20px;
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    width: 120px;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 500;
+    display: block;
+    padding: 51px 20px;
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    background-color: #f5f5f5;
+    border-right: 1px solid #eee;
+  }
+  #main.has-sidebar {
+    padding-right: 20px;
+    padding-left: 20px;
+    margin-left: 120px;
+  }
+}
+
+/* Sidebar navigation */
+.nav-sidebar {
+  margin-right: -21px; /* 20px padding + 1px border */
+  margin-bottom: 20px;
+  margin-left: -20px;
+}
+.nav-sidebar > li > a {
+  padding-right: 20px;
+  padding-left: 20px;
+  color: #777;
+}
+
+
+/*
+ * Main content
+ */
+
+/* Make the aside a right-floated sidebar when the viewport is wide enough. */
+@media (min-width: 1340px) {
+  #description {
+    float: right;
+    width: 250px;
+    margin-left: 10px;
+  }
+  #visits {
+    overflow: hidden;
+    width: calc(100% - 285px);
+  }
+}
+
+#title {
+  margin: 20px 0 84px 0;
+  text-align: center;
+}
+
+#description ul {
+  margin-left: -20px;
+}
+
+.visit {
+  padding: 10px 10px 1px 10px;
+  border-style: none solid none;
+}
+
+.visit:nth-child(2) {
+  border-style: solid solid none;
+}
+
+.visit:last-child {
+  border-style: none solid solid;
+  padding-bottom: 10px;
+}
+
+.visit table {
+  background-color: #fff;
+  width: calc(50% - 5px);
+  border-radius: 4px;
+}
+
+.visit .name {
+  background-color: #f5f5f5;
+  font-weight: normal;
+}
+
+.pane1 {
+  float: left;
+}
+.pane2 {
+  float: right;
+}
+
+.pane1 .name {
+  width: 95px;
+}
+.pane1 .value {
+  width: calc(100% - 95px);
+}
+
+.pane2 .name {
+  width: 70px;
+}
+.pane2 .value {
+  width: calc(100% - 70px);
+}
+
+/* When the viewport is narrow enough that both tables don't fit alongside each other, artificially
+ * join them into one table. This happens on original-sized iPhones.
+ */
+@media (max-width: 768px) {
+  .visit table {
+    width: 100%;
+  }
+  .pane1, .pane2 {
+    float: none;
+  }
+  .pane2 .name {
+    width: 95px;
+  }
+  .pane2 .value {
+    width: calc(100% - 95px);
+  }
+  .pane2, .pane2 > tbody > tr:first-child > td, .pane2 > tbody > tr:first-child > th {
+    border-top: none;
+  }
+  .visit .value {
+    word-break: break-all;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
