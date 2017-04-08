@@ -60,14 +60,14 @@
 
     <div class="container-fluid">
 
-      <div class="sidebar">
+      <nav class="sidebar">
         <ul class="nav nav-sidebar">
           <li><a href="#">&lt; Previous</a></li>
           <li><a href="#">Include me</a></li>
           <li><a href="#">Hide robots</a></li>
           <li><a href="#">Next &gt;</a></li>
         </ul>
-      </div>
+      </nav>
 
       <section id="main" class="has-sidebar">
         
@@ -91,181 +91,198 @@
           </div>
         </aside>
 
-        <ul id="visits" class="list-group">
+        <div id="visits">
+          <nav class="buttons">
+            <a href="#" class="btn btn-default">&lt; Previous</a>
+            <a href="#" class="btn btn-default">Include me</a>
+            <a href="#" class="btn btn-default">Hide robots</a>
+            <a href="#" class="btn btn-default">Next &gt;</a>
+          </nav>
 
-          <li class="list-group-item header">
-            <h3>Visits <small>1 to 50</small></h3>
-          </li>
+          <ul id="visits-list" class="list-group">
 
-          <li class="visit list-group-item">
-            <table class="pane1 table-bordered table-condensed">
-              <tr>
-                <th class="name">
-                  User
-                </th>
-                <td class="value">
-                  <a href="/traffic/?user=11950">11950</a>
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  IP
-                </th>
-                <td class="value ip">
-                  <a href="http://whatismyipaddress.com/ip/77.88.47.86" rel="noreferrer" target="_blank">77.88.47.86</a>
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  User Agent
-                </th>
-                <td class="value">
-                  Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)
-                </td>
-              </tr>
-            </table>
-            <table class="pane2 table-bordered table-condensed">
-              <tr>
-                <th class="name">
-                  Time
-                </th>
-                <td class="value time">
-                  April 7, 2017, 10:17 p.m. UTC
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  URL
-                </th>
-                <td class="value">
-                  <a href="http://nsto.co/traffic?page=12&amp;hide=robots&amp;include=me" target="_blank">http://nsto.co/traffic?page=12&amp;hide=robots&amp;include=me</a>
-                </td>
-              </tr>
-            </table>
-            <div class="clearfix"></div>
-          </li>
+            <li class="list-group-item header">
+              <h3>Visits <small>1 to 50</small></h3>
+            </li>
 
-          <li class="visit list-group-item">
-            <table class="pane1 table-bordered table-condensed">
-              <tr>
-                <th class="name">
-                  User
-                </th>
-                <td class="value">
-                  <a href="/traffic/?user=8810">8810</a>
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  IP
-                </th>
-                <td class="value ip">
-                  <a href="http://whatismyipaddress.com/ip/98.159.12.73" rel="noreferrer" target="_blank">98.159.12.73</a>
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  Cookie
-                </th>
-                <td class="value">
-                  LfPMB4JIAo1Ml-ul
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  Label
-                </th>
-                <td class="value">
-                  a visitor
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  User Agent
-                </th>
-                <td class="value">
-                  Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36
-                </td>
-              </tr>
-            </table>
-            <table class="pane2 table-bordered table-condensed">
-              <tr>
-                <th class="name">
-                  Time
-                </th>
-                <td class="value time">
-                  April 7, 2017, 6:43 p.m. UTC
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  URL
-                </th>
-                <td class="value">
-                  <a href="https://nstoler.com/wikihistory" target="_blank">https://nstoler.com/wikihistory</a>
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  Referrer
-                </th>
-                <td class="value">
-                  <a href="https://nstoler.com/" target="_blank">https://nstoler.com/</a>
-                </td>
-              </tr>
-            </table>
-            <div class="clearfix"></div>
-          </li>
+            <li class="visit list-group-item">
+              <table class="pane1 table-bordered table-condensed">
+                <tr>
+                  <th class="name">
+                    User
+                  </th>
+                  <td class="value">
+                    <a href="/traffic/?user=11950">11950</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    IP
+                  </th>
+                  <td class="value ip">
+                    <a href="http://whatismyipaddress.com/ip/77.88.47.86" rel="noreferrer" target="_blank">77.88.47.86</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    User Agent
+                  </th>
+                  <td class="value">
+                    Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)
+                  </td>
+                </tr>
+              </table>
+              <table class="pane2 table-bordered table-condensed">
+                <tr>
+                  <th class="name">
+                    Time
+                  </th>
+                  <td class="value time">
+                    April 7, 2017, 10:17 p.m. UTC
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    URL
+                  </th>
+                  <td class="value">
+                    <a href="http://nsto.co/traffic?page=12&amp;hide=robots&amp;include=me" target="_blank">http://nsto.co/traffic?page=12&amp;hide=robots&amp;include=me</a>
+                  </td>
+                </tr>
+              </table>
+              <div class="clearfix"></div>
+            </li>
 
-          <li class="visit list-group-item">
-            <table class="pane1 table-bordered table-condensed">
-              <tr>
-                <th class="name">
-                  User
-                </th>
-                <td class="value">
-                  <a href="/traffic/?user=11944">11944</a>
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  IP
-                </th>
-                <td class="value ip">
-                  <a href="http://whatismyipaddress.com/ip/185.169.230.8" rel="noreferrer" target="_blank">185.169.230.8</a>
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  User Agent
-                </th>
-                <td class="value">
-                  
-                </td>
-              </tr>
-            </table>
-            <table class="pane2 table-bordered table-condensed">
-              <tr>
-                <th class="name">
-                  Time
-                </th>
-                <td class="value time">
-                  April 7, 2017, 9:34 p.m. UTC
-                </td>
-              </tr>
-              <tr>
-                <th class="name">
-                  URL
-                </th>
-                <td class="value">
-                  <a href="http:///" target="_blank">http:///</a>
-                </td>
-              </tr>
-            </table>
-            <div class="clearfix"></div>
-          </li>
+            <li class="visit list-group-item">
+              <table class="pane1 table-bordered table-condensed">
+                <tr>
+                  <th class="name">
+                    User
+                  </th>
+                  <td class="value">
+                    <a href="/traffic/?user=8810">8810</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    IP
+                  </th>
+                  <td class="value ip">
+                    <a href="http://whatismyipaddress.com/ip/98.159.12.73" rel="noreferrer" target="_blank">98.159.12.73</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    Cookie
+                  </th>
+                  <td class="value">
+                    LfPMB4JIAo1Ml-ul
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    Label
+                  </th>
+                  <td class="value">
+                    a visitor
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    User Agent
+                  </th>
+                  <td class="value">
+                    Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36
+                  </td>
+                </tr>
+              </table>
+              <table class="pane2 table-bordered table-condensed">
+                <tr>
+                  <th class="name">
+                    Time
+                  </th>
+                  <td class="value time">
+                    April 7, 2017, 6:43 p.m. UTC
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    URL
+                  </th>
+                  <td class="value">
+                    <a href="https://nstoler.com/wikihistory" target="_blank">https://nstoler.com/wikihistory</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    Referrer
+                  </th>
+                  <td class="value">
+                    <a href="https://nstoler.com/" target="_blank">https://nstoler.com/</a>
+                  </td>
+                </tr>
+              </table>
+              <div class="clearfix"></div>
+            </li>
 
-        </ul>
+            <li class="visit list-group-item">
+              <table class="pane1 table-bordered table-condensed">
+                <tr>
+                  <th class="name">
+                    User
+                  </th>
+                  <td class="value">
+                    <a href="/traffic/?user=11944">11944</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    IP
+                  </th>
+                  <td class="value ip">
+                    <a href="http://whatismyipaddress.com/ip/185.169.230.8" rel="noreferrer" target="_blank">185.169.230.8</a>
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    User Agent
+                  </th>
+                  <td class="value">
+
+                  </td>
+                </tr>
+              </table>
+              <table class="pane2 table-bordered table-condensed">
+                <tr>
+                  <th class="name">
+                    Time
+                  </th>
+                  <td class="value time">
+                    April 7, 2017, 9:34 p.m. UTC
+                  </td>
+                </tr>
+                <tr>
+                  <th class="name">
+                    URL
+                  </th>
+                  <td class="value">
+                    <a href="http:///" target="_blank">http:///</a>
+                  </td>
+                </tr>
+              </table>
+              <div class="clearfix"></div>
+            </li>
+
+          </ul>
+
+          <nav class="buttons">
+            <a href="#" class="btn btn-default">&lt; Previous</a>
+            <a href="#" class="btn btn-default">Include me</a>
+            <a href="#" class="btn btn-default">Hide robots</a>
+            <a href="#" class="btn btn-default">Next &gt;</a>
+          </nav>
+
+        </div>
       
         <a class="btn btn-default" href="/misc/export">Export database</a>
         

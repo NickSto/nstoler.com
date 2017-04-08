@@ -44,102 +44,122 @@
           </div>
         </aside>
 
-        <ul id="visits" class="list-group">
+        <div id="visits">
 
-          <li class="list-group-item header">
-            <h3>Visits
-              <small>
-                {% if end %}
-                  {{ start }} to {{ end }}
-                {% endif %}
-              </small>
-            </h3>
-          </li>
+          {% if links %}
+            <nav class="buttons">
+              {% for text, href in links %}
+                <a class="btn btn-default" href="{{ href }}">{{ text }}</a>
+              {% endfor %}
+            </nav>
+          {% endif %}
 
-          {% for visit in visits %}
-            <li class="visit list-group-item">
-              <table class="pane1 table-bordered table-condensed">
-                <tr>
-                  <th class="name">
-                    User
-                  </th>
-                  <td class="value">
-                    <a href="/traffic/?user={{ visit.visitor.user.id }}">{{ visit.visitor.user.id }}</a>
-                  </td>
-                </tr>
-                <tr>
-                  <th class="name">
-                    IP
-                  </th>
-                  <td class="value ip">
-                    <a href="http://whatismyipaddress.com/ip/{{ visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ visit.visitor.ip }}</a>
-                  </td>
-                </tr>
-                {% if visit.visitor.cookie1 %}
+          <ul id="visits-list" class="list-group">
+
+            <li class="list-group-item header">
+              <h3>Visits
+                <small>
+                  {% if end %}
+                    {{ start }} to {{ end }}
+                  {% endif %}
+                </small>
+              </h3>
+            </li>
+
+            {% for visit in visits %}
+              <li class="visit list-group-item">
+                <table class="pane1 table-bordered table-condensed">
                   <tr>
                     <th class="name">
-                      Cookie
+                      User
                     </th>
                     <td class="value">
-                      {{ visit.visitor.cookie1 }}
+                      <a href="/traffic/?user={{ visit.visitor.user.id }}">{{ visit.visitor.user.id }}</a>
                     </td>
                   </tr>
-                {% endif %}
-                {% if visit.visitor.label %}
                   <tr>
                     <th class="name">
-                      Label
+                      IP
                     </th>
-                    <td class="value">
-                      {{ visit.visitor.label }}
+                    <td class="value ip">
+                      <a href="http://whatismyipaddress.com/ip/{{ visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ visit.visitor.ip }}</a>
                     </td>
                   </tr>
-                {% endif %}
-                <tr>
-                  <th class="name">
-                    User Agent
-                  </th>
-                  <td class="value">
-                    {{ visit.visitor.user_agent }}
-                  </td>
-                </tr>
-              </table>
-              <table class="pane2 table-bordered table-condensed">
-                <tr>
-                  <th class="name">
-                    Time
-                  </th>
-                  <td class="value time">
-                    {{ visit.timestamp }} UTC
-                  </td>
-                </tr>
-                <tr>
-                  <th class="name">
-                    URL
-                  </th>
-                  <td class="value">
-                    <a href="{{ visit.url }}" target="_blank">
-                      {{ visit.url }}
-                    </a>
-                  </td>
-                </tr>
-                {% if visit.referrer %}
+                  {% if visit.visitor.cookie1 %}
+                    <tr>
+                      <th class="name">
+                        Cookie
+                      </th>
+                      <td class="value">
+                        {{ visit.visitor.cookie1 }}
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if visit.visitor.label %}
+                    <tr>
+                      <th class="name">
+                        Label
+                      </th>
+                      <td class="value">
+                        {{ visit.visitor.label }}
+                      </td>
+                    </tr>
+                  {% endif %}
                   <tr>
                     <th class="name">
-                      Referrer
+                      User Agent
                     </th>
                     <td class="value">
-                      <a href="{{ visit.referrer }}" target="_blank" rel="nofollow noreferrer">
-                        {{ visit.referrer }}
+                      {{ visit.visitor.user_agent }}
+                    </td>
+                  </tr>
+                </table>
+                <table class="pane2 table-bordered table-condensed">
+                  <tr>
+                    <th class="name">
+                      Time
+                    </th>
+                    <td class="value time">
+                      {{ visit.timestamp }} UTC
+                    </td>
+                  </tr>
+                  <tr>
+                    <th class="name">
+                      URL
+                    </th>
+                    <td class="value">
+                      <a href="{{ visit.url }}" target="_blank">
+                        {{ visit.url }}
                       </a>
                     </td>
                   </tr>
-                {% endif %}
-              </table>
-              <div class="clearfix"></div>
-            </li>
-          {% endfor %}
-        </ul>
+                  {% if visit.referrer %}
+                    <tr>
+                      <th class="name">
+                        Referrer
+                      </th>
+                      <td class="value">
+                        <a href="{{ visit.referrer }}" target="_blank" rel="nofollow noreferrer">
+                          {{ visit.referrer }}
+                        </a>
+                      </td>
+                    </tr>
+                  {% endif %}
+                </table>
+                <div class="clearfix"></div>
+              </li>
+            {% endfor %}
+          </ul>
+
+          {% if links %}
+            <nav class="buttons">
+              {% for text, href in links %}
+                <a class="btn btn-default" href="{{ href }}">{{ text }}</a>
+              {% endfor %}
+            </nav>
+          {% endif %}
+
+        </div>
 
         {% if admin %}
           <a class="btn btn-default" href="/misc/export">Export database</a>
