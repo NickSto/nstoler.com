@@ -23,10 +23,6 @@
   width: auto;
 }
 
-table .labels {
-  background-color: #e8e8e8;
-}
-
 pre.content {
   float: right;
   width: calc(100% - 25px);

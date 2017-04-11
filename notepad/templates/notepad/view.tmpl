@@ -29,17 +29,17 @@
               {% if admin %}
                 <div class="admin">
                   <table class="table table-bordered table-condensed">
-                    <tr class="labels">
-                      <td>id</td>
-                      <td>deleted</td>
+                    <tr class="names">
+                      <th>id</th>
+                      <th>deleted</th>
                       {% if note.visit %}
-                        <td>added</td>
-                        <td>IP</td>
+                        <th>added</th>
+                        <th>IP</th>
                         {% if note.visit.visitor.label %}
-                          <td>label</td>
+                          <th>label</th>
                         {% endif %}
-                        <td>user</td>
-                        <td>cookie</td>
+                        <th>user</th>
+                        <th>cookie</th>
                       {% endif %}
                     </tr>
                     <tr class="values">
@@ -59,7 +59,7 @@
                     </tr>
                     {% if note.visit %}
                       <tr>
-                        <td class="labels">user agent</td>
+                        <th class="name">user agent</th>
                         <td class="values" colspan="6">{{ note.visit.visitor.user_agent }}</td>
                       </tr>
                     {% endif %}

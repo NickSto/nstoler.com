@@ -25,3 +25,11 @@
 .panel-heading {
   border-bottom: 1px solid #ddd;
 }
+
+td.name, th.name, tr.names {
+  background-color: #f5f5f5;
+}
+
+th.name, tr.names > th {
+  font-weight: normal;
+}
