@@ -29,14 +29,13 @@ pre.content {
    * and removing all the pre-specific features I don't want. Also, remove all the styling Bootstrap
    * applies to <pre>'s.
    */
-  word-break: normal;
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-  font-size: 14px;
-  line-height: 1.42857142857;
-  color: #333;
+  word-break: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  background-color: inherit;
   border: none;
-  border-radius: 0;
-  background-color: #fff;
   padding: 0;
   margin: 0;
 }
