@@ -58,12 +58,14 @@
 
     <div class="container-fluid">
 
+      <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
       <div class="buttons">
-        <a class="btn btn-default" href="#bottom">Bottom</a>
+        <a class="btn btn-default" href="#bottom">To bottom</a>
         <a class="btn btn-default" href="/notepad/random">Random page</a>
       </div>
+
       <form name='delete_notes' method='post' action="/notepad/delete/notepad">
         <ul id="notes" class="list-group">
           <li class="list-group-item header">
@@ -114,6 +116,7 @@ world!
     all i really changed though    were the comments!</pre>
             <div class="clearfix"></div>
           </li>
+          <a id="bottom"></a>
           <li id="note_8" class="note list-group-item">
             <input type="checkbox" class="checkbox" name="note_8">
             <pre class="content">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</pre>
@@ -128,7 +131,8 @@ world!
             <label for="site">Site:</label>
             <input type="text" name="site">
           </div>
-          <input type="submit" id="delete" class="btn btn-default" value="Delete notes">
+          <a class="btn btn-default" href="#top">To top</a>
+          <input type="submit" id="delete" class="btn btn-default" value="Delete selected notes">
         </footer>
       </form>
 
