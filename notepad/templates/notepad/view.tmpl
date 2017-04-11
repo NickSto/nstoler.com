@@ -17,7 +17,7 @@
       <form name='delete_notes' method='post' action="{% url 'notepad:delete' page %}">
         {% csrf_token %}
         <ul id="notes" class="list-group">
-          <li class="list-group-item">
+          <li class="list-group-item header">
             <h3 class="page-name">{{ page }}</h3>
           </li>
           {% for note, content in notes %}
