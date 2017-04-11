@@ -35,6 +35,7 @@ pre.content {
   line-height: inherit;
   color: inherit;
   background-color: inherit;
+  overflow: visible;
   border: none;
   padding: 0;
   margin: 0;
