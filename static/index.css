@@ -1,9 +1,5 @@
 /* Custom additions to the Bootstrap CSS */
 
-li.list-group-item.header {
-  background-color: #F5F5F5;
-}
-
 .jumbotron .well h3 {
   font-size: 150%
 }
