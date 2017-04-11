@@ -57,7 +57,7 @@
   }
   #visits {
     overflow: hidden;
-    width: calc(100% - 285px);
+    width: calc(100% - 265px);
   }
 }
 
