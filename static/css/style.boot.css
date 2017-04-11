@@ -33,3 +33,12 @@ td.name, th.name, tr.names {
 th.name, tr.names > th {
   font-weight: normal;
 }
+
+.buttons {
+  margin-top: 10px;
+}
+
+.btn {
+  margin-right: 6px;
+  margin-bottom: 10px;
+}

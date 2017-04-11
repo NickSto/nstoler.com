@@ -46,14 +46,6 @@ pre.content {
   margin: 0;
 }
 
-.buttons {
-  margin-bottom: 10px;
-}
-
-.buttons .btn {
-  margin-right: 5px;
-}
-
 #add_note {
   margin: 40px 0;
 }
@@ -64,6 +56,6 @@ textarea[name="content"] {
   padding: 5px 10px;
 }
 
-#add_note .btn {
-  margin: 10px 17px;
+#add_note .panel {
+  margin-bottom: 10px;
 }
