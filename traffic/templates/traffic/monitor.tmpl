@@ -47,7 +47,7 @@
         <div id="visits">
 
           {% if links %}
-            <nav class="buttons">
+            <nav class="buttons sidebar-replacement">
               {% for text, href in links %}
                 <a class="btn btn-default" href="{{ href }}">{{ text }}</a>
               {% endfor %}
@@ -152,7 +152,7 @@
           </ul>
 
           {% if links %}
-            <nav class="buttons">
+            <nav class="buttons sidebar-replacement">
               {% for text, href in links %}
                 <a class="btn btn-default" href="{{ href }}">{{ text }}</a>
               {% endfor %}
@@ -162,7 +162,9 @@
         </div>
 
         {% if admin %}
-          <a class="btn btn-default" href="/misc/export">Export database</a>
+          <nav class="buttons">
+            <a class="btn btn-default" href="/misc/export">Export database</a>
+          </nav>
         {% endif %}
 
       </section>
