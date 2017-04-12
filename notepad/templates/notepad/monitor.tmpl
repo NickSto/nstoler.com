@@ -1,32 +1,43 @@
-{% extends 'html5boilerplate1.0.tmpl' %}
+{% extends 'bootstrap.tmpl' %}
 {% load staticfiles %}
 
-{% block title %}Notepad Monitor{% endblock %}
+{% block title %}{{ page }} - Notepad{% endblock %}
 
 {% block stylesheet %}
-  <link rel="stylesheet" href="{% static 'notepad/css/notepad.css' %}?via=html">
+  <link rel="stylesheet" href="{% static 'notepad/css/view.css' %}?via=html">
 {% endblock %}
 
 {% block content %}
-		<header>
-			<h1 id="title">Notepad - Monitor</h1>
-			<div class="randpage">Go to <a href="{% url 'notepad:random' %}">random page</a>
-			</div>
-			<p class="youarehere">Currently existing pages:</p>
-		</header>
-		
-		<section id="notepad">
-			<ul id="note_list">
-      {% for page in pages %}
-				<li class="note">
-					<p><a href="/{{ page.name }}">{{ page.name }}</a></p>
-				</li>
-			{% empty %}
-				<li class="note">
-					<p>No existing pages right now.</p>
-				</li>
-			{% endfor %}
-			</ul>
-		</section>
-		<p><a href="export.cgi">Export</a> all existing notes</p>
+      <a id="top"></a>
+      <h2 id="title">Notepad</h2>
+
+      <div class="buttons">
+        <a class="btn btn-default" href="#bottom">To bottom</a>
+        <a class="btn btn-default" href="{% url 'notepad:random' %}">Random page</a>
+      </div>
+
+      <ul id="notes" class="list-group">
+        <li class="list-group-item header">
+          <h3 class="page-name">Currently existing pages</h3>
+        </li>
+        {% for page in pages %}
+          {% if forloop.last %}
+            <a id="bottom"></a>
+          {% endif %}
+          <li id="page_{{ page }}" class="note list-group-item">
+            <pre class="content">{{ page }}</pre>
+            <div class="clearfix"></div>
+          </li>
+        {% empty %}
+          <li class="note list-group-item">
+            <div class="content">No pages!</div>
+            <div class="clearfix"></div>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <div class="buttons">
+        <a class="btn btn-default" href="#top">To top</a>
+        <a class="btn btn-default" href="{% url 'misc:export' %}">Export database</a>
+      </div>
 {% endblock content %}
