@@ -1,4 +1,9 @@
 
-td {
-  padding: 1px 8px;
+.container-fluid {
+  padding-top: 20px;
+  padding-left: 40px;
+}
+
+table#currentCookies {
+  width: auto;
 }

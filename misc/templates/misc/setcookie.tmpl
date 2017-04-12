@@ -1,4 +1,4 @@
-{% extends 'html5boilerplate1.0.tmpl' %}
+{% extends 'bootstrap.tmpl' %}
 {% load staticfiles %}
 
 {% block title %}Mess with your cookies!{% endblock %}
@@ -13,30 +13,33 @@
         <h4>Notice: Javascript is required for this page's functionality.</h4>
       </noscript>
     </section>
-    <section>
-      <h5>Your current cookies:</h5>
-      <table id="currentCookies">
+    <section class="panel panel-shrink">
+      <div class="panel-heading">
+        <h4>Your current cookies:</h4>
+      </div>
+      <table id="currentCookies" class="panel-body table table-bordered table-condensed table-hover">
         <tbody>
         </tbody>
       </table>
     </section>
-    <section>
-      <h3>Edit a cookie:</h3>
-      <div class="form_bit">
-        <label for="cookieName">Cookie name:</label>
+    <div class="clearfix-ish"></div>
+    <section class="panel panel-shrink">
+      <div class="panel-heading">
+        <h4>Edit a cookie:</h4>
       </div>
-      <div class="form_bit">
-        <input id="cookieName" class="text" name="cookieName" type="text" value="{{ default_name }}">
-      </div>
-      <div class="form_bit">
-        <label for="cookieValue">Cookie value:</label>
-      </div>
-      <div class="form_bit">
-        <input id="cookieValue" class="text" name="cookieValue" type="text" value="{{ default_value }}">
-      </div>
-      <div class="form_bit">
-        <input id="set" type="submit" value="Set">
-        <input id="delete" type="submit" value="Delete">
+      <div class="panel-body">
+        <div class="input">
+          <label for="cookieName">Cookie name:</label>
+          <input id="cookieName" class="form-control" name="cookieName" type="text" value="{{ default_name }}">
+        </div>
+        <div class="input">
+          <label for="cookieValue">Cookie value:</label>
+          <input id="cookieValue" class="form-control" name="cookieValue" type="text" value="{{ default_value }}">
+        </div>
+        <div class="buttons">
+          <input id="set" class="btn btn-default" type="submit" value="Set">
+          <input id="delete" class="btn btn-default" type="submit" value="Delete">
+        </div>
       </div>
     </section>
 {% endblock content %}
