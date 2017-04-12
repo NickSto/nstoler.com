@@ -1,8 +1,9 @@
 Version 1.0
 ===========
-This is mostly very old code, circa 2011, when I'd only been programming for about a year. It does work though, and I still use the Notepad app every day.
 
-This directory is where these files wait while I sort through them and either use or remove them.
+This is some code from version 1.0 of my site. I've kept it around for reference, and in case I decide to rewrite more of it in Python.
+
+Be warned: it's mostly very old code, circa 2011, when I'd only been programming for about a year.
 
 Requirements
 ------------
