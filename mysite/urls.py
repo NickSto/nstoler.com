@@ -15,12 +15,16 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.views.generic.base import RedirectView
 import traffic.views
+import pages.views
 
 urlpatterns = [
   # url(r'^admin/', include(admin.site.urls)),
   url(r'^misc/', include('misc.urls')),
   url(r'^traffic$', traffic.views.monitor, name='traffic_monitor'),
+  url(r'^yourgenome$', pages.views.yourgenome, name='pages_yourgenome'),
+  url(r'^yourgenome/$', RedirectView.as_view(url='/yourgenome', permanent=True)),
   url(r'^traffic/', include('traffic.urls')),
   url(r'^admin/', include('myadmin.urls')),
   url(r'^wikihistory/', include('wikihistory.urls')),

@@ -40,6 +40,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'misc',
+    'pages',
     'notepad',
     'traffic',
     'myadmin',
