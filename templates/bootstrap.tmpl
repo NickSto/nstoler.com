@@ -14,7 +14,7 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=">
-    <link rel="stylesheet" href="{% static 'css/style.boot.css' %}?via=html">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?via=html">
     {% block stylesheet %}
     {% endblock %}
 
@@ -27,7 +27,7 @@
 
   <body>
 
-    {% include 'navbar.boot.html' %}
+    {% include 'navbar.html' %}
 
     <div class="container-fluid">
       {% block content %}
