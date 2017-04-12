@@ -46,21 +46,21 @@ def auth_form(request, action):
   elif action == 'hash':
     context = {
       'title':'Get password hash',
-      'instruction':'Get the hash of a password:',
+      'instruction':'Get the hash of a password',
       'action':'hash',
       'get_password':True,
     }
   elif action == 'logout':
     context = {
       'title':'Admin logout',
-      'instruction':'De-authenticate yourself as an administrator:',
+      'instruction':'De-authenticate yourself as an administrator',
       'action':'logout',
       'get_password':False,
     }
   else:
     context = {
       'title':'Admin login',
-      'instruction':'Identify yourself as an administrator:',
+      'instruction':'Identify yourself as an administrator',
       'action':'login',
       'get_password':True,
     }

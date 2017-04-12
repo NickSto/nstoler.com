@@ -1,9 +1,11 @@
-{% extends 'html5boilerplate1.0.tmpl' %}
+{% extends 'bootstrap.tmpl' %}
 {% load staticfiles %}
 
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-	 	<h2>{{ message }}</h2>
-		<p><a href="{{ back_link }}">{{ back_text }}</a></p>
+    <h3>{{ message }}</h3>
+    <div class="buttons">
+      <a class="btn btn-default" href="{{ back_link }}">{{ back_text }}</a>
+    </div>
 {% endblock %}
