@@ -25,6 +25,7 @@ urlpatterns = [
   url(r'^traffic$', traffic.views.monitor, name='traffic_monitor'),
   url(r'^yourgenome$', pages.views.yourgenome, name='pages_yourgenome'),
   url(r'^yourgenome/$', RedirectView.as_view(url='/yourgenome', permanent=True)),
+  url(r'^pages/', include('pages.urls')),
   url(r'^traffic/', include('traffic.urls')),
   url(r'^admin/', include('myadmin.urls')),
   url(r'^wikihistory/', include('wikihistory.urls')),
