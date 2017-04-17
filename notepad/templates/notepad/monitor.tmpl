@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+    <div class="container-fluid">
       <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
@@ -40,4 +41,5 @@
         <a class="btn btn-default" href="#top">To top</a>
         <a class="btn btn-default" href="{% url 'misc:export' %}">Export database</a>
       </div>
+    </div>
 {% endblock content %}

@@ -4,8 +4,10 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
+    <div class="container-fluid">
     <h3>{{ message }}</h3>
     <div class="buttons">
       <a class="btn btn-default" href="{{ back_link }}">{{ back_text }}</a>
+    </div>
     </div>
 {% endblock %}
