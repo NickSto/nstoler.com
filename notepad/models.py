@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 from utils import ModelMixin
 
 class Page(ModelMixin, models.Model):
