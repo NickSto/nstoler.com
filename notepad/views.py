@@ -17,6 +17,10 @@ def view(request, page_name):
   params = request.GET
   format = params.get('format')
   admin = params.get('admin')
+  try:
+    note_id = int(params.get('note'))
+  except (ValueError, TypeError):
+    note_id = None
   show_deleted = params.get('include') == 'deleted'
   # Only allow showing deleted notes to the admin over HTTPS.
   admin_cookie = get_admin_cookie(request)
@@ -30,6 +34,8 @@ def view(request, page_name):
     note_objects = Note.objects.filter(page__name=page_name, deleted=False).order_by('id')
   notes = []
   for note in note_objects:
+    if note_id is not None and note.id != note_id:
+      continue
     if format == 'plain':
       notes.append(note.content)
     else:
