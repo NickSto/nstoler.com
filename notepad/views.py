@@ -28,16 +28,15 @@ def view(request, page_name):
     note_objects = Note.objects.filter(page__name=page_name).order_by('id')
   else:
     note_objects = Note.objects.filter(page__name=page_name, deleted=False).order_by('id')
-  text = ''
   notes = []
   for note in note_objects:
     if format == 'plain':
-      text += note.content
+      notes.append(note.content)
     else:
       content_formatted = urlize(escape(note.content))
       notes.append((note, content_formatted))
   if format == 'plain':
-    return HttpResponse(text, content_type='text/plain; charset=UTF-8')
+    return HttpResponse('\n\n'.join(notes), content_type='text/plain; charset=UTF-8')
   else:
     context = {'page':page_name, 'notes':notes, 'admin':admin}
     return render(request, 'notepad/view.tmpl', context)
