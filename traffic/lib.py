@@ -22,10 +22,17 @@ def middleware(get_response):
   """Wrap a view with a function that logs the visit.
   It also makes the Visit available as the visit property of the request."""
   def wrapper(request):
-    visit = get_or_create_visit_and_visitor(request)
-    request.visit = visit
+    params = request.GET
+    via = params.get('via')
+    if via in ('js', 'css', 'html'):
+      request.visit = None
+    else:
+      request.visit = get_or_create_visit_and_visitor(request)
+    # Send the request to the view and get the response.
     response = get_response(request)
-    return set_cookies(visit, response)
+    if request.visit is not None:
+      response = set_cookies(request.visit, response)
+    return response
   return wrapper
 
 
