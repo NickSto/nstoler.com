@@ -22,6 +22,14 @@ function main {
     www_root="$WWW_ROOT_DEFAULT"
   fi
 
+  sanity_check "$www_root"
+
+  restart "$www_root"
+}
+
+
+function sanity_check {
+  www_root="$1"
   # Check everything is as expected, before doing anything.
   okay_to_go=true
   # Check for required commands.
@@ -47,8 +55,11 @@ function main {
   if ! [[ $okay_to_go ]]; then
     exit 1
   fi
+}
 
-  #TODO: Print the git commit to an "updates" log file (when it changes).
+
+function restart {
+  www_root="$1"
   cd "$www_root/logs"
   printf "Restarting Nginx..\n"
   sudo service nginx restart
@@ -72,9 +83,11 @@ function main {
     2> "$www_root/logs/watch_nginx.stderr.log" &
 }
 
+
 function fail {
   echo "$@" >&2
   exit 1
 }
+
 
 main "$@"
