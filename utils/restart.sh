@@ -22,6 +22,32 @@ function main {
     www_root="$WWW_ROOT_DEFAULT"
   fi
 
+  # Check everything is as expected, before doing anything.
+  okay_to_go=true
+  # Check for required commands.
+  for cmd in nohup uwsgi run-one-constantly; do
+    if ! which $cmd >/dev/null 2>/dev/null; then
+      echo "Error: Missing command \"$cmd\"." >&2
+      okay_to_go=
+    fi
+  done
+  # Check for required files/directories.
+  for dir in /etc/uwsgi/vassals "$www_root/logs"; do
+    if ! [[ -d "$dir" ]]; then
+      echo "Error: Missing directory \"$dir\"." >&2
+      okay_to_go=
+    fi
+  done
+  for file in "$www_root/nstoler.com/.venv/bin/python" "$www_root/nstoler.com/traffic/watch_nginx.py"; do
+    if ! [[ -f "$file" ]]; then
+      echo "Error: Missing file \"$file\"." >&2
+      okay_to_go=
+    fi
+  done
+  if ! [[ $okay_to_go ]]; then
+    exit 1
+  fi
+
   #TODO: Print the git commit to an "updates" log file (when it changes).
   cd "$www_root/logs"
   printf "Restarting Nginx..\n"
