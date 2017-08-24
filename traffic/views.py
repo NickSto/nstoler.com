@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.conf import settings
-from .lib import add_visit, add_and_get_visit
 from .categorize import is_robot
 from .models import Visit
 from myadmin.lib import get_admin_cookie
@@ -11,7 +10,6 @@ log = logging.getLogger(__name__)
 
 PER_PAGE_DEFAULT = 50
 
-@add_visit
 def monitor_redirect(request):
   """Redirect to the monitor() view, preserving the query string."""
   path = reverse('traffic_monitor')
@@ -23,16 +21,15 @@ def monitor_redirect(request):
 #TODO: A view to set a Visitor.label or Visitor.is_me, so I can do it via a link in the monitor.
 
 #TODO: Clean up this mess.
-@add_and_get_visit
-def monitor(request, this_visit):
+def monitor(request):
   # Only allow access to admin users over HTTPS.
-  this_user = this_visit.visitor.user.id
+  this_user = request.visit.visitor.user.id
   admin_cookie = get_admin_cookie(request)
   if admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS):
     user = None
     admin = True
   else:
-    user = this_visit.visitor.user.id
+    user = request.visit.visitor.user.id
     admin = False
   # Get query parameters.
   params = request.GET
@@ -88,10 +85,10 @@ def monitor(request, this_visit):
   if start == 0 and (user == this_user or (user is None and include == 'me')):
     if len(visits) == 0:
       log.info('No visits. Adding this one..')
-      visits = [this_visit]
-    elif visits[0].id != this_visit.id:
+      visits = [request.visit]
+    elif visits[0].id != request.visit.id:
       log.info('Adding this visit to the start..')
-      visits = [this_visit] + visits[:per_page-1]
+      visits = [request.visit] + visits[:per_page-1]
   # Construct the navigation links.
   link_data = []
   if page > 1:

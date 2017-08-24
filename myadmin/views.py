@@ -4,7 +4,6 @@ from django.conf import settings
 from django.urls import reverse
 from .models import AdminCookie, AdminDigest
 from .lib import get_admin_cookie
-from traffic.lib import add_visit
 import binascii
 import hashlib
 
@@ -28,7 +27,6 @@ doesn't offer great protection. I may re-evaluate this trade-off later.
 #TODO: Add a sub-navigation bar to go between login, logout, and hash generation.
 
 
-@add_visit
 def auth_form(request, action):
   result = request.GET.get('result')
   if result:
@@ -67,7 +65,6 @@ def auth_form(request, action):
   return render(request, 'myadmin/auth_form.tmpl', context)
 
 
-@add_visit
 def submit(request, action):
   if action == 'login':
     return _submit_login(request)

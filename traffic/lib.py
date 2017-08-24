@@ -1,5 +1,4 @@
 from .models import Visit, Visitor, User, Cookie
-import functools
 import string
 import random
 import base64
@@ -19,28 +18,15 @@ ALPHABET1 = string.ascii_lowercase + string.ascii_uppercase + string.digits + '+
 COOKIE_MAX_AGE = 10*365*24*60*60  # 10 years
 
 
-# Decorator.
-def add_visit(view):
-  """Wrap a view with a function that logs the visit."""
-  #TODO: This might be better written as middleware, but I'll have to look into it.
-  @functools.wraps(view)
-  def wrapped_view(request, *nargs, **kwargs):
+def middleware(get_response):
+  """Wrap a view with a function that logs the visit.
+  It also makes the Visit available as the visit property of the request."""
+  def wrapper(request):
     visit = get_or_create_visit_and_visitor(request)
-    response = view(request, *nargs, **kwargs)
+    request.visit = visit
+    response = get_response(request)
     return set_cookies(visit, response)
-  return wrapped_view
-
-
-# Decorator.
-def add_and_get_visit(view):
-  """Wrap a view with a function that logs the visit and provides it as an argument to the view."""
-  #TODO: This might be better written as middleware, but I'll have to look into it.
-  @functools.wraps(view)
-  def wrapped_view(request, *nargs, **kwargs):
-    visit = get_or_create_visit_and_visitor(request)
-    response = view(request, visit, *nargs, **kwargs)
-    return set_cookies(visit, response)
-  return wrapped_view
+  return wrapper
 
 
 def get_or_create_visit_and_visitor(request):

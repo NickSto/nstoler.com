@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
 from django.conf import settings
 from .models import Note, Page
-from traffic.lib import add_visit, add_and_get_visit
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 import random as rand
 import string
@@ -12,7 +11,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-@add_visit
 def view(request, page_name):
   params = request.GET
   format = params.get('format')
@@ -48,8 +46,7 @@ def view(request, page_name):
     return render(request, 'notepad/view.tmpl', context)
 
 
-@add_and_get_visit
-def add(request, visit, page_name):
+def add(request, page_name):
   params = request.POST
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were added to the main "notepad" page.
@@ -65,14 +62,13 @@ def add(request, visit, page_name):
     note = Note(
       page=page,
       content=params['content'],
-      visit=visit
+      visit=request.visit
     )
     note.save()
   return HttpResponseRedirect(view_url+'#bottom')
 
 
-@add_and_get_visit
-def delete(request, visit, page_name):
+def delete(request, page_name):
   params = request.POST
   view_url = reverse('notepad:view', args=(page_name,))
   if params['site'] == '':
@@ -86,24 +82,22 @@ def delete(request, visit, page_name):
           note = Note.objects.get(pk=note_id)
         except Note.DoesNotExist:
           log.info('Visitor "{}" tried to delete non-existent note #{}.'
-                   .format(visit.visitor, note_id))
+                   .format(request.visit.visitor, note_id))
           continue
         note.deleted = True
-        note.deleting_visit = visit
+        note.deleting_visit = request.visit
         note.save()
   #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were deleted from the main "notepad" page.
   return HttpResponseRedirect(view_url+'#bottom')
 
 
-@add_visit
 def random(request):
   alphabet = string.ascii_lowercase
   page_name = ''.join([rand.choice(alphabet) for i in range(5)])
   return redirect('notepad:view', page_name)
 
 
-@add_visit
 @require_admin_and_privacy
 def monitor(request):
   format = request.GET.get('format')

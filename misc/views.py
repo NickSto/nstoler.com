@@ -2,13 +2,11 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
 from myadmin.lib import require_admin_and_privacy
-from traffic.lib import add_visit
 import collections
 import subprocess
 import os
 
 
-@add_visit
 @require_admin_and_privacy
 def export(request):
   db_name = settings.DATABASES['default']['NAME']
@@ -22,7 +20,6 @@ def export(request):
   return response
 
 
-@add_visit
 @require_admin_and_privacy
 def env(request):
   text = ''
@@ -32,7 +29,6 @@ def env(request):
   return HttpResponse(text, content_type='text/plain; charset=UTF-8')
 
 
-@add_visit
 def userinfo(request):
   headers = request.META
   info = collections.OrderedDict()
@@ -46,7 +42,6 @@ def userinfo(request):
   return HttpResponse(text, content_type='text/plain; charset=UTF-8')
 
 
-@add_visit
 @require_admin_and_privacy
 def setcookie(request):
   context = {'default_name':'visitors_v1', 'default_value':request.COOKIES['visitors_v1']}
