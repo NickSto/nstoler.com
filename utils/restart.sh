@@ -24,6 +24,8 @@ function main {
 
   sanity_check "$www_root"
 
+  print_commit "$www_root"
+
   restart "$www_root"
 }
 
@@ -46,7 +48,8 @@ function sanity_check {
       okay_to_go=
     fi
   done
-  for file in "$www_root/nstoler.com/.venv/bin/python" "$www_root/nstoler.com/traffic/watch_nginx.py"; do
+  for file in "$www_root/nstoler.com/.venv/bin/python" "$www_root/logs/versions.tsv" \
+              "$www_root/nstoler.com/traffic/watch_nginx.py"; do
     if ! [[ -f "$file" ]]; then
       echo "Error: Missing file \"$file\"." >&2
       okay_to_go=
@@ -55,6 +58,19 @@ function sanity_check {
   if ! [[ $okay_to_go ]]; then
     exit 1
   fi
+}
+
+
+function print_commit {
+  www_root="$1"
+  last_recorded=$(cut -f 2 "$www_root/logs/versions.tsv" | tail -n 1)
+  current=$(git --work-tree="$www_root/nstoler.com" --git-dir="$www_root/nstoler.com/.git" \
+            log -n 1 --pretty=format:%h)
+  if [[ $current == $last_recorded ]]; then
+    return
+  fi
+  now=$(date +%s)
+  echo -e "$now\t$current" >> "$www_root/logs/versions.tsv"
 }
 
 
