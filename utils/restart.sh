@@ -55,6 +55,7 @@ function sanity_check {
       okay_to_go=
     fi
   done
+  #TODO: Check that all submodules are updated as well!
   if ! [[ $okay_to_go ]]; then
     exit 1
   fi
@@ -67,10 +68,12 @@ function print_commit {
   current=$(git --work-tree="$www_root/nstoler.com" --git-dir="$www_root/nstoler.com/.git" \
             log -n 1 --pretty=format:%h)
   if [[ $current == $last_recorded ]]; then
-    return
+    echo "Git commit unchanged from $last_recorded."
+  else
+    echo "Git commit changed from $last_recorded to $current."
+    now=$(date +%s)
+    echo -e "$now\t$current" >> "$www_root/logs/versions.tsv"
   fi
-  now=$(date +%s)
-  echo -e "$now\t$current" >> "$www_root/logs/versions.tsv"
 }
 
 
