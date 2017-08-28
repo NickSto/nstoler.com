@@ -36,6 +36,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+#TODO: Check out these security settings:
+#      https://docs.djangoproject.com/en/1.11/ref/middleware/#module-django.middleware.security
+# SECURE_BROWSER_XSS_FILTER
+# SECURE_CONTENT_TYPE_NOSNIFF
+
 
 # Application definition
 
@@ -194,24 +199,15 @@ LOGGING = {
       'level': 'DEBUG',
       'propagate': False,
     },
-    'notepad': {
-      'handlers': ['console', 'logfile'],
-      'level': 'DEBUG',
-    },
-    'traffic': {
-      'handlers': ['console', 'logfile'],
-      'level': 'DEBUG',
-    },
-    'myadmin': {
-      'handlers': ['console', 'logfile'],
-      'level': 'DEBUG',
-    },
-    'misc': {
-      'handlers': ['console', 'logfile'],
-      'level': 'DEBUG',
-    },
   }
 }
+
+for _app in INSTALLED_APPS:
+  if not _app.startswith('django.'):
+    LOGGING['loggers'][_app] = {
+      'handlers': ['console', 'logfile'],
+      'level': 'DEBUG',
+    }
 
 ########## Read config file settings ##########
 
