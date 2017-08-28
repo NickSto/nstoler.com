@@ -1,4 +1,14 @@
+from mysite import settings
+DEBUG = False
 SECRET_KEY = 'jgfz2e+mjbjrep!k14b^wnvo$v+d#ehr-m-5c%t7-0m6^mn6_e'
 ADMIN_SALT = '44aa150cac2f2a8c7856b8b260a53ae69103929a75d4fa49dd8d60e48a97a84f'
 ALLOWED_HOSTS = ['example.com', 'example.com.test']
-
+DATABASES = settings.DATABASES
+DATABASES['default'] = {
+  'ENGINE': 'django.db.backends.postgresql_psycopg2',
+  'NAME': 'django',
+  'USER': 'django',
+  'PASSWORD': '6DAPJy8t3tTJcVKIuu0HWL0a',
+  'HOST': 'localhost',
+  'PORT': '',
+}
