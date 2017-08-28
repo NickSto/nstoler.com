@@ -14,6 +14,7 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WEB_ROOT = '/var/www'
 
 ########## My custom settings ##########
 
@@ -163,7 +164,7 @@ LOGGING = {
     'logfile': {
       'level':'DEBUG',
       'class':'logging.handlers.RotatingFileHandler',
-      'filename': '/var/www/logs/django.log',
+      'filename': os.path.join(WEB_ROOT, 'logs/django.log'),
       'maxBytes': 1000000,
       'backupCount': 99999,
       'formatter': 'standard',
@@ -171,7 +172,7 @@ LOGGING = {
     'sqlfile': {
       'level':'DEBUG',
       'class':'logging.handlers.RotatingFileHandler',
-      'filename': '/var/www/logs/django_sql.log',
+      'filename': os.path.join(WEB_ROOT, 'django_sql.log'),
       'maxBytes': 1000000,
       'backupCount': 10,
       'formatter': 'standard',
