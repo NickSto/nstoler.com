@@ -1,7 +1,8 @@
 
 user_agent:
   # These names occur in a known location in the user_agent string: After "compatible; " and before
-  # "/" or ";". Example:
+  # "/" or ";". Examples:
+  # "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)"
   # "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)"
   names:
     - Googlebot
