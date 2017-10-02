@@ -1,0 +1,26 @@
+
+user_agent:
+  # These names occur in a known location in the user_agent string: After "compatible; " and before
+  # "/" or ";". Example:
+  # "Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)"
+  names:
+    - Googlebot
+    - Yahoo! Slurp
+    - Baiduspider
+
+  # These names occur after "compatible; " and before " ". It's incompatible with the above, which
+  # allows spaces in the names. Example:
+  # "Mozilla/5.0 (compatible; archive.org_bot +http://www.archive.org/details/archive.org_bot)"
+  space_delim:
+    - archive.org_bot
+
+  # For these, the user_agent string begins with the bot name, followed by a "/". Example:
+  # "Sogou web spider/4.0(+http://www.sogou.com/docs/help/webmasters.htm#07)"
+  startswith:
+    - curl
+    - Sogou web spider
+
+  # These strings are the 2nd whitespace-delimited word. Example:
+  # "Mozilla/5.0 Jorgee"
+  2nd_word:
+    - Jorgee

@@ -18,6 +18,8 @@ WEB_ROOT = '/var/www'
 
 ########## My custom settings ##########
 
+CONFIG_DIR = os.path.join(BASE_DIR, 'config')
+
 # Requre HTTPS when transferring sensitive information?
 REQUIRE_HTTPS = False
 
