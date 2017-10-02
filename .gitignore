@@ -12,3 +12,12 @@ static/media/
 *.log
 *.log.gz
 static/.well-known
+static/myadmin
+static/notepad
+static/pages
+static/traffic
+static/wikihistory
+static/ET
+static/admin
+static/misc/js
+static/misc/css
