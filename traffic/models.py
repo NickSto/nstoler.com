@@ -103,7 +103,6 @@ class IpInfo(ModelMixin, models.Model):
 
 # Types of visitors which should be considered robots.
 class Robot(ModelMixin, models.Model):
-  source = models.CharField(max_length=30)
   ip = models.GenericIPAddressField()
   cookie1 = models.CharField(max_length=24, null=True, blank=True)
   cookie2 = models.CharField(max_length=24, null=True, blank=True)
