@@ -1,4 +1,5 @@
 from .models import Visit, Visitor, User, Cookie
+from .categorize import get_bot_score
 import string
 import random
 import base64
@@ -38,12 +39,9 @@ def middleware(get_response):
 
 def get_or_create_visit_and_visitor(request):
   """Do the actual work of logging the visit. Return the Visit object."""
-  cookies_got = get_cookies(request)
-  headers = request.META
-  ip = headers.get('REMOTE_ADDR')
-  user_agent = headers.get('HTTP_USER_AGENT')
-  visitor = get_or_create_visitor(ip, cookies_got, user_agent)
-  visit = create_visit(request, visitor)
+  request_data = unpack_request(request)
+  visitor = get_or_create_visitor(request_data)
+  visit = create_visit(request_data, visitor, request.COOKIES)
   return visit
 
 
@@ -64,19 +62,19 @@ def set_cookies(visit, response):
   return response
 
 
-def create_visit(request, visitor):
+def create_visit(request_data, visitor, request_cookies):
   visit = Visit(
-    method=request.method,
-    scheme=request.scheme,
-    host=request.get_host(),
-    path=request.path_info,
-    query_str=request.META.get('QUERY_STRING') or request.GET.urlencode(),
-    referrer=request.META.get('HTTP_REFERER'),
+    method=request_data['method'],
+    scheme=request_data['scheme'],
+    host=request_data['host'],
+    path=request_data['path'],
+    query_str=request_data['query_str'],
+    referrer=request_data['referrer'],
     visitor=visitor
   )
   visit.save()
   # Take care of the cookies received and sent.
-  cookies_got, cookies_set = create_cookies_got_set(request.COOKIES)
+  cookies_got, cookies_set = create_cookies_got_set(request_cookies)
   visit.cookies_got.add(*cookies_got)
   visit.cookies_set.add(*cookies_set)
   visit.save()
@@ -121,24 +119,44 @@ def make_cookie1():
   return ''.join([random.choice(ALPHABET1) for i in range(16)])
 
 
-def get_or_create_visitor(ip, cookies_got, user_agent):
+def unpack_request(request):
+  headers = request.META
+  cookie1, cookie2 = get_cookies(request)
+  return {
+    'ip': headers.get('REMOTE_ADDR'),
+    'user_agent': headers.get('HTTP_USER_AGENT'),
+    'cookie1': cookie1,
+    'cookie2': cookie2,
+    'method': request.method,
+    'scheme': request.scheme,
+    'host': request.get_host(),
+    'path': request.path_info,
+    'query_str': headers.get('QUERY_STRING') or request.GET.urlencode(),
+    'referrer': headers.get('HTTP_REFERER')
+  }
+
+
+def get_or_create_visitor(request_data):
   """Find a Visitor by ip, user_agent, and cookies sent (only visitors_v1/2).
   If no exact match for the Visitor is found, create one. In that case, if a Visitor with a matching
   cookie can be found, assume it's the same User."""
-  cookie1, cookie2 = cookies_got
-  visitor, user, label = get_visitor_user_and_label(ip, user_agent, cookie1, cookie2)
+  visitor, user, label = get_visitor_user_and_label(request_data['ip'],
+                                                    request_data['user_agent'],
+                                                    request_data['cookie1'],
+                                                    request_data['cookie2'])
   if not user:
     user = User()
     user.save()
     log.info('Created new User (id {})'.format(user.id))
   if not visitor:
     visitor = Visitor(
-      ip=ip,
-      user_agent=user_agent,
-      cookie1=cookie1,
-      cookie2=cookie2,
+      ip=request_data['ip'],
+      user_agent=request_data['user_agent'],
+      cookie1=request_data['cookie1'],
+      cookie2=request_data['cookie2'],
       label=label,
       user=user,
+      bot_score=get_bot_score(**request_data),
       version=2,
     )
     visitor.save()
@@ -234,7 +252,7 @@ def get_visitors_by_cookies_set(cookies):
   (confirming that it accepted it!)."""
   for cookie in cookies:
     if cookie is not None:
-      visitors = Visitor.objects.filter(visit__cookies_set__value=cookie)
+      visitors = Visitor.objects.filter(visit__cookies_set__value=cookie)  #TODO: index?
       if visitors:
         log.info('Found {} Visitor(s) where the cookie {!r} was set in an HTTP response.'
                  .format(len(visitors), cookie))
