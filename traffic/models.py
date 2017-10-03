@@ -30,7 +30,13 @@ class Visitor(ModelMixin, models.Model):
   cookie2 = models.CharField(max_length=24, null=True, blank=True)
   user_agent = models.CharField(max_length=200, null=True, blank=True)
   label = models.CharField(max_length=200)
+  # Bot score:
+  # positive = more sure it's a bot
+  # negative = more sure it's not a bot
+  # zero = not saying either way
+  bot_score = models.IntegerField(default=0)
   user = models.ForeignKey(User, models.PROTECT)
+  # Version:
   # Version 1: The cookies are the old, loosely-defined type.
   # Version 2: The cookies are strictly ones sent by the client.
   version = models.SmallIntegerField()
@@ -93,3 +99,29 @@ class IpInfo(ModelMixin, models.Model):
   town = models.CharField(max_length=127)
   zip = models.CharField(max_length=31)
   timestamp = models.DateTimeField(default=timezone.now)  # When this info was current.
+
+
+# Types of visitors which should be considered robots.
+class Robot(ModelMixin, models.Model):
+  source = models.CharField(max_length=30)
+  ip = models.GenericIPAddressField()
+  cookie1 = models.CharField(max_length=24, null=True, blank=True)
+  cookie2 = models.CharField(max_length=24, null=True, blank=True)
+  user_agent = models.CharField(max_length=200, null=True, blank=True)
+  # Version 1: The cookies are the old, loosely-defined type.
+  # Version 2: The cookies are strictly ones sent by the client.
+  version = models.SmallIntegerField()
+  def __str__(self):
+    fields = []
+    if self.ip:
+      fields.append(self.ip)
+    for cookie in (self.cookie1, self.cookie2):
+      if cookie:
+        fields.append('({})'.format(cookie))
+    if self.user_agent:
+      fields.append('"{}"'.format(self.user_agent))
+    if len(fields) == 1:
+      for value in (self.ip, self.cookie1, self.cookie2, self.user_agent):
+        if value:
+          return value
+    return ' '.join(fields)
