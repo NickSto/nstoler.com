@@ -8,5 +8,6 @@ urlpatterns = [
   url(r'^monitor\.cgi$', views.monitor_redirect),
   url(r'^monitor/$', views.monitor_redirect),
   url(r'^monitor$', views.monitor_redirect),
+  url(r'^markbots$', views.mark_robots, name='markbots'),
   url(r'^$', views.monitor, name='monitor'),
 ]

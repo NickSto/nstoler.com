@@ -164,7 +164,8 @@
 
         {% if admin %}
           <nav class="buttons">
-            <a class="btn btn-default" href="/misc/export">Export database</a>
+            <a class="btn btn-default" href="{% url 'misc:export' %}">Export database</a>
+            <a class="btn btn-default" href="{% url 'traffic:markbots' %}">Mark robots</a>
           </nav>
         {% endif %}
 

@@ -2,9 +2,9 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from django.conf import settings
-from .categorize import is_robot
-from .models import Visit
-from myadmin.lib import get_admin_cookie
+from .models import Visit, Visitor
+from myadmin.lib import get_admin_cookie, require_admin_and_privacy
+from . import categorize
 import logging
 log = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ def monitor(request):
   if hide == 'robots' and user is None:
     visits = []
     for visit in visits_unbounded:
-      if not is_robot(visit):
+      if not categorize.is_robot(visit):
         visits.append(visit)
       if len(visits) >= per_page:
         break
@@ -146,3 +146,28 @@ def _construct_query_str(params, extra_defaults):
         joiner = '?'
       query_str += '{}{}={}'.format(joiner, param, value)
   return query_str
+
+
+@require_admin_and_privacy
+def mark_robots(request):
+  """Go through the entire database and mark robots we weren't aware of before.
+  Basically re-loads robots.yaml and marks historical bots."""
+  #TODO: Cache .save()s and commit them all at once using @transaction.atomic:
+  #      https://stackoverflow.com/questions/3395236/aggregating-saves-in-django/3397586#3397586
+  bot_strings = categorize.load_bot_strings()
+  probable_bots = 0
+  maybe_bots = 0
+  for visitor in Visitor.objects.all():
+    user_agent = visitor.user_agent
+    if visitor.bot_score < categorize.SCORES['ua_contains']:
+      if categorize.is_robot_ua(bot_strings, user_agent):
+        visitor.bot_score = categorize.SCORES['ua_contains']
+        probable_bots += 1
+        visitor.save()
+    if visitor.bot_score < categorize.SCORES['bot_in_ua']:
+      if 'bot' in user_agent.lower():
+        visitor.bot_score = categorize.SCORES['bot_in_ua']
+        maybe_bots += 1
+        visitor.save()
+  out_text = '{} likely bots found\n{} possible bots found'.format(probable_bots, maybe_bots)
+  return HttpResponse(out_text, content_type='text/plain; charset=UTF-8')
