@@ -36,7 +36,7 @@ def monitor(request):
   page = int(params.get('p', 1))
   per_page = int(params.get('per_page', PER_PAGE_DEFAULT))
   include = params.get('include')
-  hide = params.get('hide')
+  bot_thres = params.get('bot_thres')
   if admin and 'user' in params:
     user = int(params['user'])
   if page < 1:
@@ -49,13 +49,17 @@ def monitor(request):
     default_user = None
   else:
     default_user = this_user
-  # Calculate start and end of visits to request.
+  # Obtain visits list from database.
   if user is not None:
-    total_visits = Visit.objects.filter(visitor__user__id=user).count()
+    visits = Visit.objects.filter(visitor__user__id=user)
   elif include == 'me':
-    total_visits = Visit.objects.count()
+    visits = Visit.objects.order_by('-id')
   else:
-    total_visits = Visit.objects.exclude(visitor__user__id=1).count()
+    visits = Visit.objects.exclude(visitor__user__id=1)
+  # Exclude robots, if requested.
+  if bot_thres is not None and user is None:
+    visits = visits.filter(visitor__bot_score__lte=bot_thres)
+  total_visits = visits.count()
   start = (page-1)*per_page
   end = page*per_page
   # Is this page beyond the last possible one?
@@ -64,23 +68,8 @@ def monitor(request):
     new_params['p'] = (total_visits-1) // per_page + 1
     query_str = _construct_query_str(new_params, {'user':default_user})
     return redirect(reverse('traffic_monitor')+query_str)
-  # Obtain visits list from database.
-  if user is not None:
-    visits_unbounded = Visit.objects.filter(visitor__user__id=user).order_by('-id')[start:]
-  elif include == 'me':
-    visits_unbounded = Visit.objects.order_by('-id')[start:]
-  else:
-    visits_unbounded = Visit.objects.exclude(visitor__user__id=1).order_by('-id')[start:]
-  # Exclude robots, if requested.
-  if hide == 'robots' and user is None:
-    visits = []
-    for visit in visits_unbounded:
-      if not categorize.is_robot(visit):
-        visits.append(visit)
-      if len(visits) >= per_page:
-        break
-  else:
-    visits = list(visits_unbounded[:per_page])
+  # Slice the list of all visits into an ordered list of the visits for this page.
+  visits = visits.order_by('-id')[start:end]
   # Add this visit to the start of the list, if it's not there but should be.
   if start == 0 and (user == this_user or (user is None and include == 'me')):
     if len(visits) == 0:
@@ -92,19 +81,19 @@ def monitor(request):
   # Construct the navigation links.
   link_data = []
   if page > 1:
-    link_data.append(('< Later', 'p', page-1))
+    link_data.append(('Later', 'p', page-1))
   if admin:
     if include == 'me':
       link_data.append(('Hide me', 'include', None))
     else:
       link_data.append(('Include me', 'include', 'me'))
   if admin:
-    if hide == 'robots':
-      link_data.append(('Show robots', 'hide', None))
+    if bot_thres is None:
+      link_data.append(('Hide robots', 'bot_thres', categorize.SCORES['bot_in_ua']))
     else:
-      link_data.append(('Hide robots', 'hide', 'robots'))
+      link_data.append(('Show robots', 'bot_thres', None))
   if total_visits > end:
-    link_data.append(('Earlier >', 'p', page+1))
+    link_data.append(('Earlier', 'p', page+1))
   links = _construct_links(link_data, new_params, {'user':default_user})
   context = {
     'visits': visits,
@@ -130,10 +119,10 @@ def _construct_links(link_data, params, extra_defaults):
 def _construct_query_str(params, extra_defaults):
   """Construct the query string, omitting default values and with parameters in a predetermined
   order."""
-  defaults = {'p':1, 'user':1, 'include':None, 'hide':None, 'per_page':PER_PAGE_DEFAULT}
+  defaults = {'p':1, 'user':1, 'include':None, 'bot_thres':None, 'per_page':PER_PAGE_DEFAULT}
   defaults.update(extra_defaults)
   query_str = ''
-  param_list = ['p', 'user', 'include', 'hide', 'per_page']
+  param_list = ['p', 'user', 'include', 'bot_thres', 'per_page']
   for param in params:
     if param not in param_list:
       param_list.append(param)
