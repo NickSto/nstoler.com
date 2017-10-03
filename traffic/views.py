@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.urls import reverse
+from django.utils.html import escape
 from django.conf import settings
-from .models import Visit, Visitor
+from .models import Visit, Visitor, Robot
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 from . import categorize
 import logging
@@ -138,7 +139,7 @@ def _construct_query_str(params, extra_defaults):
 
 
 @require_admin_and_privacy
-def mark_robots(request):
+def mark_all_robots(request):
   """Go through the entire database and mark robots we weren't aware of before.
   Basically re-loads robots.yaml and marks historical bots."""
   #TODO: Cache .save()s and commit them all at once using @transaction.atomic:
@@ -160,3 +161,24 @@ def mark_robots(request):
         visitor.save()
   out_text = '{} likely bots found\n{} possible bots found'.format(probable_bots, maybe_bots)
   return HttpResponse(out_text, content_type='text/plain; charset=UTF-8')
+
+
+@require_admin_and_privacy
+def mark_robot(request):
+  # Get query parameters.
+  params = request.POST
+  user_agent = params.get('user_agent')
+  if not user_agent:
+    return HttpResponseBadRequest('Error: You must supply a user_agent.', content_type='text/plain; charset=UTF-8')
+  try:
+    Robot.objects.get(user_agent=user_agent, ip=None, cookie1=None, cookie2=None)
+  except Robot.DoesNotExist:
+    robot = Robot(user_agent=user_agent, version=2)
+    robot.save()
+  bot_score = categorize.SCORES['ua_exact']
+  marked = Visitor.objects.filter(user_agent=user_agent, bot_score__lt=bot_score).update(bot_score=bot_score)
+  referrer = request.META.get('HTTP_REFERER')
+  html = '<p>{} visitors marked as robots.</p>'.format(marked)
+  if referrer:
+    html += '\n<p><a href="{}">back</a></p>'.format(escape(referrer))
+  return HttpResponse(html)

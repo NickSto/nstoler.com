@@ -125,6 +125,19 @@
   width: calc(100% - 70px);
 }
 
+form.markbot {
+  display: inline;
+}
+
+form.markbot input {
+  margin-left: 3px;
+  margin-top: 8px;
+}
+
+.user_agent.value {
+  padding-bottom: 0;
+}
+
 /* When the viewport is narrow enough that both tables don't fit alongside each other, artificially
  * join them into one table. This happens on original-sized iPhones.
  */

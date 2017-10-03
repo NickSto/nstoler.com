@@ -106,14 +106,23 @@
                       </td>
                     </tr>
                   {% endif %}
+                  {% if visit.visitor.user_agent %}
                   <tr>
                     <th class="name">
                       User Agent
                     </th>
-                    <td class="value">
+                    <td class="value user_agent">
                       {{ visit.visitor.user_agent | truncatechars:200 }}
+                      {% if admin and visit.visitor.bot_score < 1000 %}
+                        <form class="markbot" name="markbot_{{ visit.id }}" method="post" action="{% url 'traffic:markbot' %}">
+                          {% csrf_token %}
+                          <input type="hidden" name="user_agent" value="{{ visit.visitor.user_agent }}">
+                          <input type="submit" class="btn btn-default btn-xs mark-bot" value="mark bot">
+                        </form>
+                      {% endif %}
                     </td>
                   </tr>
+                  {% endif %}
                 </table>
                 <table class="pane2 table-bordered table-condensed">
                   <tr>
@@ -175,7 +184,7 @@
         {% if admin %}
           <nav class="buttons">
             <a class="btn btn-default" href="{% url 'misc:export' %}">Export database</a>
-            <a class="btn btn-default" href="{% url 'traffic:markbots' %}">Mark robots</a>
+            <a class="btn btn-default" href="{% url 'traffic:markallbots' %}">Mark robots</a>
           </nav>
         {% endif %}
 
