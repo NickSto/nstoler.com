@@ -59,7 +59,7 @@ def monitor(request):
     visits = Visit.objects.exclude(visitor__user__id=1)
   # Exclude robots, if requested.
   if bot_thres is not None and user is None:
-    visits = visits.filter(visitor__bot_score__lte=bot_thres)
+    visits = visits.filter(visitor__bot_score__lt=bot_thres)
   total_visits = visits.count()
   start = (page-1)*per_page
   end = page*per_page

@@ -16,15 +16,6 @@ SCORES = {
   'sent_cookies':-100,
 }
 
-#TODO: The main way to filter out bots should be by marking visitors in the database with a
-#      "bot_likelihood" value. Then a simple database query can filter them out. That field can be
-#      set in a few ways. One should be via a UI element in the traffic monitor that lets me mark
-#      all visitors with a given user agent as bots. That could set a high value for those visitors.
-#      Another, more flexible way would be via the robots.yaml file. Maybe that would be a slightly
-#      lower value. I should have a specific button on the traffic monitor page to load it and
-#      mark bots in the database using the updated info. I could also just mark any visitor with
-#      "bot" in the user_agent with a low (but positive) value.
-
 
 def load_bot_strings(robots_config_path=DEFAULT_ROBOTS_CONFIG_PATH):
   empty_strings = {'user_agent': collections.defaultdict(list)}
