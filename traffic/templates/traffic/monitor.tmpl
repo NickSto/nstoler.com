@@ -111,7 +111,7 @@
                       User Agent
                     </th>
                     <td class="value">
-                      {{ visit.visitor.user_agent }}
+                      {{ visit.visitor.user_agent | truncatechars:200 }}
                     </td>
                   </tr>
                 </table>
@@ -130,7 +130,7 @@
                     </th>
                     <td class="value">
                       <a href="{{ visit.url }}" target="_blank">
-                        {{ visit.url }}
+                        {{ visit.url | truncatechars:130 }}
                       </a>
                     </td>
                   </tr>
@@ -141,8 +141,18 @@
                       </th>
                       <td class="value">
                         <a href="{{ visit.referrer }}" target="_blank" rel="nofollow noreferrer">
-                          {{ visit.referrer }}
+                          {{ visit.referrer | truncatechars:130 }}
                         </a>
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if visit.visitor.bot_score != 0 %}
+                    <tr>
+                      <th class="name">
+                        Bot Score
+                      </th>
+                      <td class="value">
+                        {{ visit.visitor.bot_score }}
                       </td>
                     </tr>
                   {% endif %}
