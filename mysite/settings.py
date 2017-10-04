@@ -181,7 +181,7 @@ LOGGING = {
     'sqlfile': {
       'level':'DEBUG',
       'class':'logging.handlers.RotatingFileHandler',
-      'filename': os.path.join(WEB_ROOT, 'django_sql.log'),
+      'filename': os.path.join(WEB_ROOT, 'logs/django_sql.log'),
       'maxBytes': 20000000,
       'backupCount': 10,
       'formatter': 'standard',
