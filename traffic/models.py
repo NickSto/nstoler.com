@@ -106,7 +106,8 @@ class Robot(ModelMixin, models.Model):
   ip = models.GenericIPAddressField(null=True, blank=True)
   cookie1 = models.CharField(max_length=24, null=True, blank=True)
   cookie2 = models.CharField(max_length=24, null=True, blank=True)
-  user_agent = models.CharField(max_length=200, null=True, blank=True)
+  user_agent = models.CharField(max_length=200, null=True, blank=True, db_index=True)
+  referrer = models.URLField(max_length=4095, null=True, blank=True, db_index=True)
   # Version 1: The cookies are the old, loosely-defined type.
   # Version 2: The cookies are strictly ones sent by the client.
   version = models.SmallIntegerField()
@@ -119,6 +120,8 @@ class Robot(ModelMixin, models.Model):
         fields.append('({})'.format(cookie))
     if self.user_agent:
       fields.append('"{}"'.format(self.user_agent))
+    if self.referrer:
+      fields.append('via: '+self.referrer)
     if len(fields) == 1:
       for value in (self.ip, self.cookie1, self.cookie2, self.user_agent):
         if value:

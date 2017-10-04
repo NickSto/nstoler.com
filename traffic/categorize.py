@@ -4,25 +4,30 @@ import os
 import logging
 import collections
 log = logging.getLogger(__name__)
+try:
+  import yaml
+except ImportError:
+  log.warning('ImportError for module "yaml".')
+  yaml = None
 
 DEFAULT_ROBOTS_CONFIG_PATH = os.path.join(settings.CONFIG_DIR, 'robots.yaml')
 
 SCORES = {
+  'ua+referrer': 1500,
   'ua_exact':1000,
+  'referrer_exact':800,
   'ua_contains':500,
   'empty':200,
   'bad_host':100,
   'bot_in_ua':20,
+  'mozilla_ua':-50,
   'sent_cookies':-100,
 }
 
 
 def load_bot_strings(robots_config_path=DEFAULT_ROBOTS_CONFIG_PATH):
   empty_strings = {'user_agent': collections.defaultdict(list)}
-  try:
-    import yaml
-  except ImportError:
-    log.warning('ImportError for "yaml".')
+  if yaml is None:
     return empty_strings
   try:
     with open(robots_config_path) as robots_config_file:
@@ -33,40 +38,71 @@ def load_bot_strings(robots_config_path=DEFAULT_ROBOTS_CONFIG_PATH):
   return bot_strings
 
 
+def unpack_visit(visit):
+  data = {
+    'path': visit.path,
+    'host': visit.host,
+    'query_str': visit.query_str,
+    'referrer': visit.referrer,
+    'user_agent': visit.visitor.user_agent,
+    'cookie1': '',
+    'cookie2': '',
+  }
+  if visit.visitor.version >= 2:
+    data['cookie1'] = visit.visitor.cookie1
+    data['cookie2'] = visit.visitor.cookie2
+  return data
+
+
 def is_robot(visit, thres=99, bot_strings=load_bot_strings()):
-  bot_score = get_bot_score(visit.path,
-                            visit.host,
-                            visit.query_str,
-                            visit.referrer,
-                            visit.visitor.user_agent,
-                            visit.visitor.cookie1,
-                            visit.visitor.cookie2,
-                            bot_strings=bot_strings)
+  visit_data = unpack_visit(visit)
+  bot_score = get_bot_score(bot_strings=bot_strings, **visit_data)
   return bot_score > thres
 
 
 def get_bot_score(path='', host='', query_str='', referrer='', user_agent='', cookie1='', cookie2='',
-                  bot_strings=load_bot_strings(), **kwargs):
-  # Highest score: Its full user_agent is in the list of known robots.
-  if Robot.objects.filter(user_agent=user_agent, ip=None, cookie1=None, cookie2=None):
-    return SCORES['ua_exact']
-  # 2nd highest score: Its user_agent includes strings of known bots in certain places.
+                  query_robots=True, bot_strings=load_bot_strings(), **kwargs):
+  # Check the user_agent and referrer against the database of known robots.
+  if query_robots:
+    nulls = {'ip':None, 'cookie1':None, 'cookie2':None}
+    if user_agent:
+      robots = Robot.objects.filter(user_agent=user_agent, **nulls)
+      if robots:
+        # The user_agent is in at least one Robot entry. If the entry(s) has a referrer field and
+        # it matches, we have a ua+referrer match. Otherwise, the Robot(s)' referrer must be empty,
+        # or we could be matching a Robot with the right user_agent but a different referrer.
+        # And if both fields are specified in the Robot, both must match.
+        if referrer and robots.filter(referrer=referrer):
+          # Highest score: Its full user_agent and referrer are in a single Robot entry.
+          return SCORES['ua+referrer']
+        elif robots.filter(referrer=None):
+          # 2nd highest score: Its full user_agent is in the list of known robots.
+          return SCORES['ua_exact']
+    if referrer:
+      if Robot.objects.filter(referrer=referrer, user_agent=None, **nulls):
+        # 3rd highest score: Its full referrer is in the list of known robots.
+        return SCORES['referrer_exact']
+  # 4th highest score: Its user_agent includes strings of known bots in certain places.
   if is_robot_ua(bot_strings, user_agent):
     return SCORES['ua_contains']
-  # 3rd highest score: All the request fields are empty (but maybe with a path of "/").
+  # 5th highest score: All the request fields are empty (but maybe with a path of "/").
   all_fields_empty = not (host or query_str or referrer or user_agent or cookie1 or cookie2)
   path_is_default = (path == '/' or path == '')
   if all_fields_empty and path_is_default:
     return SCORES['empty']
-  # 4th highest score: If the HOST field it provided isn't one of ours.
+  # 6th highest score: If the HOST field it provided isn't one of ours.
   if invalid_host(host):
     return SCORES['bad_host']
-  # 5th highest score: If "bot" appears anywhere in the user_agent.
+  # 7th highest score: If "bot" appears anywhere in the user_agent.
   if 'bot' in user_agent.lower():
     return SCORES['bot_in_ua']
-  # 1st negative score: It actually sent cookies. Probably a repeat visitor.
+  # 2nd lowest score: Its user_agent starts with "Mozilla/" followed by a number.
+  if is_mozilla_ua(user_agent):
+    return SCORES['mozilla_ua']
+  # Lowest score: It actually sent cookies. Probably a repeat visitor.
   if cookie1 or cookie2:
     return SCORES['sent_cookies']
+  #TODO: Below lowest score: It sent back cookies we gave it previously.
   # Default: 0
   return 0
 
@@ -110,3 +146,17 @@ def is_robot_ua(bot_strings, user_agent):
     return True
   # It's not a known bot.
   return False
+
+
+def is_mozilla_ua(user_agent):
+  first_word = user_agent.split()[0]
+  fields = first_word.split('/')
+  if len(fields) <= 1:
+    return False
+  if fields[0] != 'Mozilla':
+    return False
+  try:
+    float(fields[1])
+    return True
+  except ValueError:
+    return False

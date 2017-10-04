@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.urls import reverse
 from django.utils.html import escape
 from django.conf import settings
@@ -37,7 +37,10 @@ def monitor(request):
   page = int(params.get('p', 1))
   per_page = int(params.get('per_page', PER_PAGE_DEFAULT))
   include = params.get('include')
-  bot_thres = params.get('bot_thres')
+  try:
+    bot_thres = int(params.get('bot_thres'))
+  except (ValueError, TypeError):
+    bot_thres = None
   if admin and 'user' in params:
     user = int(params['user'])
   if page < 1:
@@ -89,10 +92,14 @@ def monitor(request):
     else:
       link_data.append(('Include me', 'include', 'me'))
   if admin:
-    if bot_thres is None:
+    if bot_thres is None or bot_thres < categorize.SCORES['bot_in_ua']:
       link_data.append(('Hide robots', 'bot_thres', categorize.SCORES['bot_in_ua']))
     else:
       link_data.append(('Show robots', 'bot_thres', None))
+    if bot_thres is None or bot_thres > categorize.SCORES['mozilla_ua']+1:
+      link_data.append(('Show humans', 'bot_thres', categorize.SCORES['mozilla_ua']+1))
+    else:
+      link_data.append(('Show all', 'bot_thres', None))
   if total_visits > end:
     link_data.append(('Earlier', 'p', page+1))
   links = _construct_links(link_data, new_params, {'user':default_user})
@@ -102,6 +109,8 @@ def monitor(request):
     'start': start+1,
     'end': min(end, start+len(visits)),
     'links': links,
+    'ua_exact_thres': categorize.SCORES['ua_exact'],
+    'referrer_exact_thres': categorize.SCORES['referrer_exact'],
   }
   return render(request, 'traffic/monitor.tmpl', context)
 
@@ -144,41 +153,67 @@ def mark_all_robots(request):
   Basically re-loads robots.yaml and marks historical bots."""
   #TODO: Cache .save()s and commit them all at once using @transaction.atomic:
   #      https://stackoverflow.com/questions/3395236/aggregating-saves-in-django/3397586#3397586
+  #TODO: Do this in the background using one of the solutions here:
+  #      https://stackoverflow.com/questions/6602761/django-background-task
+  if request.method != 'POST':
+    return HttpResponseNotAllowed(['POST'])
   bot_strings = categorize.load_bot_strings()
-  probable_bots = 0
-  maybe_bots = 0
-  for visitor in Visitor.objects.all():
-    user_agent = visitor.user_agent
-    if visitor.bot_score < categorize.SCORES['ua_contains']:
-      if categorize.is_robot_ua(bot_strings, user_agent):
-        visitor.bot_score = categorize.SCORES['ua_contains']
-        probable_bots += 1
-        visitor.save()
-    if visitor.bot_score < categorize.SCORES['bot_in_ua']:
-      if 'bot' in user_agent.lower():
-        visitor.bot_score = categorize.SCORES['bot_in_ua']
-        maybe_bots += 1
-        visitor.save()
-  out_text = '{} likely bots found\n{} possible bots found'.format(probable_bots, maybe_bots)
+  likely_bots = 0
+  likely_humans = 0
+  for visit in Visit.objects.all():
+    visit_data = categorize.unpack_visit(visit)
+    bot_score = categorize.get_bot_score(query_robots=False, bot_strings=bot_strings, **visit_data)
+    prev_score = visit.visitor.bot_score
+    # Set the Visitor's bot_score to the one we just determined if it hasn't been set yet, or if
+    # the new score is further from zero than the previous one.
+    if prev_score == 0 or abs(bot_score) > abs(prev_score):
+      visit.visitor.bot_score = bot_score
+      visit.visitor.save()
+      if bot_score > 0:
+        likely_bots += 1
+      elif bot_score < 0:
+        likely_humans += 1
+  out_text = '{} likely bots found\n{} likely humans found'.format(likely_bots, likely_humans)
+  logging.info('Finished marking all bots. Results: '+out_text.replace('\n', ', '))
   return HttpResponse(out_text, content_type='text/plain; charset=UTF-8')
 
 
 @require_admin_and_privacy
 def mark_robot(request):
+  if request.method != 'POST':
+    return HttpResponseNotAllowed(['POST'])
   # Get query parameters.
   params = request.POST
   user_agent = params.get('user_agent')
-  if not user_agent:
-    return HttpResponseBadRequest('Error: You must supply a user_agent.', content_type='text/plain; charset=UTF-8')
+  referrer = params.get('referrer')
+  if not (user_agent or referrer):
+    return HttpResponseBadRequest('Error: You must supply a user_agent and/or referrer.',
+                                  content_type='text/plain; charset=UTF-8')
+  # Create a Robot for these strings.
   try:
-    Robot.objects.get(user_agent=user_agent, ip=None, cookie1=None, cookie2=None)
-  except Robot.DoesNotExist:
-    robot = Robot(user_agent=user_agent, version=2)
-    robot.save()
-  bot_score = categorize.SCORES['ua_exact']
-  marked = Visitor.objects.filter(user_agent=user_agent, bot_score__lt=bot_score).update(bot_score=bot_score)
-  referrer = request.META.get('HTTP_REFERER')
+    robot, created = Robot.objects.get_or_create(user_agent=user_agent,
+                                                 referrer=referrer,
+                                                 cookie1=None,
+                                                 cookie2=None,
+                                                 ip=None,
+                                                 defaults={'version':2})
+  except Robot.MultipleObjectsReturned:
+    pass
+  # Mark existing Visitors in database according to these new strings.
+  if user_agent and referrer:
+    bot_score = categorize.SCORES['ua+referrer']
+    visitors = Visitor.objects.filter(user_agent=user_agent, visit__referrer=referrer,
+                                      bot_score__lt=bot_score)
+  elif user_agent:
+    bot_score = categorize.SCORES['ua_exact']
+    visitors = Visitor.objects.filter(user_agent=user_agent, bot_score__lt=bot_score)
+  elif referrer:
+    bot_score = categorize.SCORES['referrer_exact']
+    visitors = Visitor.objects.filter(visit__referrer=referrer, bot_score__lt=bot_score)
+  marked = visitors.update(bot_score=bot_score)
+  # Generate response.
+  our_referrer = request.META.get('HTTP_REFERER')
   html = '<p>{} visitors marked as robots.</p>'.format(marked)
-  if referrer:
-    html += '\n<p><a href="{}">back</a></p>'.format(escape(referrer))
+  if our_referrer:
+    html += '\n<p><a href="{}">back</a></p>'.format(escape(our_referrer))
   return HttpResponse(html)

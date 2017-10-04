@@ -112,12 +112,12 @@
                       User Agent
                     </th>
                     <td class="value user_agent">
-                      {{ visit.visitor.user_agent | truncatechars:200 }}
-                      {% if admin and visit.visitor.bot_score < 1000 %}
-                        <form class="markbot" name="markbot_{{ visit.id }}" method="post" action="{% url 'traffic:markbot' %}">
+                      {{ visit.visitor.user_agent | truncatechars:250 }}
+                      {% if admin and visit.visitor.bot_score < ua_exact_thres %}
+                        <form class="inline markbot" name="markbot_ua_{{ visit.id }}" method="post" action="{% url 'traffic:markbot' %}">
                           {% csrf_token %}
                           <input type="hidden" name="user_agent" value="{{ visit.visitor.user_agent }}">
-                          <input type="submit" class="btn btn-default btn-xs mark-bot" value="mark bot">
+                          <input type="submit" class="btn btn-default btn-xs" value="mark bot">
                         </form>
                       {% endif %}
                     </td>
@@ -139,7 +139,7 @@
                     </th>
                     <td class="value">
                       <a href="{{ visit.url }}" target="_blank">
-                        {{ visit.url | truncatechars:130 }}
+                        {{ visit.url | truncatechars:150 }}
                       </a>
                     </td>
                   </tr>
@@ -150,7 +150,14 @@
                       </th>
                       <td class="value">
                         <a href="{{ visit.referrer }}" target="_blank" rel="nofollow noreferrer">
-                          {{ visit.referrer | truncatechars:130 }}
+                          {{ visit.referrer | truncatechars:150 }}
+                          {% if admin and visit.visitor.bot_score < referrer_exact_thres %}
+                            <form class="inline markbot" name="markbot_ref_{{ visit.id }}" method="post" action="{% url 'traffic:markbot' %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="referrer" value="{{ visit.referrer }}">
+                              <input type="submit" class="btn btn-default btn-xs" value="mark bot">
+                            </form>
+                          {% endif %}
                         </a>
                       </td>
                     </tr>
@@ -184,7 +191,10 @@
         {% if admin %}
           <nav class="buttons">
             <a class="btn btn-default" href="{% url 'misc:export' %}">Export database</a>
-            <a class="btn btn-default" href="{% url 'traffic:markallbots' %}">Mark robots</a>
+            <form class="inline" name="markallbots" method="post" action="{% url 'traffic:markallbots' %}">
+              {% csrf_token %}
+              <input type="submit" class="btn btn-default" href="{% url 'traffic:markallbots' %}" value="Mark robots">
+            </form>
           </nav>
         {% endif %}
 

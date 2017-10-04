@@ -10,7 +10,7 @@
 
 @media (min-width: 768px) {
   .sidebar {
-    width: 120px;
+    width: 130px;
     position: fixed;
     top: 0;
     bottom: 0;
@@ -24,7 +24,7 @@
     border-right: 1px solid #eee;
   }
   #main.has-sidebar {
-    margin-left: 120px;
+    margin-left: 130px;
   }
   .sidebar-replacement {
     display: none;
@@ -123,10 +123,6 @@
 }
 .pane2 .value {
   width: calc(100% - 70px);
-}
-
-form.markbot {
-  display: inline;
 }
 
 form.markbot input {
