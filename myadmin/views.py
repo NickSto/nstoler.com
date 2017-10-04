@@ -136,7 +136,7 @@ def _submit_hash(request):
   # Safe to return a response directly to this POST instead of redirecting because it doesn't
   # actually change anything on the server. We're just using a POST because it's potentially
   # sensitive data so we don't want it in the query url as a query string.
-  return HttpResponse(text, content_type='text/plain; charset=UTF-8')
+  return HttpResponse(text, content_type=settings.PLAINTEXT)
 
 
 def _get_hash(password):

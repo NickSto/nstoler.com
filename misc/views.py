@@ -26,7 +26,7 @@ def env(request):
   for key in sorted(request.META.keys()):
     if key not in os.environ:
       text += '{}:\t{}\n'.format(key, request.META[key])
-  return HttpResponse(text, content_type='text/plain; charset=UTF-8')
+  return HttpResponse(text, content_type=settings.PLAINTEXT)
 
 
 def userinfo(request):
@@ -39,7 +39,7 @@ def userinfo(request):
   info['visitors_v2'] = request.COOKIES.get('visitors_v2')
   info['Cookie header'] = headers.get('HTTP_COOKIE')
   text = '\n'.join(['{}:\t{!r}'.format(key, value) for key, value in info.items()])
-  return HttpResponse(text, content_type='text/plain; charset=UTF-8')
+  return HttpResponse(text, content_type=settings.PLAINTEXT)
 
 
 @require_admin_and_privacy

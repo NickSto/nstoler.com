@@ -40,7 +40,7 @@ def view(request, page_name):
       content_formatted = urlize(escape(note.content))
       notes.append((note, content_formatted))
   if format == 'plain':
-    return HttpResponse('\n\n'.join(notes), content_type='text/plain; charset=UTF-8')
+    return HttpResponse('\n\n'.join(notes), content_type=settings.PLAINTEXT)
   else:
     context = {'page':page_name, 'notes':notes, 'admin':admin}
     return render(request, 'notepad/view.tmpl', context)
@@ -104,7 +104,7 @@ def monitor(request):
   pages = Page.objects.order_by('name')
   if format == 'plain':
     text = '\n'.join([page.name for page in pages])
-    return HttpResponse(text, content_type='text/plain; charset=UTF-8')
+    return HttpResponse(text, content_type=settings.PLAINTEXT)
   else:
     context = {'pages':pages}
     return render(request, 'notepad/monitor.tmpl', context)

@@ -157,29 +157,9 @@ def mark_robot(request):
   referrer = params.get('referrer')
   if not (user_agent or referrer):
     return HttpResponseBadRequest('Error: You must supply a user_agent and/or referrer.',
-                                  content_type='text/plain; charset=UTF-8')
-  # Create a Robot for these strings.
-  try:
-    robot, created = Robot.objects.get_or_create(user_agent=user_agent,
-                                                 referrer=referrer,
-                                                 cookie1=None,
-                                                 cookie2=None,
-                                                 ip=None,
-                                                 defaults={'version':2})
-  except Robot.MultipleObjectsReturned:
-    pass
-  # Mark existing Visitors in database according to these new strings.
-  if user_agent and referrer:
-    bot_score = categorize.SCORES['ua+referrer']
-    visitors = Visitor.objects.filter(user_agent=user_agent, visit__referrer=referrer,
-                                      bot_score__lt=bot_score)
-  elif user_agent:
-    bot_score = categorize.SCORES['ua_exact']
-    visitors = Visitor.objects.filter(user_agent=user_agent, bot_score__lt=bot_score)
-  elif referrer:
-    bot_score = categorize.SCORES['referrer_exact']
-    visitors = Visitor.objects.filter(visit__referrer=referrer, bot_score__lt=bot_score)
-  marked = visitors.update(bot_score=bot_score)
+                                  content_type=settings.PLAINTEXT)
+  # Do the actual marking.
+  marked = categorize.mark_robot(user_agent, referrer)
   # Generate response.
   our_referrer = request.META.get('HTTP_REFERER')
   html = '<p>{} visitors marked as robots.</p>'.format(marked)
@@ -196,4 +176,4 @@ def mark_all_robots(request):
     return HttpResponseNotAllowed(['POST'])
   likely_bots, likely_humans = categorize.mark_all_robots()
   out_text = '{} likely bots found\n{} likely humans found'.format(likely_bots, likely_humans)
-  return HttpResponse(out_text, content_type='text/plain; charset=UTF-8')
+  return HttpResponse(out_text, content_type=settings.PLAINTEXT)

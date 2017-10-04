@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import Robot, Visit
+from .models import Robot, Visitor, Visit
 import os
 import logging
 import collections
@@ -162,6 +162,32 @@ def is_mozilla_ua(user_agent):
     return True
   except ValueError:
     return False
+
+
+def mark_robot(user_agent, referrer):
+  # Create a Robot for these strings.
+  try:
+    robot, created = Robot.objects.get_or_create(user_agent=user_agent,
+                                                 referrer=referrer,
+                                                 cookie1=None,
+                                                 cookie2=None,
+                                                 ip=None,
+                                                 defaults={'version':2})
+  except Robot.MultipleObjectsReturned:
+    pass
+  # Mark existing Visitors in database according to these new strings.
+  if user_agent and referrer:
+    bot_score = SCORES['ua+referrer']
+    visitors = Visitor.objects.filter(user_agent=user_agent, visit__referrer=referrer,
+                                      bot_score__lt=bot_score)
+  elif user_agent:
+    bot_score = SCORES['ua_exact']
+    visitors = Visitor.objects.filter(user_agent=user_agent, bot_score__lt=bot_score)
+  elif referrer:
+    bot_score = SCORES['referrer_exact']
+    visitors = Visitor.objects.filter(visit__referrer=referrer, bot_score__lt=bot_score)
+  marked = visitors.update(bot_score=bot_score)
+  return marked
 
 
 def mark_all_robots(query_robots=False):
