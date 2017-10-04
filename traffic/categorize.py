@@ -164,7 +164,7 @@ def is_mozilla_ua(user_agent):
     return False
 
 
-def mark_all_robots():
+def mark_all_robots(query_robots=False):
   """Go through the entire database and mark robots we weren't aware of before.
   Basically re-loads robots.yaml and marks historical bots."""
   #TODO: Cache .save()s and commit them all at once using @transaction.atomic:
@@ -175,7 +175,7 @@ def mark_all_robots():
   likely_humans = 0
   for visit in Visit.objects.all():
     visit_data = unpack_visit(visit)
-    bot_score = get_bot_score(query_robots=False, bot_strings=bot_strings, **visit_data)
+    bot_score = get_bot_score(query_robots=query_robots, bot_strings=bot_strings, **visit_data)
     prev_score = visit.visitor.bot_score
     # Set the Visitor's bot_score to the one we just determined if it hasn't been set yet, or if
     # the new score is further from zero than the previous one.
