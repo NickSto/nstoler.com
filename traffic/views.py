@@ -148,37 +148,6 @@ def _construct_query_str(params, extra_defaults):
 
 
 @require_admin_and_privacy
-def mark_all_robots(request):
-  """Go through the entire database and mark robots we weren't aware of before.
-  Basically re-loads robots.yaml and marks historical bots."""
-  #TODO: Cache .save()s and commit them all at once using @transaction.atomic:
-  #      https://stackoverflow.com/questions/3395236/aggregating-saves-in-django/3397586#3397586
-  #TODO: Do this in the background using one of the solutions here:
-  #      https://stackoverflow.com/questions/6602761/django-background-task
-  if request.method != 'POST':
-    return HttpResponseNotAllowed(['POST'])
-  bot_strings = categorize.load_bot_strings()
-  likely_bots = 0
-  likely_humans = 0
-  for visit in Visit.objects.all():
-    visit_data = categorize.unpack_visit(visit)
-    bot_score = categorize.get_bot_score(query_robots=False, bot_strings=bot_strings, **visit_data)
-    prev_score = visit.visitor.bot_score
-    # Set the Visitor's bot_score to the one we just determined if it hasn't been set yet, or if
-    # the new score is further from zero than the previous one.
-    if prev_score == 0 or abs(bot_score) > abs(prev_score):
-      visit.visitor.bot_score = bot_score
-      visit.visitor.save()
-      if bot_score > 0:
-        likely_bots += 1
-      elif bot_score < 0:
-        likely_humans += 1
-  out_text = '{} likely bots found\n{} likely humans found'.format(likely_bots, likely_humans)
-  logging.info('Finished marking all bots. Results: '+out_text.replace('\n', ', '))
-  return HttpResponse(out_text, content_type='text/plain; charset=UTF-8')
-
-
-@require_admin_and_privacy
 def mark_robot(request):
   if request.method != 'POST':
     return HttpResponseNotAllowed(['POST'])
@@ -217,3 +186,14 @@ def mark_robot(request):
   if our_referrer:
     html += '\n<p><a href="{}">back</a></p>'.format(escape(our_referrer))
   return HttpResponse(html)
+
+
+@require_admin_and_privacy
+def mark_all_robots(request):
+  #TODO: Do this in the background using one of the solutions here:
+  #      https://stackoverflow.com/questions/6602761/django-background-task
+  if request.method != 'POST':
+    return HttpResponseNotAllowed(['POST'])
+  likely_bots, likely_humans = categorize.mark_all_robots()
+  out_text = '{} likely bots found\n{} likely humans found'.format(likely_bots, likely_humans)
+  return HttpResponse(out_text, content_type='text/plain; charset=UTF-8')

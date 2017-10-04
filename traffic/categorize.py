@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import Robot
+from .models import Robot, Visit
 import os
 import logging
 import collections
@@ -82,6 +82,7 @@ def get_bot_score(path='', host='', query_str='', referrer='', user_agent='', co
       if Robot.objects.filter(referrer=referrer, user_agent=None, **nulls):
         # 3rd highest score: Its full referrer is in the list of known robots.
         return SCORES['referrer_exact']
+  #TODO: Add match in Robot database for the path (e.g. "/wp-login.php")
   # 4th highest score: Its user_agent includes strings of known bots in certain places.
   if is_robot_ua(bot_strings, user_agent):
     return SCORES['ua_contains']
@@ -98,10 +99,11 @@ def get_bot_score(path='', host='', query_str='', referrer='', user_agent='', co
     return SCORES['bot_in_ua']
   # 2nd lowest score: Its user_agent starts with "Mozilla/" followed by a number.
   if is_mozilla_ua(user_agent):
-    return SCORES['mozilla_ua']
-  # Lowest score: It actually sent cookies. Probably a repeat visitor.
-  if cookie1 or cookie2:
-    return SCORES['sent_cookies']
+    # Lowest score: It also sent cookies. Possible repeat visitor.
+    if cookie1 or cookie2:
+      return SCORES['sent_cookies']
+    else:
+      return SCORES['mozilla_ua']
   #TODO: Below lowest score: It sent back cookies we gave it previously.
   # Default: 0
   return 0
@@ -160,3 +162,30 @@ def is_mozilla_ua(user_agent):
     return True
   except ValueError:
     return False
+
+
+def mark_all_robots():
+  """Go through the entire database and mark robots we weren't aware of before.
+  Basically re-loads robots.yaml and marks historical bots."""
+  #TODO: Cache .save()s and commit them all at once using @transaction.atomic:
+  #      https://stackoverflow.com/questions/3395236/aggregating-saves-in-django/3397586#3397586
+  # Re-load robots.yaml.
+  bot_strings = load_bot_strings()
+  likely_bots = 0
+  likely_humans = 0
+  for visit in Visit.objects.all():
+    visit_data = unpack_visit(visit)
+    bot_score = get_bot_score(query_robots=False, bot_strings=bot_strings, **visit_data)
+    prev_score = visit.visitor.bot_score
+    # Set the Visitor's bot_score to the one we just determined if it hasn't been set yet, or if
+    # the new score is further from zero than the previous one.
+    if prev_score == 0 or abs(bot_score) > abs(prev_score):
+      visit.visitor.bot_score = bot_score
+      visit.visitor.save()
+      if bot_score > 0:
+        likely_bots += 1
+      elif bot_score < 0:
+        likely_humans += 1
+  logging.info('Finished marking all bots. Results: {} likely bots, {} likely humans'
+               .format(likely_bots, likely_humans))
+  return likely_bots, likely_humans
