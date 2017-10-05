@@ -190,16 +190,18 @@ def mark_robot(user_agent, referrer):
   return marked
 
 
-def mark_all_robots(query_robots=False):
+def mark_all_robots(query_robots=False, start=0, end=None):
   """Go through the entire database and mark robots we weren't aware of before.
   Basically re-loads robots.yaml and marks historical bots."""
   #TODO: Cache .save()s and commit them all at once using @transaction.atomic:
   #      https://stackoverflow.com/questions/3395236/aggregating-saves-in-django/3397586#3397586
   # Re-load robots.yaml.
+  if end is None:
+    end = Visit.objects.count()+1
   bot_strings = load_bot_strings()
   likely_bots = 0
   likely_humans = 0
-  for visit in Visit.objects.all():
+  for visit in Visit.objects.filter(id__gte=start, id__lte=end):
     visit_data = unpack_visit(visit)
     bot_score = get_bot_score(query_robots=query_robots, bot_strings=bot_strings, **visit_data)
     prev_score = visit.visitor.bot_score
