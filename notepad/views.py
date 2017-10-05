@@ -48,10 +48,9 @@ def view(request, page_name):
 
 def add(request, page_name):
   params = request.POST
-  #TODO: Email warning about detected spambots.
   #TODO: Check if the notes were added to the main "notepad" page.
   view_url = reverse('notepad:view', args=(page_name,))
-  if params['site'] == '':
+  if params.get('site') == '':
     try:
       page = Page.objects.get(name=page_name)
     except Page.DoesNotExist:
@@ -61,17 +60,23 @@ def add(request, page_name):
       page.save()
     note = Note(
       page=page,
-      content=params['content'],
+      content=params.get('content', ''),
       visit=request.visit
     )
     note.save()
+  else:
+    #TODO: Email warning about detected spambots.
+    site = truncate(params.get('site'))
+    content = truncate(params.get('content'))
+    log.warning('Spambot ({0}) blocked from adding to page "{1}". Ruhuman field: {2!r}, note: {3!r}'
+                .format(request.visit.visitor, page_name, site, content))
   return HttpResponseRedirect(view_url+'#bottom')
 
 
 def delete(request, page_name):
   params = request.POST
   view_url = reverse('notepad:view', args=(page_name,))
-  if params['site'] == '':
+  if params.get('site') == '':
     for key in params:
       if key.startswith('note_'):
         try:
@@ -87,9 +92,21 @@ def delete(request, page_name):
         note.deleted = True
         note.deleting_visit = request.visit
         note.save()
-  #TODO: Email warning about detected spambots.
+  else:
+    #TODO: Email warning about detected spambots.
+    site = truncate(params.get('site'))
+    note_ids = [key[5:] for key in params.keys() if key.startswith('note_')]
+    log.warning('Spambot ({0}) blocked from deleting notes {1} from page "{2}". Ruhuman field: {3!r}'
+                .format(request.visit.visitor, ', '.join(note_ids), page_name, site))
   #TODO: Check if the notes were deleted from the main "notepad" page.
   return HttpResponseRedirect(view_url+'#bottom')
+
+
+def truncate(s, max_len=100):
+  if s is not None and len(s) > max_len:
+    return s[:max_len]+'...'
+  else:
+    return s
 
 
 def random(request):
