@@ -92,14 +92,12 @@ def monitor(request):
     else:
       link_data.append(('Include me', 'include', 'me'))
   if admin:
-    if bot_thres is None or bot_thres < categorize.SCORES['bot_in_ua']:
+    if bot_thres is not None and bot_thres != 0:
+      link_data.append(('Show all', 'bot_thres', None))
+    if bot_thres is None or bot_thres > categorize.SCORES['bot_in_ua']:
       link_data.append(('Hide robots', 'bot_thres', categorize.SCORES['bot_in_ua']))
-    else:
-      link_data.append(('Show robots', 'bot_thres', None))
     if bot_thres is None or bot_thres > categorize.SCORES['sent_cookies']+1:
       link_data.append(('Show humans', 'bot_thres', categorize.SCORES['sent_cookies']+1))
-    else:
-      link_data.append(('Show all', 'bot_thres', None))
   if total_visits > end:
     link_data.append(('Earlier', 'p', page+1))
   links = _construct_links(link_data, new_params, {'user':default_user})
