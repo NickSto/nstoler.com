@@ -96,8 +96,8 @@ def monitor(request):
       link_data.append(('Hide robots', 'bot_thres', categorize.SCORES['bot_in_ua']))
     else:
       link_data.append(('Show robots', 'bot_thres', None))
-    if bot_thres is None or bot_thres > categorize.SCORES['mozilla_ua']+1:
-      link_data.append(('Show humans', 'bot_thres', categorize.SCORES['mozilla_ua']+1))
+    if bot_thres is None or bot_thres > categorize.SCORES['sent_cookies']+1:
+      link_data.append(('Show humans', 'bot_thres', categorize.SCORES['sent_cookies']+1))
     else:
       link_data.append(('Show all', 'bot_thres', None))
   if total_visits > end:
