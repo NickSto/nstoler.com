@@ -104,7 +104,9 @@ def get_bot_score(path='', host='', query_str='', referrer='', user_agent='', co
       return SCORES['sent_cookies']
     else:
       return SCORES['mozilla_ua']
-  #TODO: Below lowest score: It sent back cookies we gave it previously.
+  #TODO: Absolute lowest score: This User has executed a totally regular interaction at least once:
+  #      It made a first request, received a cookie, made a second, sending it back, and including
+  #      a referrer from the same domain, etc.
   # Default: 0
   return 0
 
