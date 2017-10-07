@@ -1,5 +1,8 @@
 from django.db import models
-from datetime import datetime
+import http.client
+import codecs
+import logging
+log = logging.getLogger(__name__)
 
 
 class ModelMixin(object):
@@ -37,3 +40,67 @@ class ModelMixin(object):
             value_str = repr(value_str[:max_len-5]+'...')
         return name, value_str
     return None, None
+
+
+def http_request(host, path, secure=True, timeout=None, max_response=None):
+  """A very quick and simple function for making an HTTP request.
+  WARNING: This returns a str, so it does the bytes-to-str conversion. If a valid charset is in the
+  Content-Type response header, it'll be fine, but if not it'll try utf-8, and if the decode fails,
+  so will this."""
+  if secure:
+    conex_class = http.client.HTTPSConnection
+  else:
+    conex_class = http.client.HTTPConnection
+  try:
+    if timeout is None:
+      conex = conex_class(host)
+    else:
+      conex = conex_class(host, timeout=timeout)
+    conex.request('GET', path)
+    response = conex.getresponse()
+    if response.status != 200:
+      if secure:
+        url = 'https://'+host+path
+      else:
+        url = 'http://'+host+path
+      log.warning('Received response {} from {}'.format(response.status, url))
+      conex.close()
+      return None
+    if max_response is None:
+      response_bytes = response.read()
+    else:
+      response_bytes = response.read(max_response)
+    content_type = response.headers.get('Content-Type')
+    encoding = get_encoding(content_type)
+    if encoding:
+      response_str = str(response_bytes, encoding)
+    else:
+      try:
+        response_str = str(response_bytes, 'utf8')
+      except UnicodeError:
+        return None
+    conex.close()
+    return response_str
+  except http.client.HTTPException:
+    return None
+
+
+def get_encoding(content_type):
+  if not content_type:
+    return None
+  fields = content_type.split(';')
+  if len(fields) != 2:
+    return None
+  mime_encoding = fields[1]
+  fields = mime_encoding.split('=')
+  if len(fields) != 2:
+    return None
+  key, encoding = fields
+  if key.strip().lower() != 'charset':
+    return None
+  encoding = encoding.strip().lower()
+  try:
+    codecs.getencoder(encoding)
+    return encoding
+  except LookupError:
+    return None

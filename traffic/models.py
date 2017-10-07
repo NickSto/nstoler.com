@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils import timezone
+from django.utils import timezone as utils_timezone
 from utils import ModelMixin
 import urllib.parse
 
@@ -49,7 +49,7 @@ class Visitor(ModelMixin, models.Model):
 
 
 class Visit(ModelMixin, models.Model):
-  timestamp = models.DateTimeField(default=timezone.now)
+  timestamp = models.DateTimeField(default=utils_timezone.now)
   method = models.CharField(max_length=8)
   scheme = models.CharField(max_length=8)
   host = models.CharField(max_length=1023)
@@ -89,16 +89,18 @@ class Visit(ModelMixin, models.Model):
 class IpInfo(ModelMixin, models.Model):
   ip = models.GenericIPAddressField(db_index=True)
   label = models.CharField(max_length=200)
-  version = models.SmallIntegerField(choices=((4,'4'), (6,'6')))
+  version = models.SmallIntegerField(null=True, blank=True, choices=((4,'4'), (6,'6')))
   asn = models.IntegerField(null=True, blank=True)
   isp = models.CharField(max_length=200)
+  hostname = models.CharField(max_length=255)
+  timezone = models.CharField(max_length=63)  # Long name like "America/Los_Angeles"
   latitude = models.FloatField(null=True, blank=True)
   longitude = models.FloatField(null=True, blank=True)
   country = models.CharField(max_length=63)
   region = models.CharField(max_length=127)
   town = models.CharField(max_length=127)
-  zip = models.CharField(max_length=31)
-  timestamp = models.DateTimeField(default=timezone.now)  # When this info was current.
+  zip = models.IntegerField(null=True, blank=True)
+  timestamp = models.DateTimeField(default=utils_timezone.now)  # When this info was current.
 
 
 # Types of visitors which should be considered robots.

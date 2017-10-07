@@ -1,5 +1,6 @@
 from .models import Visit, Visitor, User, Cookie
 from .categorize import get_bot_score
+from .ipinfo import ip_to_ipinfo
 import string
 import random
 import base64
@@ -42,6 +43,11 @@ def get_or_create_visit_and_visitor(request):
   request_data = unpack_request(request)
   visitor = get_or_create_visitor(request_data)
   visit = create_visit(request_data, visitor, request.COOKIES)
+  #TODO: Get IpInfo in a background task.
+  #      Otherwise first-time visitors will see a latency of up to timeout*2 seconds.
+  ipinfo = ip_to_ipinfo(visitor.ip, timeout=0.1)
+  if not ipinfo:
+    log.info('Failed getting IpInfo for {}'.format(visitor.ip))
   return visit
 
 
