@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import escape
 from django.conf import settings
 from .models import Visit, Visitor, Robot
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 from . import categorize
+from .ipinfo import set_timezone
 import logging
 log = logging.getLogger(__name__)
 
@@ -107,6 +109,7 @@ def monitor(request):
     'start': start+1,
     'end': min(end, start+len(visits)),
     'links': links,
+    'timezone': set_timezone(request),  # Set and retrieve timezone.
     'ua_exact_thres': categorize.SCORES['ua_exact'],
     'referrer_exact_thres': categorize.SCORES['referrer_exact'],
   }

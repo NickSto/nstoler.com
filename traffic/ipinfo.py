@@ -1,5 +1,6 @@
-from .models import IpInfo
 from django.conf import settings
+from django.utils import timezone
+from .models import IpInfo
 from datetime import datetime
 import utils
 import pytz
@@ -164,8 +165,35 @@ def get_api_data(domain, path, secure=True, timeout=DEFAULT_TIMEOUT, max_respons
     return None
 
 
+def set_timezone(request):
+  """Set the timezone to the user's one and return which one that is.
+  Returns the abbreviation of the timezone, like "PST".
+  On failure, returns the abbrevation of settings.TIME_ZONE."""
+  ipinfo = IpInfo.objects.filter(ip=request.visit.visitor.ip).order_by('-timestamp')
+  if ipinfo:
+    timezone.activate(pytz.timezone(ipinfo[0].timezone))
+    tz = get_tz_abbrv(ipinfo[0].timezone)
+  else:
+    tz = None
+  if tz:
+    return tz
+  else:
+    return pytz.timezone(settings.TIME_ZONE)
+
+
 def tz_convert(dt, timezone):
   """Convert a timezone-aware datetime object to a different timezone.
   "timezone" should be a string like "America/Chicago" (as returned by get_ip_timezone())"""
   tz = pytz.timezone(timezone)
   return dt.astimezone(tz)
+
+
+def get_tz_abbrv(timezone):
+  """Give a string like "America/Chicago", get a string like "CST"."""
+  if timezone is None:
+    return None
+  try:
+    tz = pytz.timezone(timezone)
+  except pytz.UnknownTimeZoneError:
+    return None
+  return tz.tzname(datetime.now())
