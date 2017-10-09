@@ -7,13 +7,13 @@ from django.db.models import F
 
 
 def init_display_order(apps, schema_editor):
-    """Set the initial display order to the Note.id."""
+    """Set the initial display order to the Note.id*1000."""
     # We get the model from the versioned app registry;
     # if we directly import it, it'll be the wrong version.
     db_alias = schema_editor.connection.alias
     Note = apps.get_model("notepad", "Note")
     notes = Note.objects.using(db_alias).all()
-    notes.update(display_order=F('id'))
+    notes.update(display_order=F('id')*1000)
 
 
 class Migration(migrations.Migration):
