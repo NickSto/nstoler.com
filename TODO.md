@@ -15,14 +15,14 @@ Allow non-admins to see `/notepad/monitor`.
 ### Editing notes
 
 #### HTML
-Add buttons next to each note for `delete`, `edit`, `↑`, and `↓`.
-- In order of increasing difficulty.
+Add `<button>`s next to each note for `delete`, `edit`, `↑`, and `↓` (listed in order of increasing difficulty)
 - Fade out the buttons unless you `:hover`.
-- Probably have to make an independent `<form>` for each.
-    - Can't have different buttons in the same form perform different actions.
+- Enclose each note in a `<form>`.
+    - Use each `<button>`'s `value` attribute to communicate which action it's executing.
+        - E.g. `<button name="action" value="edit">edit</button>`
+            - This will send the key/value pair `action`: `edit` in the POST.
 - The note can be in a `<textarea>`.
     - Remove the borders with CSS and it looks/acts just like a contenteditable element.
-    - Will have to enclose the `<textarea>` and `edit` button in the same `<form>`.
 
 #### Database
 Add a pointer to the previous version of the note.
@@ -40,7 +40,7 @@ Traffic
 
 ### Optional filters
 - Try to filter out bots.
-- Filter out "via=html", etc.
+- Filter out `via=html`, etc.
 - Filter out handled by nginx/non-django.
 
 Static/Dynamic
