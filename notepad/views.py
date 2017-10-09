@@ -1,8 +1,9 @@
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
-from django.conf import settings
+from django.db.models import Max
 from .models import Note, Page
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 import random as rand
@@ -27,9 +28,9 @@ def view(request, page_name):
     admin = False
   #TODO: Display deleted notes differently.
   if show_deleted:
-    note_objects = Note.objects.filter(page__name=page_name).order_by('id')
+    note_objects = Note.objects.filter(page__name=page_name).order_by('display_order', 'id')
   else:
-    note_objects = Note.objects.filter(page__name=page_name, deleted=False).order_by('id')
+    note_objects = Note.objects.filter(page__name=page_name, deleted=False).order_by('display_order', 'id')
   notes = []
   for note in note_objects:
     if note_id is not None and note.id != note_id:
@@ -51,6 +52,7 @@ def add(request, page_name):
   #TODO: Check if the notes were added to the main "notepad" page.
   view_url = reverse('notepad:view', args=(page_name,))
   if params.get('site') == '':
+    # Get or create the Page.
     try:
       page = Page.objects.get(name=page_name)
     except Page.DoesNotExist:
@@ -58,10 +60,20 @@ def add(request, page_name):
         name=page_name
       )
       page.save()
+    # Find the highest display_order currently on the page.
+    stats = Note.objects.filter(page__name=page_name).aggregate(Max('display_order'))
+    max_display = stats.get('display_order__max')
+    if max_display is None:
+      max_display = 0
+    # Make the new display_order 1000 greater than the previous max, to give room to place notes
+    # inbetween existing ones.
+    display_order = max_display + 1000
+    # Create the Note.
     note = Note(
       page=page,
       content=params.get('content', ''),
-      visit=request.visit
+      visit=request.visit,
+      display_order=display_order
     )
     note.save()
   else:
