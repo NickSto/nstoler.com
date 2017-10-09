@@ -1,6 +1,7 @@
 from django.db import models
 import http.client
 import codecs
+import socket
 import logging
 log = logging.getLogger(__name__)
 
@@ -81,7 +82,7 @@ def http_request(host, path, secure=True, timeout=None, max_response=None):
         return None
     conex.close()
     return response_str
-  except http.client.HTTPException:
+  except (http.client.HTTPException, socket.error):
     return None
 
 
