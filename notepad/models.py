@@ -14,6 +14,9 @@ class Note(ModelMixin, models.Model):
   deleted = models.BooleanField(default=False)
   deleting_visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True,
                                      related_name='deleted_note')
+  display_order = models.IntegerField()
+  last_version = models.OneToOneField('self', models.SET_NULL, null=True, blank=True,
+                                      related_name='next_version')
   def __str__(self):
     deleted = ''
     if self.deleted:
