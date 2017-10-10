@@ -107,11 +107,11 @@
                     </tr>
                   {% endif %}
                   {% if visit.visitor.user_agent %}
-                  <tr>
+                  <tr class="user_agent">
                     <th class="name">
                       User Agent
                     </th>
-                    <td class="value user_agent">
+                    <td class="value">
                       {{ visit.visitor.user_agent | truncatechars:250 }}
                       {% if admin and visit.visitor.bot_score < ua_exact_thres %}
                         <form class="inline markbot" name="markbot_ua_{{ visit.id }}" method="post" action="{% url 'traffic:markbot' %}">
@@ -144,7 +144,7 @@
                     </td>
                   </tr>
                   {% if visit.referrer %}
-                    <tr>
+                    <tr class="referrer">
                       <th class="name">
                         Referrer
                       </th>

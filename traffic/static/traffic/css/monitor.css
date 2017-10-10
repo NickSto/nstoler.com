@@ -130,7 +130,10 @@ form.markbot input {
   margin-top: 8px;
 }
 
-.user_agent.value {
+/* The "mark bot" button makes the table cell too tall.
+ * When it's present (the admin interface), shrink it.
+ */
+.admin .user_agent .value, .admin .referrer .value {
   padding-bottom: 0;
 }
 
