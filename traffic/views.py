@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, StreamingHttpResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
@@ -8,6 +8,7 @@ from .models import Visit, Visitor, Robot
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 from . import categorize
 from .ipinfo import set_timezone
+from utils import async
 import logging
 log = logging.getLogger(__name__)
 
@@ -171,10 +172,25 @@ def mark_robot(request):
 
 @require_admin_and_privacy
 def mark_all_robots(request):
-  #TODO: Do this in the background using one of the solutions here:
-  #      https://stackoverflow.com/questions/6602761/django-background-task
   if request.method != 'POST':
     return HttpResponseNotAllowed(['POST'])
-  likely_bots, likely_humans = categorize.mark_all_robots()
-  out_text = '{} likely bots found\n{} likely humans found'.format(likely_bots, likely_humans)
-  return HttpResponse(out_text, content_type=settings.PLAINTEXT)
+  return StreamingHttpResponse(mark_all_robots_incremental(), content_type=settings.PLAINTEXT)
+
+
+def mark_all_robots_incremental(batch_size=1000):
+  """Mark all robots in batches, reporting progress along the way.
+  batch_size is how many Visits at a time to process."""
+  likely_bots = 0
+  likely_humans = 0
+  total_visits = Visit.objects.count()
+  for start in range(0, total_visits+1, batch_size):
+    end = start+batch_size
+    bots, humans = categorize.mark_all_robots(start=start, end=end)
+    likely_bots += bots
+    likely_humans += humans
+    status = 'Finished marking visits {} to {} ({} bots, {} humans)'.format(start, end, bots, humans)
+    yield status+'\n'
+    log.info(status)
+  result = '{} likely bots found, {} likely humans found'.format(likely_bots, likely_humans)
+  yield result
+  log.info('mark_all_robots() finished. '+result)
