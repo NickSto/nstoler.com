@@ -1,6 +1,8 @@
+from django.db import connection
 from .models import Visit, Visitor, User, Cookie
 from .categorize import get_bot_score
 from .ipinfo import ip_to_ipinfo
+from utils import async
 import string
 import random
 import base64
@@ -43,12 +45,24 @@ def get_or_create_visit_and_visitor(request):
   request_data = unpack_request(request)
   visitor = get_or_create_visitor(request_data)
   visit = create_visit(request_data, visitor, request.COOKIES)
-  #TODO: Get IpInfo in a background task.
-  #      Otherwise first-time visitors will see a latency of up to timeout*2 seconds.
-  ipinfo = ip_to_ipinfo(visitor.ip, timeout=0.1)
-  if not ipinfo:
-    log.info('Failed getting IpInfo for {}'.format(visitor.ip))
+  run_background_tasks(visitor, request_data)
   return visit
+
+
+@async
+def run_background_tasks(visitor, request_data):
+  """Execute tasks which aren't necessary to finish before the request is returned.
+  Currently: Get IpInfo and the Visitor.bot_score."""
+  # timeout=10 because there's no rush in a background thread.
+  ipinfo = ip_to_ipinfo(visitor.ip, timeout=10)
+  if ipinfo:
+    log.info('Success getting IpInfo for {}'.format(visitor.ip))
+  else:
+    log.warning('Failed getting IpInfo for {}'.format(visitor.ip))
+  visitor.bot_score = get_bot_score(**request_data)
+  visitor.save()
+  # Have to close the new connection Django made for this thread.
+  connection.close()
 
 
 def get_cookies(request):
@@ -162,7 +176,6 @@ def get_or_create_visitor(request_data):
       cookie2=request_data['cookie2'],
       label=label,
       user=user,
-      bot_score=get_bot_score(**request_data),
       version=2,
     )
     visitor.save()
