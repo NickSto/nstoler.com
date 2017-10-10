@@ -1,5 +1,7 @@
 from django.db import models
 import http.client
+import threading
+import functools
 import codecs
 import socket
 import logging
@@ -105,3 +107,14 @@ def get_encoding(content_type):
     return encoding
   except LookupError:
     return None
+
+
+# From https://stackoverflow.com/questions/18420699/multithreading-for-python-django/28913218#28913218
+def async(function):
+  """Decorator to make a function execute in a background thread."""
+  @functools.wraps(function)
+  def wrapped_fxn(*args, **kwargs):
+    t = threading.Thread(target=function, args=args, kwargs=kwargs)
+    t.daemon = True
+    t.start()
+  return wrapped_fxn
