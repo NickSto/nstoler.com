@@ -23,7 +23,7 @@
         </div>
       {% endif %}
 
-      <section id="main" {% if links %}class="has-sidebar"{% endif %}>
+      <section id="main" class="{% if links %}has-sidebar{% endif %}{% if admin %} admin{% endif %}">
 
         <h2 id="title">Traffic Monitor</h2>
 
