@@ -16,6 +16,9 @@ Allow non-admins to see `/notepad/monitor`.
 
 #### HTML
 Add `<button>`s next to each note for `delete`, `edit`, `↑`, and `↓` (listed in order of increasing difficulty)
+- Put them in the top-right, in a horizontal line, inside the area with the note text.
+    - Hopefully the text can wrap around the buttons.
+    - This is in order to still allow compact, one-line notes, but take as little horizontal space as possible on mobile.
 - Fade out the buttons unless you `:hover`.
 - Enclose each note in a `<form>`.
     - Use each `<button>`'s `value` attribute to communicate which action it's executing.
