@@ -49,14 +49,14 @@ def make_ip_info(ip, data):
   ip_info = IpInfo(ip=ip,
                    version=version,
                    asn=data.get('asn'),
-                   isp=data.get('isp'),
-                   hostname=data.get('hostname'),
-                   timezone=data.get('timezone'),
+                   isp=data.get('isp', ''),
+                   hostname=data.get('hostname', ''),
+                   timezone=data.get('timezone', ''),
                    latitude=data.get('latitude'),
                    longitude=data.get('longitude'),
-                   country=data.get('country'),
-                   region=data.get('region'),
-                   town=data.get('town'),
+                   country=data.get('country', ''),
+                   region=data.get('region', ''),
+                   town=data.get('town', ''),
                    zip=data.get('zip'))
   ip_info.save()
   return ip_info
