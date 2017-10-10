@@ -171,14 +171,21 @@ def set_timezone(request):
   On failure, returns the abbrevation of settings.TIME_ZONE."""
   ipinfo = IpInfo.objects.filter(ip=request.visit.visitor.ip).order_by('-timestamp')
   if ipinfo:
-    timezone.activate(pytz.timezone(ipinfo[0].timezone))
-    tz = get_tz_abbrv(ipinfo[0].timezone)
+    try:
+      zone = pytz.timezone(ipinfo[0].timezone)
+      timezone.activate(zone)
+      tz = get_tz_abbrv(ipinfo[0].timezone)
+    except pytz.UnknownTimeZoneError:
+      tz = None
   else:
     tz = None
   if tz:
     return tz
   else:
-    return pytz.timezone(settings.TIME_ZONE)
+    try:
+      return pytz.timezone(settings.TIME_ZONE)
+    except pytz.UnknownTimeZoneError:
+      return 'UTC'
 
 
 def tz_convert(dt, timezone):
