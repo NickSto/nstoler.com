@@ -27,6 +27,13 @@ Add `<button>`s next to each note for `delete`, `edit`, `move up`, and `move dow
             - This will send the key/value pair `action`: `edit` in the POST.
 - The note can be in a `<textarea>`.
     - Remove the borders with CSS and it looks/acts just like a contenteditable element.
+    - BUT: `<textarea>`s come with a pre-set height that doesn't change with the typed text.
+        - Either have to:
+            1. use JavaScript to dynamically re-size it or
+            2. go back to a `contenteditable` `<pre>` and submit its contents via JavaScript.
+        - Maybe I do some progressive enhancement:
+            1. Without JavaScript I have the `edit` button go to a separate page where you can edit and submit the text.
+            2. With JavaScript it's a `save` button that does it all at once.
 - Some nice code for the buttons themselves:
     ```html
     <div class="actions buttons">
@@ -36,6 +43,9 @@ Add `<button>`s next to each note for `delete`, `edit`, `move up`, and `move dow
       <button class="btn btn-default btn-xs" name="action" value="movedown">↓</button>
     </div>
     ```
+- Looks like you can get the buttons to nicely float in the upper-right, with the text wrapping.
+    - But not with a `<textarea>` or `<pre>`!
+    - Have to put the buttons' `<div>` directly inside the `<div>` holding the text.
 
 #### Database
 Add a pointer to the previous version of the note.
