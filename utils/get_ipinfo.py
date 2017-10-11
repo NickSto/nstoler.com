@@ -24,7 +24,11 @@ from traffic.models import Visitor, IpInfo
 from traffic.ipinfo import get_ip_data, make_ip_info
 
 
-DESCRIPTION = """Retrieve the IpInfo for some historical visitor IP addresses which are missing it."""
+DESCRIPTION = """Retrieve the IpInfo for some historical visitor IP addresses which are missing it.
+This will go through Visitors from latest to earliest, looking for ones with missing IpInfo. It will
+try to obtain the IpInfo for each one and store it. After --limit requests to the IP metadata APIs
+it will exit. So if you run this once a day (after the API limits have reset), eventually all
+unknown IP addresses should be described."""
 
 
 def make_argparser():
