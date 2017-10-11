@@ -15,8 +15,8 @@ Allow non-admins to see `/notepad/monitor`.
 ### Editing notes
 
 #### HTML
-Add `<button>`s next to each note for `delete`, `edit`, `move up`, and `move down` (listed in order of increasing difficulty)
-- Characters I can use: ✕, ✎, ↑, ↓
+Add `<button>`s next to each note for `delete`, `edit`/`save`, `move up`, and `move down` (listed in order of increasing difficulty)
+- Characters I can use: ✕, ✎/🖫, ↑, ↓
 - Put them in the top-right, in a horizontal line, inside the area with the note text.
     - Hopefully the text can wrap around the buttons.
     - This is in order to still allow compact, one-line notes, but take as little horizontal space as possible on mobile.
@@ -37,10 +37,10 @@ Add `<button>`s next to each note for `delete`, `edit`, `move up`, and `move dow
 - Some nice code for the buttons themselves:
     ```html
     <div class="actions buttons">
-      <button class="btn btn-default btn-xs" name="action" value="edit">✎</button>
-      <button class="btn btn-default btn-xs" name="action" value="delete">✕</button>
       <button class="btn btn-default btn-xs" name="action" value="moveup">↑</button>
       <button class="btn btn-default btn-xs" name="action" value="movedown">↓</button>
+      <button class="btn btn-default btn-xs" name="action" value="edit">✎</button>
+      <button class="btn btn-default btn-xs" name="action" value="delete">✕</button>
     </div>
     ```
 - Looks like you can get the buttons to nicely float in the upper-right, with the text wrapping.
