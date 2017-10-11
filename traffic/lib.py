@@ -11,13 +11,6 @@ import socket
 import logging
 log = logging.getLogger(__name__)
 
-#TODO: Grab info about the IP address at the time. Stuff like the ISP, ASN, and geoip data.
-#      That stuff can change, especially as IPv4 addresses are bought and sold increasingly.
-#      Maybe run a daemon separate from Django to do it in the background, to not hold up the
-#      response. Possible data sources:
-#      http://ipinfo.io/developers (ASN, geiop)
-#      https://stat.ripe.net/docs/data_api (semi-official, but ASN only)
-
 ALPHABET1 = string.ascii_lowercase + string.ascii_uppercase + string.digits + '+-'
 COOKIE_MAX_AGE = 10*365*24*60*60  # 10 years
 

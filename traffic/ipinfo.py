@@ -18,6 +18,8 @@ TZAPI_PATH = '/api/ip?ip={}'
 MAX_RESPONSE = 65536
 DEFAULT_TIMEOUT = 1
 TTL_DEFAULT = 24*60*60  # Cache IpInfo data for 1 day.
+# Possible other data source:
+# https://stat.ripe.net/docs/data_api (semi-official, but ASN only)
 
 
 def ip_to_ipinfo(ip, ttl=TTL_DEFAULT, timeout=DEFAULT_TIMEOUT):
