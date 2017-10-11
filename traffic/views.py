@@ -195,7 +195,9 @@ def mark_all_robots_incremental(batch_size=1000):
   log.info('mark_all_robots() finished. '+result)
 
 
-def view_ip(request, ip):
+def view_ip(request, ip=None):
+  if ip is None:
+    ip = request.visit.visitor.ip
   # Only allow regular users to view their own IP address.
   admin_cookie = get_admin_cookie(request)
   if admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS):

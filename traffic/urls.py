@@ -9,6 +9,7 @@ urlpatterns = [
   url(r'^monitor/$', views.monitor_redirect),
   url(r'^monitor$', views.monitor_redirect),
   url(r'^ip/(?P<ip>.+)$', views.view_ip, name='view_ip'),
+  url(r'^ip$', views.view_ip),
   url(r'^markallbots$', views.mark_all_robots, name='markallbots'),
   url(r'^markbot$', views.mark_robot, name='markbot'),
   url(r'^$', views.monitor, name='monitor'),
