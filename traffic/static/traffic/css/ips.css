@@ -18,29 +18,29 @@
   font-size: 125%;
 }
 
-#visits {
+#ips {
   margin: 30px 0;
 }
 
-#visits-list {
+#ips-list {
   margin-bottom: 15px;
 }
 
-.visit {
+.ip {
   padding: 10px 10px 1px 10px;
   border-style: none solid none;
 }
 
-.visit:nth-child(2) {
+.ip:nth-child(2) {
   border-style: solid solid none;
 }
 
-.visit:last-child {
+.ip:last-child {
   border-style: none solid solid;
   padding-bottom: 10px;
 }
 
-.visit table {
+.ip table {
   background-color: #fff;
   width: calc(50% - 5px);
   border-radius: 4px;
@@ -67,23 +67,12 @@
   width: calc(100% - 70px);
 }
 
-form.markbot input {
-  margin-left: 3px;
-  margin-top: 8px;
-}
-
-/* The "mark bot" button makes the table cell too tall.
- * When it's present (the admin interface), shrink it.
- */
-.admin .user_agent .value, .admin .referrer .value {
-  padding-bottom: 0;
-}
 
 /* When the viewport is narrow enough that both tables don't fit alongside each other, artificially
  * join them into one table. This happens on original-sized iPhones.
  */
 @media (max-width: 768px) {
-  .visit table {
+  .ip table {
     width: 100%;
   }
   .pane1, .pane2 {
@@ -98,7 +87,7 @@ form.markbot input {
   .pane2, .pane2 > tbody > tr:first-child > td, .pane2 > tbody > tr:first-child > th {
     border-top: none;
   }
-  .visit .value {
+  .ip .value {
     word-break: break-all;
     word-wrap: break-word;
     overflow-wrap: break-word;

@@ -19,7 +19,7 @@
           <p><a href="https://bgp.he.net/ip/{{ ip }}" rel="noreferrer" target="_blank">Hurricane Electric</a></p>
         </div>
 
-        <div id="visits">
+        <div id="ips">
 
           {% if links %}
             <nav class="buttons sidebar-replacement">
@@ -29,14 +29,14 @@
             </nav>
           {% endif %}
 
-          <ul id="visits-list" class="list-group">
+          <ul id="ips-list" class="list-group">
 
             <li class="list-group-item header">
               <h3>Metadata</h3>
             </li>
 
             {% for ipinfo in ipinfos %}
-              <li class="visit list-group-item">
+              <li class="ip list-group-item">
                 <table class="pane1 table-bordered table-condensed">
                   {% if ipinfo.country %}
                     <tr>
@@ -152,6 +152,10 @@
                   </tr>
                 </table>
                 <div class="clearfix"></div>
+              </li>
+            {% empty %}
+              <li class="ip list-group-item">
+                No data!
               </li>
             {% endfor %}
           </ul>
