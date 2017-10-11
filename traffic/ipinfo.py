@@ -176,8 +176,11 @@ def set_timezone(request):
       timezone.activate(zone)
       tz = get_tz_abbrv(ipinfo[0].timezone)
     except pytz.UnknownTimeZoneError:
+      log.warning('set_timezone(): pytz.UnknownTimeZoneError on "{}" (ip {})'
+                  .format(ipinfo[0].timezone, request.visit.visitor.ip))
       tz = None
   else:
+    log.warning('set_timezone(): Could not find ip {} in database.'.format(request.visit.visitor.ip))
     tz = None
   if tz:
     return tz
@@ -185,6 +188,7 @@ def set_timezone(request):
     try:
       return pytz.timezone(settings.TIME_ZONE)
     except pytz.UnknownTimeZoneError:
+      log.warning('set_timezone(): Failed. Returning UTC.')
       return 'UTC'
 
 
