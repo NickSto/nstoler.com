@@ -75,7 +75,7 @@
                       User
                     </th>
                     <td class="value">
-                      <a href="/traffic?user={{ visit.visitor.user.id }}">{{ visit.visitor.user.id }}</a>
+                      <a href="{% url 'traffic:monitor' %}?user={{ visit.visitor.user.id }}">{{ visit.visitor.user.id }}</a>
                     </td>
                   </tr>
                   <tr>
@@ -83,7 +83,7 @@
                       IP
                     </th>
                     <td class="value ip">
-                      <a href="http://whatismyipaddress.com/ip/{{ visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ visit.visitor.ip }}</a>
+                      <a href="{% url 'traffic:view_ip' visit.visitor.ip %}">{{ visit.visitor.ip }}</a>
                     </td>
                   </tr>
                   {% if visit.visitor.cookie1 %}
