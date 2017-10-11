@@ -15,7 +15,8 @@ Allow non-admins to see `/notepad/monitor`.
 ### Editing notes
 
 #### HTML
-Add `<button>`s next to each note for `delete`, `edit`, `↑`, and `↓` (listed in order of increasing difficulty)
+Add `<button>`s next to each note for `delete`, `edit`, `move up`, and `move down` (listed in order of increasing difficulty)
+- Characters I can use: ✕, ✎, ↑, ↓
 - Put them in the top-right, in a horizontal line, inside the area with the note text.
     - Hopefully the text can wrap around the buttons.
     - This is in order to still allow compact, one-line notes, but take as little horizontal space as possible on mobile.
@@ -26,6 +27,15 @@ Add `<button>`s next to each note for `delete`, `edit`, `↑`, and `↓` (listed
             - This will send the key/value pair `action`: `edit` in the POST.
 - The note can be in a `<textarea>`.
     - Remove the borders with CSS and it looks/acts just like a contenteditable element.
+- Some nice code for the buttons themselves:
+    ```html
+    <div class="actions buttons">
+      <button class="btn btn-default btn-xs" name="action" value="edit">✎</button>
+      <button class="btn btn-default btn-xs" name="action" value="delete">✕</button>
+      <button class="btn btn-default btn-xs" name="action" value="moveup">↑</button>
+      <button class="btn btn-default btn-xs" name="action" value="movedown">↓</button>
+    </div>
+    ```
 
 #### Database
 Add a pointer to the previous version of the note.
