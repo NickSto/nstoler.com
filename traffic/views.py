@@ -1,8 +1,9 @@
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.html import escape
-from django.conf import settings
+from django.db import DataError
 from .models import Visit, IpInfo
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 from . import categorize
@@ -201,15 +202,33 @@ def view_ip(request, ip):
     admin = True
   else:
     ip = request.visit.visitor.ip
+  # Get query parameters.
+  params = request.GET
+  format = params.get('format', 'html')
+  # Get the IpInfos for the IP address.
   ipinfos = IpInfo.objects.filter(ip=ip).order_by('-timestamp')
-  if not ipinfos:
-    return HttpResponse('No data on ip '+ip, content_type=settings.PLAINTEXT)
-  response = HttpResponse(content_type=settings.PLAINTEXT)
-  response.write(ip+':\n')
-  columns = ('timestamp', 'version', 'asn', 'isp', 'hostname', 'timezone', 'latitude', 'longitude',
-             'country', 'region', 'town', 'zip', 'label')
-  response.write('\t'.join(columns)+'\n')
-  for ipinfo in ipinfos:
-    values = [str(getattr(ipinfo, key, None)) for key in columns]
-    response.write('\t'.join(values)+'\n')
-  return response
+  if format == 'plain':
+    if not ipinfos:
+      return HttpResponse('No data on ip '+ip, content_type=settings.PLAINTEXT)
+    response = HttpResponse(content_type=settings.PLAINTEXT)
+    response.write(ip+':\n')
+    columns = ('timestamp', 'version', 'asn', 'isp', 'hostname', 'timezone', 'latitude', 'longitude',
+               'country', 'region', 'town', 'zip', 'label')
+    response.write('\t'.join(columns)+'\n')
+    for ipinfo in ipinfos:
+      values = [str(getattr(ipinfo, key, None)) for key in columns]
+      response.write('\t'.join(values)+'\n')
+    return response
+  else:
+    try:
+      ipinfos.count()
+    except DataError:
+      # DataError is thrown on executing the query on an invalid ip address.
+      ipinfos = []
+    context = {
+      'ip':ip,
+      'admin':admin,
+      'timezone': set_timezone(request),  # Set and retrieve timezone.
+      'ipinfos': ipinfos
+    }
+    return render(request, 'traffic/ips.tmpl', context)

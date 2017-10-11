@@ -1,0 +1,171 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}IP address {{ ip }}{% endblock %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{% static 'traffic/css/ips.css' %}?via=html">
+{% endblock %}
+
+
+{% block content %}
+    <div class="container-fluid">
+
+      <section id="main" class="{% if admin %} admin{% endif %}">
+
+        <div id="title">
+          <h2>{{ ip }}</h2>
+          <p><a href="https://whatismyipaddress.com/ip/{{ ip }}" rel="noreferrer" target="_blank">What Is My IP Address</a></p>
+          <p><a href="https://bgp.he.net/ip/{{ ip }}" rel="noreferrer" target="_blank">Hurricane Electric</a></p>
+        </div>
+
+        <div id="visits">
+
+          {% if links %}
+            <nav class="buttons sidebar-replacement">
+              {% for text, href in links %}
+                <a class="btn btn-default" href="{{ href }}">{{ text }}</a>
+              {% endfor %}
+            </nav>
+          {% endif %}
+
+          <ul id="visits-list" class="list-group">
+
+            <li class="list-group-item header">
+              <h3>Metadata</h3>
+            </li>
+
+            {% for ipinfo in ipinfos %}
+              <li class="visit list-group-item">
+                <table class="pane1 table-bordered table-condensed">
+                  {% if ipinfo.country %}
+                    <tr>
+                      <th class="name">
+                        Country
+                      </th>
+                      <td class="value time">
+                        {{ ipinfo.country }}
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if ipinfo.region %}
+                    <tr>
+                      <th class="name">
+                        Region
+                      </th>
+                      <td class="value time">
+                        {{ ipinfo.region }}
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if ipinfo.town %}
+                    <tr>
+                      <th class="name">
+                        City
+                      </th>
+                      <td class="value time">
+                        {{ ipinfo.town }}
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if ipinfo.zip %}
+                    <tr>
+                      <th class="name">
+                        Zip code
+                      </th>
+                      <td class="value time">
+                        {{ ipinfo.zip }}
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if ipinfo.latitude and ipinfo.longitude %}
+                    <tr class="referrer">
+                      <th class="name">
+                        Location
+                      </th>
+                      <td class="value">
+                        <a href="http://maps.google.com/maps?q={{ ipinfo.latitude }}%2C{{ ipinfo.longitude }}" target="_blank" rel="nofollow noreferrer">
+                          {{ ipinfo.latitude }}, {{ ipinfo.longitude }}
+                        </a>
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if ipinfo.label %}
+                    <tr>
+                      <th class="name">
+                        Label
+                      </th>
+                      <td class="value time">
+                        {{ ipinfo.label }}
+                      </td>
+                    </tr>
+                  {% endif %}
+                </table>
+                <table class="pane2 table-bordered table-condensed">
+                  {% if ipinfo.isp %}
+                    <tr>
+                      <th class="name">
+                        ISP
+                      </th>
+                      <td class="value">
+                        {{ ipinfo.isp }}
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if ipinfo.asn %}
+                    <tr>
+                      <th class="name">
+                        ASN
+                      </th>
+                      <td class="value ip">
+                        <a href="https://bgp.he.net/AS{{ ipinfo.asn }}" rel="noreferrer" target="_blank">{{ ipinfo.asn }}</a>
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if ipinfo.hostname %}
+                    <tr>
+                      <th class="name">
+                        Hostname
+                      </th>
+                      <td class="value">
+                        {{ ipinfo.hostname }}
+                      </td>
+                    </tr>
+                  {% endif %}
+                  {% if ipinfo.timezone %}
+                  <tr class="timezone">
+                    <th class="name">
+                      Timezone
+                    </th>
+                    <td class="value">
+                      {{ ipinfo.timezone }}
+                    </td>
+                  </tr>
+                  {% endif %}
+                  <tr>
+                    <th class="name">
+                      Gathered
+                    </th>
+                    <td class="value">
+                      {{ ipinfo.timestamp }} {{ timezone }}
+                    </td>
+                  </tr>
+                </table>
+                <div class="clearfix"></div>
+              </li>
+            {% endfor %}
+          </ul>
+
+          {% if links %}
+            <nav class="buttons">
+              {% for text, href in links %}
+                <a class="btn btn-default" href="{{ href }}">{{ text }}</a>
+              {% endfor %}
+            </nav>
+          {% endif %}
+
+        </div>
+
+      </section>
+    </div>
+{% endblock content %}

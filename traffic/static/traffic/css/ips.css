@@ -1,0 +1,106 @@
+
+/*
+ * Main content
+ */
+
+#title {
+  margin-bottom: 60px;
+}
+
+/* Decrease the indent on the bullet points. */
+#description ul {
+  margin-left: -20px;
+}
+#description li {
+  font-size: 80%;
+}
+#description li span {
+  font-size: 125%;
+}
+
+#visits {
+  margin: 30px 0;
+}
+
+#visits-list {
+  margin-bottom: 15px;
+}
+
+.visit {
+  padding: 10px 10px 1px 10px;
+  border-style: none solid none;
+}
+
+.visit:nth-child(2) {
+  border-style: solid solid none;
+}
+
+.visit:last-child {
+  border-style: none solid solid;
+  padding-bottom: 10px;
+}
+
+.visit table {
+  background-color: #fff;
+  width: calc(50% - 5px);
+  border-radius: 4px;
+}
+
+.pane1 {
+  float: left;
+}
+.pane2 {
+  float: right;
+}
+
+.pane1 .name {
+  width: 95px;
+}
+.pane1 .value {
+  width: calc(100% - 95px);
+}
+
+.pane2 .name {
+  width: 85px;
+}
+.pane2 .value {
+  width: calc(100% - 70px);
+}
+
+form.markbot input {
+  margin-left: 3px;
+  margin-top: 8px;
+}
+
+/* The "mark bot" button makes the table cell too tall.
+ * When it's present (the admin interface), shrink it.
+ */
+.admin .user_agent .value, .admin .referrer .value {
+  padding-bottom: 0;
+}
+
+/* When the viewport is narrow enough that both tables don't fit alongside each other, artificially
+ * join them into one table. This happens on original-sized iPhones.
+ */
+@media (max-width: 768px) {
+  .visit table {
+    width: 100%;
+  }
+  .pane1, .pane2 {
+    float: none;
+  }
+  .pane2 .name {
+    width: 95px;
+  }
+  .pane2 .value {
+    width: calc(100% - 95px);
+  }
+  .pane2, .pane2 > tbody > tr:first-child > td, .pane2 > tbody > tr:first-child > th {
+    border-top: none;
+  }
+  .visit .value {
+    word-break: break-all;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
