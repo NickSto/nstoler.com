@@ -1,14 +1,12 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, StreamingHttpResponse
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.html import escape
 from django.conf import settings
-from .models import Visit, Visitor, Robot
+from .models import Visit, IpInfo
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 from . import categorize
 from .ipinfo import set_timezone
-from utils import async
 import logging
 log = logging.getLogger(__name__)
 
@@ -194,3 +192,24 @@ def mark_all_robots_incremental(batch_size=1000):
   result = '{} likely bots found, {} likely humans found'.format(likely_bots, likely_humans)
   yield result
   log.info('mark_all_robots() finished. '+result)
+
+
+def view_ip(request, ip):
+  # Only allow regular users to view their own IP address.
+  admin_cookie = get_admin_cookie(request)
+  if admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS):
+    admin = True
+  else:
+    ip = request.visit.visitor.ip
+  ipinfos = IpInfo.objects.filter(ip=ip).order_by('-timestamp')
+  if not ipinfos:
+    return HttpResponse('No data on ip '+ip, content_type=settings.PLAINTEXT)
+  response = HttpResponse(content_type=settings.PLAINTEXT)
+  response.write(ip+':\n')
+  columns = ('timestamp', 'version', 'asn', 'isp', 'hostname', 'timezone', 'latitude', 'longitude',
+             'country', 'region', 'town', 'zip', 'label')
+  response.write('\t'.join(columns)+'\n')
+  for ipinfo in ipinfos:
+    values = [str(getattr(ipinfo, key, None)) for key in columns]
+    response.write('\t'.join(values)+'\n')
+  return response
