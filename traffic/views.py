@@ -206,24 +206,39 @@ def view_ip(request, ip):
   params = request.GET
   format = params.get('format', 'html')
   # Get the IpInfos for the IP address.
-  ipinfos = IpInfo.objects.filter(ip=ip).order_by('-timestamp')
+  query = IpInfo.objects.filter(ip=ip).order_by('-timestamp')
+  fields = ('timestamp', 'version', 'asn', 'isp', 'hostname', 'timezone', 'latitude', 'longitude',
+            'country', 'region', 'town', 'zip', 'label')
   if format == 'plain':
-    if not ipinfos:
+    if not query:
       return HttpResponse('No data on ip '+ip, content_type=settings.PLAINTEXT)
     response = HttpResponse(content_type=settings.PLAINTEXT)
     response.write(ip+':\n')
-    columns = ('timestamp', 'version', 'asn', 'isp', 'hostname', 'timezone', 'latitude', 'longitude',
-               'country', 'region', 'town', 'zip', 'label')
-    response.write('\t'.join(columns)+'\n')
-    for ipinfo in ipinfos:
-      values = [str(getattr(ipinfo, key, None)) for key in columns]
+    response.write('\t'.join(fields)+'\n')
+    for ipinfo in query:
+      values = [str(getattr(ipinfo, field, None)) for field in fields]
       response.write('\t'.join(values)+'\n')
     return response
   else:
+    ipinfos = []
     try:
-      ipinfos.count()
+      last_ipinfo = None
+      for ipinfo in query:
+        if last_ipinfo is None:
+          ipinfos.append(ipinfo)
+        else:
+          changed = False
+          for field in fields:
+            new_value = getattr(ipinfo, field, None)
+            old_value = getattr(last_ipinfo, field, None)
+            if field != 'timestamp' and new_value != old_value:
+              changed = True
+          if changed:
+            ipinfos.append(ipinfo)
+        last_ipinfo = ipinfo
     except DataError:
       # DataError is thrown on executing the query on an invalid ip address.
+      log.warning('DataError on IP address'+ip)
       ipinfos = []
     context = {
       'ip':ip,
