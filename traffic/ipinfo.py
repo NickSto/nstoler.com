@@ -102,7 +102,7 @@ def get_freegeoip_data(ip, timeout=DEFAULT_TIMEOUT):
   try:
     our_data['zip'] = int(our_data['zip'])
   except (ValueError, KeyError):
-    pass
+    our_data['zip'] = None
   return our_data
 
 
@@ -143,7 +143,7 @@ def get_ipinfo_data(ip, timeout=DEFAULT_TIMEOUT):
   try:
     our_data['zip'] = int(our_data['zip'])
   except (ValueError, KeyError):
-    pass
+    our_data['zip'] = None
   try:
     fields = response['loc'].split(',')
     if len(fields) == 2:
