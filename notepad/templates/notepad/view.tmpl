@@ -50,7 +50,7 @@
                       {% if note.visit %}
                         <td>{{ note.visit.timestamp }} UTC</td>
                         <td>
-                          <a href="http://whatismyipaddress.com/ip/{{ note.visit.visitor.ip }}" rel="noreferrer" target="_blank">{{ note.visit.visitor.ip }}</a>
+                          <a href="{% url 'traffic:view_ip' note.visit.visitor.ip %}">{{ note.visit.visitor.ip }}</a>
                         </td>
                         {% if note.visit.visitor.label %}
                           <td>{{ note.visit.visitor.label }}</td>
