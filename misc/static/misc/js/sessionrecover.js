@@ -1,4 +1,6 @@
-function parseSession() {
+var windowList;
+
+function readSession() {
   deleteChildren(document.getElementById('stderr'));
   deleteChildren(document.getElementById('session'));
 
@@ -22,48 +24,64 @@ function parseSession() {
     var fileContents = reader.result.replace(/\r/g, "\n");
     var fileLines = fileContents.split("\n");
     if (fileLines.length !== 5) {
-      log('error', 'file is the wrong length (expected 5 lines).');
+      log('error', 'File is the wrong length (expected 5 lines).');
       return;
     }
     try {
       var sessionData = JSON.parse(fileLines[4]);
     } catch (SyntaxError) {
-      log('error', 'invalid data in file. Maybe it\'s not a Session Manager session?');
-      return;
-    }
-    if (sessionData.windows === undefined || sessionData.windows.length < 1) {
-      log('error', 'session data not as expected.');
+      log('error', 'Invalid data in file. Maybe it\'s not a Session Manager session?');
       return;
     }
 
-    var windowList = [];
-    for (var w = 0; w < sessionData.windows.length; w++) {
-      var sWindow = sessionData.windows[w];
-      if (sWindow.tabs === undefined || sWindow.tabs.length < 1) {
-        log('warning', 'session data not as expected (in the window object).');
-        continue;
-      }
-      console.log('Window '+(w+1)+': '+sWindow.tabs.length+' tabs');
-      var tabList = [];
-      for (var t = 0; t < sWindow.tabs.length; t++) {
-        var tab = sWindow.tabs[t];
-        if (tab.entries === undefined || tab.entries.length < 1) {
-          log('warning', 'session data not as expected (in the tab object).');
-          continue;
-        }
-        var lastEntry = tab.entries[tab.entries.length-1];
-        console.log('  '+lastEntry.title);
-        console.log('    '+lastEntry.url);
-        tabList.push(lastEntry);
-      }
-      console.log('');
-      windowList.push(tabList);
+    windowList = parseSessionData(sessionData);
+
+    if (windowList !== undefined) {
+      displaySession(windowList);
+      var afterElement = document.getElementById('after-parsing');
+      afterElement.style.display = 'inherit';
     }
-    displaySession(windowList);
   };
 
   reader.readAsText(files[0]);
 }
+
+
+function parseSessionData(data) {
+  var windowList = [];
+
+  if (data.windows === undefined || data.windows.length < 1) {
+    log('error', 'Session data not as expected (missing "windows").');
+    return;
+  }
+
+  for (var w = 0; w < data.windows.length; w++) {
+    var sWindow = data.windows[w];
+    if (sWindow.tabs === undefined || sWindow.tabs.length < 1) {
+      log('warning', 'Session data not as expected (in the window object).');
+      continue;
+    }
+    // Log everything to the console as a last-resort way to get some data if something goes wrong.
+    console.log('Window '+(w+1)+': '+sWindow.tabs.length+' tabs');
+    var tabList = [];
+    for (var t = 0; t < sWindow.tabs.length; t++) {
+      var tab = sWindow.tabs[t];
+      if (tab.entries === undefined || tab.entries.length < 1) {
+        log('warning', 'Session data not as expected (in the tab object).');
+        continue;
+      }
+      var lastEntry = tab.entries[tab.entries.length-1];
+      console.log('  '+lastEntry.title);
+      console.log('    '+lastEntry.url);
+      tabList.push(lastEntry);
+    }
+    console.log('');
+    windowList.push(tabList);
+  }
+
+  return windowList;
+}
+
 
 function displaySession(windowList) {
   var sessionElement = document.getElementById('session');
@@ -93,18 +111,77 @@ function displaySession(windowList) {
   }
 }
 
+
+function downloadSession() {
+  if (windowList === undefined) {
+    log('error', 'Please select a session file and click "Read session" first.');
+    return;
+  } else if (windowList.length < 1) {
+    log('error', 'No data to download.');
+    return;
+  }
+  var fileInput = document.getElementById('selection');
+  var files = fileInput.files;
+  if (files.length === 0) {
+    log('error', 'No file selected!');
+    return;
+  }
+  var filename = createFileName(files[0].name);
+  var contents = createSessionFile(windowList);
+  var link = document.createElement('a');
+  link.setAttribute('href', 'data:text/plain;charset=utf-8,'+encodeURIComponent(contents));
+  link.setAttribute('download', filename);
+  var click = new MouseEvent('click');
+  link.dispatchEvent(click);
+}
+
+
+function createSessionFile(windowList) {
+  var contents = "";
+  for (var w = 0; w < windowList.length; w++) {
+    var tabList = windowList[w];
+    contents += 'Window '+(w+1)+': '+tabList.length+' tabs\r\n';
+    for (var t = 0; t < tabList.length; t++) {
+      var tab = tabList[t];
+      contents += '  '+tab.title+'\r\n';
+      contents += '    '+tab.url+'\r\n';
+    }
+    contents += '\r\n';
+  }
+  return contents;
+}
+
+
+function createFileName(inputName) {
+  var extStart = inputName.indexOf('.session');
+  if (extStart == -1) {
+    var base = inputName;
+  } else {
+    var base = inputName.slice(0, extStart);
+  }
+  return base + '.txt';
+}
+
+
 function log(level, message) {
   var stderr = document.getElementById('stderr');
   var line = document.createElement('p');
   if (level) {
-    var text = level[0].toUpperCase()+level.slice(1)+': '+message;
+    var text = capitalize(level)+': ';
   } else {
-    var text = message;
+    var text = '';
   }
+  text += capitalize(message);
   var textNode = document.createTextNode(text);
   line.appendChild(textNode);
   stderr.appendChild(line);
 }
+
+
+function capitalize(str) {
+  return str[0].toUpperCase() + str.slice(1);
+}
+
 
 function deleteChildren(element) {
   if (element === null) {
@@ -116,4 +193,12 @@ function deleteChildren(element) {
   }
 }
 
-document.getElementById('submit').onclick = parseSession;
+
+function init() {
+  var afterElement = document.getElementById('after-parsing');
+  afterElement.style.display = 'none';
+  document.getElementById('submit').onclick = readSession;
+  document.getElementById('download').onclick = downloadSession;
+}
+
+window.onload = init;
