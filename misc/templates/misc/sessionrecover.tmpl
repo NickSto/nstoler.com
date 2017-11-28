@@ -1,0 +1,40 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}Parse a Session Manager .session file.{% endblock %}
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'misc/css/sessionrecover.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+      <section>
+        <noscript>
+          <h4>Notice: Javascript is required for this page's functionality.</h4>
+        </noscript>
+      </section>
+      <div class="form_bit">
+        <label>Select a .session file to read</label>
+      </div>
+      <div class="form_bit">
+        <input type="file" id="selection"></input>
+      </div>
+      <div class="form_bit">
+        <label>Then hit "Read session"!</label>
+      </div>
+      <div class="form_bit">
+        <input type="submit" id="submit" value="Read session">
+      </div>
+
+      <div id="stderr">
+      </div>
+
+      <div id="session">
+      </div>
+    </div>
+{% endblock content %}
+
+{% block javascript %}
+  <script src="{% static 'misc/js/sessionrecover.js' %}?via=html"></script>
+{% endblock %}

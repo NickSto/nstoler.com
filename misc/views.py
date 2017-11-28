@@ -50,3 +50,7 @@ def setcookie(request):
 
 def dataurl(request):
   return render(request, 'misc/dataurl.tmpl')
+
+
+def sessionrecover(request):
+  return render(request, 'misc/sessionrecover.tmpl')

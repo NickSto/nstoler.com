@@ -13,6 +13,8 @@ urlpatterns = [
   url(r'^setcookie$', views.setcookie, name='setcookie'),
   url(r'^dataurl/$', RedirectView.as_view(url='../dataurl', permanent=True)),
   url(r'^dataurl$', views.dataurl, name='dataurl'),
+  url(r'^sessionrecover/$', RedirectView.as_view(url='../sessionrecover', permanent=True)),
+  url(r'^sessionrecover$', views.sessionrecover, name='sessionrecover'),
   url(r'^export/$', RedirectView.as_view(url='../export', permanent=True)),
   url(r'^export$', views.export, name='export'),
 ]
