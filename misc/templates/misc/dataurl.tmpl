@@ -3,6 +3,10 @@
 
 {% block title %}Convert files to data: urls{% endblock %}
 
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'misc/css/dataurl.css' %}?via=html">
+{% endblock %}
+
 {% block content %}
     <div class="container-fluid">
       <section>
@@ -20,9 +24,9 @@
         <input type="submit" id="submit" value="Convert!">
       </div>
 
-      <div id="result" style="display:none">
+      <div id="result">
         <p>Result:</p>
-        <textarea id="resultBox" style="width:1024px; height:1024px; font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;">
+        <textarea id="resultBox">
         </textarea>
       </div>
     </div>

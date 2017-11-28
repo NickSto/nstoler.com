@@ -20,7 +20,7 @@ function toDataUrl() {
     var resultBox = document.getElementById('resultBox');
     resultBox.textContent = reader.result;
     var result = document.getElementById('result');
-    result.style.display = '';
+    result.style.display = 'inherit';
   };
 
   reader.readAsDataURL(files[0]);
