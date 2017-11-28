@@ -46,3 +46,7 @@ def userinfo(request):
 def setcookie(request):
   context = {'default_name':'visitors_v1', 'default_value':request.COOKIES['visitors_v1']}
   return render(request, 'misc/setcookie.tmpl', context)
+
+
+def dataurl(request):
+  return render(request, 'misc/dataurl.tmpl')

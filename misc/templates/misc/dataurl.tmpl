@@ -1,0 +1,33 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}Convert files to data: urls{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+      <section>
+        <noscript>
+          <h4>Notice: Javascript is required for this page's functionality.</h4>
+        </noscript>
+      </section>
+      <div class="form_bit">
+        <label for="query">Select a file to convert.</label>
+      </div>
+      <div class="form_bit">
+        <input type="file" id="selection"></input>
+      </div>
+      <div class="form_bit">
+        <input type="submit" id="submit" value="Convert!">
+      </div>
+
+      <div id="result" style="display:none">
+        <p>Result:</p>
+        <textarea id="resultBox" style="width:1024px; height:1024px; font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;">
+        </textarea>
+      </div>
+    </div>
+{% endblock content %}
+
+{% block javascript %}
+  <script src="{% static 'misc/js/dataurl.js' %}?via=html"></script>
+{% endblock %}
