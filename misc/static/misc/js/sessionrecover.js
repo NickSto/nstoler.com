@@ -21,10 +21,10 @@ function readSession() {
   reader.onloadend = function() {
     // Line ending fix needed because of Firefox bug:
     // https://stackoverflow.com/questions/18898036/how-to-keep-newline-characters-when-i-import-a-javascript-file-with-filereader
-    var fileContents = reader.result.replace(/\r/g, "\n");
+    var fileContents = reader.result.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
     var fileLines = fileContents.split("\n");
-    if (fileLines.length !== 5) {
-      log('error', 'File is the wrong length (expected 5 lines).');
+    if (fileLines.length < 5 || fileLines.length > 6) {
+      log('error', 'File is the wrong length (expected 5-6 lines, saw '+fileLines.length+').');
       return;
     }
     try {
