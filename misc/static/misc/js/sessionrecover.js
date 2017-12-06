@@ -3,6 +3,8 @@ var windowList;
 function readSession() {
   deleteChildren(document.getElementById('stderr'));
   deleteChildren(document.getElementById('session'));
+  document.getElementById('file-text').textContent = 'Browse..';
+  windowList = [];
 
   var fileInput = document.getElementById('selection');
 
@@ -17,8 +19,10 @@ function readSession() {
     return;
   }
 
+  displayFilename();
+
   var reader = new FileReader();
-  reader.onloadend = function() {
+  reader.addEventListener('loadend', function() {
     // Line ending fix needed because of Firefox bug:
     // https://stackoverflow.com/questions/18898036/how-to-keep-newline-characters-when-i-import-a-javascript-file-with-filereader
     var fileContents = reader.result.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
@@ -41,9 +45,20 @@ function readSession() {
       var afterElement = document.getElementById('after-parsing');
       afterElement.style.display = 'inherit';
     }
-  };
+  });
 
   reader.readAsText(files[0]);
+}
+
+
+function displayFilename() {
+  var fileInput = document.getElementById('selection');
+  if (fileInput.files.length === 0) {
+    var text = 'Browse..';
+  } else {
+    var text = fileInput.files[0].name;
+  }
+  document.getElementById('file-text').textContent = text;
 }
 
 
@@ -89,8 +104,7 @@ function displaySession(windowList) {
     var tabList = windowList[w];
     var windowElement = document.createElement('div');
     var windowHeading = document.createElement('h4');
-    var text = document.createTextNode('Window '+(w+1)+': '+tabList.length+' tabs');
-    windowHeading.appendChild(text);
+    windowHeading.textContent = 'Window '+(w+1)+': '+tabList.length+' tabs';
     windowElement.appendChild(windowHeading);
     for (var t = 0; t < tabList.length; t++) {
       var tab = tabList[t];
@@ -102,8 +116,7 @@ function displaySession(windowList) {
       } else {
         var title = tab.title;
       }
-      var text = document.createTextNode(title);
-      anchor.appendChild(text);
+      anchor.textContent = title;
       tabElement.appendChild(anchor);
       windowElement.appendChild(tabElement);
     }
@@ -172,8 +185,7 @@ function log(level, message) {
     var text = '';
   }
   text += capitalize(message);
-  var textNode = document.createTextNode(text);
-  line.appendChild(textNode);
+  line.textContent = text;
   stderr.appendChild(line);
 }
 
@@ -197,8 +209,9 @@ function deleteChildren(element) {
 function init() {
   var afterElement = document.getElementById('after-parsing');
   afterElement.style.display = 'none';
-  document.getElementById('submit').onclick = readSession;
-  document.getElementById('download').onclick = downloadSession;
+  displayFilename();
+  document.getElementById('selection').addEventListener('change', readSession);
+  document.getElementById('download').addEventListener('click', downloadSession);
 }
 
-window.onload = init;
+window.addEventListener('load', init);

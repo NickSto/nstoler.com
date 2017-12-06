@@ -64,3 +64,7 @@ th.name, tr.names > th {
   margin-right: 6px;
   margin-bottom: 10px;
 }
+
+.btn-file input[type="file"] {
+  display: none;
+}
