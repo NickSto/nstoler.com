@@ -1,0 +1,26 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}{{ page }} - Error - Notepad{% endblock %}
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'notepad/css/view.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+      <a id="top"></a>
+      <h2 id="title">Notepad</h2>
+
+      <section id="error" class="panel panel-default">
+        <div class="panel-heading">
+          <h3>Error</h3>
+        </div>
+        <div class="panel-body">
+          <p>{{ error }}</p>
+        </div>
+      </section>
+      <a class="btn btn-default" href="{% url 'notepad:view' page %}#bottom">Back to {{ page }}</a>
+
+    </div>
+{% endblock content %}
