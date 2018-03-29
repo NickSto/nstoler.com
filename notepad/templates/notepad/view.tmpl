@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container-fluid">
+    <div id="main" class="view container-fluid">
       <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
@@ -94,8 +94,8 @@ Try adding something with the form below!</div>
         </footer>
       </form>
 
-      <section id="add_note">
-        <form name='add_note' method='post' action="{% url 'notepad:add' page %}" >
+      <section id="submit_note">
+        <form name="submit_note" method="post" action="{% url 'notepad:add' page %}" >
           {% csrf_token %}
           <input type="hidden" name="page" value="{{ page }}">
           <div class="ruhuman">

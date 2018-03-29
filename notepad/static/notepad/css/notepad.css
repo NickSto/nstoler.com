@@ -41,16 +41,19 @@ pre.content {
   margin: 0;
 }
 
-#add_note {
+#submit_note {
   margin: 40px 0;
 }
 
 textarea[name="content"] {
   width: 100%;
-  height: 150px;
   padding: 5px 10px;
 }
 
-#add_note .panel {
+#main.view textarea[name="content"] {
+  height: 150px;
+}
+
+#submit_note .panel {
   margin-bottom: 10px;
 }

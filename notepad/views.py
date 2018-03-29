@@ -149,7 +149,8 @@ def editform(request, page_name):
       context = {'page':page_name, 'error':error}
       return render(request, 'notepad/error.tmpl', context)
     elif note:
-      context = {'page':page_name, 'note':note, 'lines':len(note.content.splitlines())}
+      lines = len(note.content.splitlines())
+      context = {'page':page_name, 'note':note, 'rows':round(lines*1.1)+2}
       return render(request, 'notepad/editform.tmpl', context)
     else:
       log.error('Ended up with neither a note ({!r}) nor an error ({!r}).'.format(note, error))

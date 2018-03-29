@@ -8,12 +8,12 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container-fluid">
+    <div id="main" class="editform container-fluid">
       <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
-      <section id="add_note">
-        <form name='edit_note' method='post' action="{% url 'notepad:edit' page %}" >
+      <section id="submit_note">
+        <form name="submit_note" method="post" action="{% url 'notepad:edit' page %}" >
           {% csrf_token %}
           <input type="hidden" name="page" value="{{ page }}">
           <input type="hidden" name="note" value="{{ note.id }}">
@@ -25,7 +25,7 @@
             <div class="panel-heading">
               <label for="content" class="panel-title">Edit Note</label>
             </div>
-            <textarea name="content" class="panel-body" rows="{{ lines }}">{{ note.content }}</textarea>
+            <textarea name="content" class="panel-body" rows="{{ rows }}">{{ note.content }}</textarea>
           </div>
           <input type="submit" class="btn btn-default" value="Submit">
           <a class="btn btn-default" href="{% url 'notepad:view' page %}#note_{{ note.id }}">Back to {{ page }}</a>
