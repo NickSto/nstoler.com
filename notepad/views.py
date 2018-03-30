@@ -90,28 +90,18 @@ def add(request, page_name):
 
 def delete(request, page_name):
   params = request.POST
-  note_id_strs = [key[5:] for key in params.keys() if key.startswith('note_')]
+  notes = get_notes_from_params(params)
   if params.get('site') == '':
-    for note_id_str in note_id_strs:
-      try:
-        note_id = int(note_id_str)
-      except ValueError:
-        log.warning('Non-integer note number: {!r}'.format(note_id_str))
-        continue
-      try:
-        note = Note.objects.get(pk=note_id)
-      except Note.DoesNotExist:
-        log.info('Visitor "{}" tried to delete non-existent note #{}.'
-                 .format(request.visit.visitor, note_id))
-        continue
+    for note in notes:
       note.deleted = True
       note.deleting_visit = request.visit
       note.save()
   else:
     #TODO: Email warning about detected spambots.
     site = truncate(params.get('site'))
+    note_ids = [str(note.id) for note in notes]
     log.warning('Spambot ({0}) blocked from deleting notes {1} from page "{2}". Ruhuman field: {3!r}'
-                .format(request.visit.visitor, ', '.join(note_id_strs), page_name, site))
+                .format(request.visit.visitor, ', '.join(note_ids), page_name, site))
   #TODO: Check if the notes were deleted from the main "notepad" page.
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
@@ -120,31 +110,18 @@ def delete(request, page_name):
 def editform(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
-  note_id_strs = [key[5:] for key in params.keys() if key.startswith('note_')]
+  notes = get_notes_from_params(params)
   if params.get('site') == '':
-    note_id = None
     error = None
-    for note_id_str in note_id_strs:
-      if note_id is None:
-        try:
-          note_id = int(note_id_str)
-        except ValueError:
-          log.warning('Non-integer note number: {!r}'.format(note_id_str))
-          continue
-      else:
-        log.info('Multiple notes selected')
-        break
-    note = None
-    if note_id is None:
-      log.warning('No note selected for editing.')
-      error = 'No note selected.'
+    if len(notes) == 0:
+      log.warning('No valid note selected for editing.')
+      error = 'No valid note selected.'
+      note = None
+    elif len(notes) > 1:
+      log.info('Multiple notes selected')
+      note = notes[0]
     else:
-      try:
-        note = Note.objects.get(pk=note_id)
-      except Note.DoesNotExist:
-        error = 'Note {} does not exist.'.format(note_id)
-        log.warning('Visitor "{}" tried to edit non-existent note #{}.'
-                    .format(request.visit.visitor, note_id))
+      note = notes[0]
     if error:
       context = {'page':page_name, 'error':error}
       return render(request, 'notepad/error.tmpl', context)
@@ -158,8 +135,9 @@ def editform(request, page_name):
   else:
     #TODO: Email warning about detected spambots.
     site = truncate(params.get('site'))
+    note_ids = [str(note.id) for note in notes]
     log.warning('Spambot ({0}) blocked from editing notes {1} from page "{2}". Ruhuman field: {3!r}'
-                .format(request.visit.visitor, ', '.join(note_id_strs), page_name, site))
+                .format(request.visit.visitor, ', '.join(note_ids), page_name, site))
     return HttpResponseRedirect(view_url)
 
 
@@ -211,6 +189,25 @@ def edit(request, page_name):
     log.warning('Spambot ({0}) blocked from editing note {1} from page "{2}". Ruhuman field: {3!r}'
                 .format(request.visit.visitor, note, page_name, site))
   return HttpResponseRedirect(view_url+fragment)
+
+
+def get_notes_from_params(params):
+  note_id_strs = [key[5:] for key in params.keys() if key.startswith('note_')]
+  notes = []
+  for note_id_str in note_id_strs:
+    try:
+      note_id = int(note_id_str)
+    except ValueError:
+      log.warning('Non-integer note number in {!r}'.format(note_id_str))
+      continue
+    try:
+      note = Note.objects.get(pk=note_id)
+    except Note.DoesNotExist:
+      log.warning('Non-existent note {!r}.'.format(note_id))
+      continue
+    notes.append(note)
+  notes.sort(key=lambda note: (note.display_order, note.id))
+  return notes
 
 
 def truncate(s, max_len=100):
