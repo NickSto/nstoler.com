@@ -18,17 +18,16 @@ DISPLAY_ORDER_MARGIN = 1000
 def view(request, page_name):
   params = request.GET
   format = params.get('format')
-  admin = params.get('admin')
+  admin_view = params.get('admin')
   try:
     note_id = int(params.get('note'))
   except (ValueError, TypeError):
     note_id = None
   show_deleted = params.get('include') == 'deleted'
   # Only allow showing deleted notes to the admin over HTTPS.
-  admin_cookie = get_admin_cookie(request)
-  if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
+  if not is_admin_and_secure(request):
     show_deleted = False
-    admin = False
+    admin_view = False
   #TODO: Display deleted notes differently.
   if show_deleted:
     note_objects = Note.objects.filter(page__name=page_name).order_by('display_order', 'id')
@@ -46,7 +45,7 @@ def view(request, page_name):
   if format == 'plain':
     return HttpResponse('\n\n'.join(notes), content_type=settings.PLAINTEXT)
   else:
-    context = {'page':page_name, 'notes':notes, 'admin':admin}
+    context = {'page':page_name, 'notes':notes, 'admin':admin_view}
     return render(request, 'notepad/view.tmpl', context)
 
 
@@ -91,8 +90,15 @@ def add(request, page_name):
 def delete(request, page_name):
   params = request.POST
   notes = get_notes_from_params(params)
+  admin = None
   if params.get('site') == '':
     for note in notes:
+      if note.protected:
+        if admin is None:
+          admin = is_admin_and_secure(request)
+        if not admin:
+          log.warning('Non-admin attempted to delete protected note {!r}.'.format(note.id))
+          continue
       note.deleted = True
       note.deleting_visit = request.visit
       note.save()
@@ -208,6 +214,11 @@ def get_notes_from_params(params):
     notes.append(note)
   notes.sort(key=lambda note: (note.display_order, note.id))
   return notes
+
+
+def is_admin_and_secure(request):
+  admin_cookie = get_admin_cookie(request)
+  return admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)
 
 
 def truncate(s, max_len=100):
