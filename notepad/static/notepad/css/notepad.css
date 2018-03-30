@@ -20,7 +20,7 @@
 
 pre.content {
   float: right;
-  width: calc(100% - 25px);
+  width: 100%;
   white-space: pre-wrap;
   /* Un-style the pre element. This is part of a workaround for a longstanding, not-totally-fixed
    * Firefox bug (https://bugzilla.mozilla.org/show_bug.cgi?id=116083) where setting
@@ -41,8 +41,16 @@ pre.content {
   margin: 0;
 }
 
-#submit_note {
-  margin: 40px 0;
+#main.view pre.content {
+  width: calc(100% - 25px);
+}
+
+#confirm {
+  margin-bottom: 40px;
+}
+
+#notes_container {
+  margin-bottom: 30px;
 }
 
 textarea[name="content"] {

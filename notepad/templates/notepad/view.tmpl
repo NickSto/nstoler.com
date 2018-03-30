@@ -12,11 +12,12 @@
       <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
-      <div class="buttons">
-        <a class="btn btn-default" href="#bottom">To bottom</a>
-        <a class="btn btn-default" href="{% url 'notepad:random' %}">Random page</a>
-      </div>
-      <form name='delete_notes' method='post' action="{% url 'notepad:delete' page %}">
+      <form id="notes_container" name='delete_notes' method='post' action="{% url 'notepad:confirm' page %}">
+        <div class="buttons">
+          <a class="btn btn-default" href="#bottom">To bottom</a>
+          <a class="btn btn-default" href="{% url 'notepad:random' %}">Random page</a>
+        </div>
+
         {% csrf_token %}
         <ul id="notes" class="list-group">
           <li class="list-group-item header">
