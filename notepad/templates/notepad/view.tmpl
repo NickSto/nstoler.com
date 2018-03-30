@@ -14,8 +14,8 @@
 
       <form id="notes_container" name='delete_notes' method='post' action="{% url 'notepad:confirm' page %}">
         <div class="buttons">
-          <a class="btn btn-default" href="#bottom">To bottom</a>
-          <a class="btn btn-default" href="{% url 'notepad:random' %}">Random page</a>
+          <a class="btn btn-default" href="#bottom">▼ To bottom</a>
+          <a class="btn btn-default" href="{% url 'notepad:random' %}">? Random page</a>
         </div>
 
         {% csrf_token %}
@@ -81,17 +81,24 @@ Try adding something with the form below!</div>
               <div class="clearfix"></div>
             </li>
           {% endfor %}
+          <li class="list-group-item header">
+            <label>Modify selected notes</label>
+          </li>
+          <li class="list-group-item modify-buttons">
+            <button id="delete" class="btn btn-default">✕ Delete</button>
+            <button id="edit" class="btn btn-default" formaction="{% url 'notepad:editform' page %}">✎ Edit</button>
+          </li>
         </ul>
 
-        <footer class="buttons">
-          <input type="hidden" name="page" value="{{ page }}">
-          <div class="ruhuman">
-            <label for="site">Site:</label>
-            <input type="text" name="site">
+        <footer>
+          <div class="buttons">
+            <input type="hidden" name="page" value="{{ page }}">
+            <div class="ruhuman">
+              <label for="site">Site:</label>
+              <input type="text" name="site">
+            </div>
+            <a class="btn btn-default" href="#top">▲ To top</a>
           </div>
-          <a class="btn btn-default" href="#top">To top</a>
-          <input type="submit" id="delete" class="btn btn-default" value="Delete selected notes">
-          <button type="submit" id="edit" class="btn btn-default" formaction="{% url 'notepad:editform' page %}">Edit selected note</button>
         </footer>
       </form>
 
