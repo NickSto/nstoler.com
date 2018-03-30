@@ -139,16 +139,18 @@ def editform(request, page_name):
   notes = get_notes_from_params(params)
   if params.get('site') == '':
     error = None
+    warning = None
     if len(notes) == 0:
       log.warning('No valid note selected for editing.')
       error = 'No valid note selected.'
       note = None
     elif len(notes) > 1:
-      log.info('Multiple notes selected')
+      log.info('Multiple notes selected.')
+      warning = 'Multiple notes selected. Editing only the first one.'
       note = notes[0]
     else:
       note = notes[0]
-    if note.protected and not is_admin_and_secure(request):
+    if note and note.protected and not is_admin_and_secure(request):
       log.warning('Non-admin attempted to edit protected note {}.'.format(note.id))
       error = 'This note is protected.'
     if error:
@@ -156,7 +158,7 @@ def editform(request, page_name):
       return render(request, 'notepad/error.tmpl', context)
     elif note:
       lines = len(note.content.splitlines())
-      context = {'page':page_name, 'note':note, 'rows':round(lines*1.1)+2}
+      context = {'page':page_name, 'note':note, 'rows':round(lines*1.1)+2, 'warning':warning}
       return render(request, 'notepad/editform.tmpl', context)
     else:
       log.error('Ended up with neither a note ({!r}) nor an error ({!r}).'.format(note, error))

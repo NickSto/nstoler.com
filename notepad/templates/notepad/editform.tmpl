@@ -12,6 +12,17 @@
       <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
+      {% if warning %}
+        <section id="error" class="panel panel-default">
+          <div class="panel-heading">
+            <h3>Warning</h3>
+          </div>
+          <div class="panel-body">
+            <p>{{ warning }}</p>
+          </div>
+        </section>
+      {% endif %}
+
       <div class="buttons">
         <a class="btn btn-default" href="{% url 'notepad:view' page %}#note_{{ note.id }}">Back to {{ page }}</a>
       </div>
