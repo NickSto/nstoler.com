@@ -1,0 +1,58 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}{{ page }} - Confirm - Notepad{% endblock %}
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'notepad/css/notepad.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+    <div id="main" class="confirm container-fluid">
+      <a id="top"></a>
+      <h2 id="title">Notepad</h2>
+
+      <div class="buttons">
+        <a class="btn btn-default" href="{% url 'notepad:view' page %}#note_{{ note.id }}">Back to {{ page }}</a>
+      </div>
+      <section id="confirm" class="panel panel-default">
+        <div class="panel-heading">
+          <h3>Are you sure?</h3>
+        </div>
+        <div class="panel-body">
+          <p>Delete these notes?</p>
+        </div>
+      </section>
+
+      <form id="notes_container" name="delete_notes" method="post" action="{% url 'notepad:delete' page %}" >
+        {% csrf_token %}
+        <ul id="notes" class="list-group">
+          <li class="list-group-item header">
+            <h3 class="page-name">{{ page }}</h3>
+          </li>
+          {% for note, content in notes %}
+            {% if forloop.last %}
+              <a id="bottom"></a>
+            {% endif %}
+            <li id="note_{{ note.id }}" class="note list-group-item">
+              <input type="hidden" name="note_{{ note.id }}" value="on">
+              {% autoescape off %}
+                <pre class="content">{{ content }}</pre>
+              {% endautoescape %}
+              <div class="clearfix"></div>
+            </li>
+          {% empty %}
+            <li class="note list-group-item">
+              <div class="content">No notes selected!</div>
+              <div class="clearfix"></div>
+            </li>
+          {% endfor %}
+        </ul>
+        <div class="ruhuman">
+          <label for="site">Site:</label>
+          <input type="text" name="site">
+        </div>
+        <input type="submit" class="btn btn-default" value="Delete">
+      </form>
+    </div>
+{% endblock content %}

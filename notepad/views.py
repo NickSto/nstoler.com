@@ -87,6 +87,26 @@ def add(request, page_name):
   return HttpResponseRedirect(view_url+'#bottom')
 
 
+def confirm(request, page_name):
+  params = request.POST
+  notes = get_notes_from_params(params)
+  if params.get('site') == '':
+    notes_list = []
+    for note in notes:
+      content_formatted = urlize(escape(note.content))
+      notes_list.append((note, content_formatted))
+    context = {'page':page_name, 'notes':notes_list}
+    return render(request, 'notepad/confirm.tmpl', context)
+  else:
+    #TODO: Email warning about detected spambots.
+    site = truncate(params.get('site'))
+    note_ids = [str(note.id) for note in notes]
+    log.warning('Spambot ({0}) blocked from deleting notes {1} from page "{2}". Ruhuman field: {3!r}'
+                .format(request.visit.visitor, ', '.join(note_ids), page_name, site))
+  view_url = reverse('notepad:view', args=(page_name,))
+  return HttpResponseRedirect(view_url+'#bottom')
+
+
 def delete(request, page_name):
   params = request.POST
   notes = get_notes_from_params(params)
@@ -106,8 +126,8 @@ def delete(request, page_name):
     #TODO: Email warning about detected spambots.
     site = truncate(params.get('site'))
     note_ids = [str(note.id) for note in notes]
-    log.warning('Spambot ({0}) blocked from deleting notes {1} from page "{2}". Ruhuman field: {3!r}'
-                .format(request.visit.visitor, ', '.join(note_ids), page_name, site))
+    log.warning('Spambot ({0}) blocked from confirming note deletions {1} from page "{2}". Ruhuman '
+                'field: {3!r}'.format(request.visit.visitor, ', '.join(note_ids), page_name, site))
   #TODO: Check if the notes were deleted from the main "notepad" page.
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')

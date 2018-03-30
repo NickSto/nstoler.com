@@ -9,6 +9,7 @@ urlpatterns = [
   url(r'^notepad/delete/(?P<page_name>.+)$', views.delete, name='delete'),
   url(r'^notepad/editform/(?P<page_name>.+)$', views.editform, name='editform'),
   url(r'^notepad/edit/(?P<page_name>.+)$', views.edit, name='edit'),
+  url(r'^notepad/confirm/(?P<page_name>.+)$', views.confirm, name='confirm'),
   url(r'^notepad/monitor$', views.monitor, name='monitor'),
   url(r'^(?P<page_name>.+)$', views.view, name='view'),
 ]
