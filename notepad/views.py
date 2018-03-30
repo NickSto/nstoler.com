@@ -148,6 +148,9 @@ def editform(request, page_name):
       note = notes[0]
     else:
       note = notes[0]
+    if note.protected and not is_admin_and_secure(request):
+      log.warning('Non-admin attempted to edit protected note {}.'.format(note.id))
+      error = 'This note is protected.'
     if error:
       context = {'page':page_name, 'error':error}
       return render(request, 'notepad/error.tmpl', context)
@@ -184,6 +187,8 @@ def edit(request, page_name):
                   .format(request.visit.visitor, note_id))
       return HttpResponseRedirect(view_url+fragment)
     fragment = '#note_{}'.format(note_id)
+    if note.protected and not is_admin_and_secure(request):
+      return HttpResponseRedirect(view_url+fragment)
     if 'content' not in params:
       log.warning('No "content" key in query parameters.')
       return HttpResponseRedirect(view_url+fragment)
@@ -197,6 +202,7 @@ def edit(request, page_name):
       content=params.get('content', ''),
       visit=request.visit,
       display_order=note.display_order+1,
+      protected=note.protected,
       last_version=note
     )
     note.deleted = True
