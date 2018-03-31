@@ -14,6 +14,10 @@ Allow non-admins to see `/notepad/monitor`.
 
 ### HTML
 
+Add a "select all" and "select none" button.
+- Allows effectively renaming a page easily.
+- Without JavaScript, will have to reload the page with "?select=all"
+
 #### Buttons on each note
 Add `<button>`s next to each note for `delete`, `edit`/`save`, `move up`, `move down`, and `move to a different page`
 - Characters I can use: ✕, ✎/🖫, ↑, ↓
@@ -58,20 +62,9 @@ Moving algorithm:
 
 
 ### Database
-Add a `Move` model to keep a history of movement actions:
-```python
-class Move(ModelMixin, models.Model):
-  """A record of an action that moves a note.
-  A movement either moves the note to a different page or to a different display position on
-  the same page."""
-  type = models.CharField(max_length=127, choices=(('page','page'), ('position','position')))
-  note = models.ForeignKey(Note, models.SET_NULL, null=True, blank=True)
-  old_page = models.ForeignKey(Page, models.SET_NULL, null=True, blank=True)
-  new_page = models.ForeignKey(Page, models.SET_NULL, null=True, blank=True)
-  old_display_order = models.IntegerField(null=True)
-  new_display_order = models.IntegerField(null=True)
-  visit = models.OneToOneField('traffic.Visit', models.SET_NULL, null=True, blank=True)
-```
+Use the `Move` model to keep a history of movement actions.
+- Moving a note to a different page.
+- Moving a note up or down the same page.
 
 
 # Traffic
