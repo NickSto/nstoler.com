@@ -78,11 +78,7 @@ def add(request, page_name):
     )
     note.save()
   else:
-    #TODO: Email warning about detected spambots.
-    site = truncate(params.get('site'))
-    content = truncate(params.get('content'))
-    log.warning('Spambot ({0}) blocked from adding to page "{1}". Ruhuman field: {2!r}, note: {3!r}'
-                .format(request.visit.visitor, page_name, site, content))
+    warn_and_redirect_spambot(request, page_name, 'adding a note')
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
@@ -98,11 +94,7 @@ def confirm(request, page_name):
     context = {'page':page_name, 'notes':notes_list}
     return render(request, 'notepad/confirm.tmpl', context)
   else:
-    #TODO: Email warning about detected spambots.
-    site = truncate(params.get('site'))
-    note_ids = [str(note.id) for note in notes]
-    log.warning('Spambot ({0}) blocked from deleting notes {1} from page "{2}". Ruhuman field: {3!r}'
-                .format(request.visit.visitor, ', '.join(note_ids), page_name, site))
+    warn_and_redirect_spambot(request, page_name, 'deleting notes', notes)
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
@@ -123,11 +115,7 @@ def delete(request, page_name):
       note.deleting_visit = request.visit
       note.save()
   else:
-    #TODO: Email warning about detected spambots.
-    site = truncate(params.get('site'))
-    note_ids = [str(note.id) for note in notes]
-    log.warning('Spambot ({0}) blocked from confirming note deletions {1} from page "{2}". Ruhuman '
-                'field: {3!r}'.format(request.visit.visitor, ', '.join(note_ids), page_name, site))
+    warn_and_redirect_spambot(request, page_name, 'confirming note deletions', notes)
   #TODO: Check if the notes were deleted from the main "notepad" page.
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
@@ -137,38 +125,32 @@ def editform(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params)
-  if params.get('site') == '':
-    error = None
-    warning = None
-    if len(notes) == 0:
-      log.warning('No valid note selected for editing.')
-      error = 'No valid note selected.'
-      note = None
-    elif len(notes) > 1:
-      log.info('Multiple notes selected.')
-      warning = 'Multiple notes selected. Editing only the first one.'
-      note = notes[0]
-    else:
-      note = notes[0]
-    if note and note.protected and not is_admin_and_secure(request):
-      log.warning('Non-admin attempted to edit protected note {}.'.format(note.id))
-      error = 'This note is protected.'
-    if error:
-      context = {'page':page_name, 'error':error}
-      return render(request, 'notepad/error.tmpl', context)
-    elif note:
-      lines = len(note.content.splitlines())
-      context = {'page':page_name, 'note':note, 'rows':round(lines*1.1)+2, 'warning':warning}
-      return render(request, 'notepad/editform.tmpl', context)
-    else:
-      log.error('Ended up with neither a note ({!r}) nor an error ({!r}).'.format(note, error))
-      return HttpResponseRedirect(view_url)
+  if params.get('site') != '':
+    return warn_and_redirect_spambot(request, page_name, 'editing notes', notes, view_url)
+  error = None
+  warning = None
+  if len(notes) == 0:
+    log.warning('No valid note selected for editing.')
+    error = 'No valid note selected.'
+    note = None
+  elif len(notes) > 1:
+    log.info('Multiple notes selected.')
+    warning = 'Multiple notes selected. Editing only the first one.'
+    note = notes[0]
   else:
-    #TODO: Email warning about detected spambots.
-    site = truncate(params.get('site'))
-    note_ids = [str(note.id) for note in notes]
-    log.warning('Spambot ({0}) blocked from editing notes {1} from page "{2}". Ruhuman field: {3!r}'
-                .format(request.visit.visitor, ', '.join(note_ids), page_name, site))
+    note = notes[0]
+  if note and note.protected and not is_admin_and_secure(request):
+    log.warning('Non-admin attempted to edit protected note {}.'.format(note.id))
+    error = 'This note is protected.'
+  if error:
+    context = {'page':page_name, 'error':error}
+    return render(request, 'notepad/error.tmpl', context)
+  elif note:
+    lines = len(note.content.splitlines())
+    context = {'page':page_name, 'note':note, 'rows':round(lines*1.1)+2, 'warning':warning}
+    return render(request, 'notepad/editform.tmpl', context)
+  else:
+    log.error('Ended up with neither a note ({!r}) nor an error ({!r}).'.format(note, error))
     return HttpResponseRedirect(view_url)
 
 
@@ -176,53 +158,64 @@ def edit(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   fragment = '#bottom'
   params = request.POST
-  if params.get('site') == '':
-    try:
-      note_id = int(params.get('note'))
-    except (TypeError, ValueError):
-      log.warning('Invalid note id for editing: {!r}'.format(params.get('note')))
-      return HttpResponseRedirect(view_url+fragment)
-    try:
-      note = Note.objects.get(pk=note_id)
-    except Note.DoesNotExist:
-      log.warning('Visitor "{}" tried to submit an edit to non-existent note #{}.'
-                  .format(request.visit.visitor, note_id))
-      return HttpResponseRedirect(view_url+fragment)
-    fragment = '#note_{}'.format(note_id)
-    if note.protected and not is_admin_and_secure(request):
-      return HttpResponseRedirect(view_url+fragment)
-    if 'content' not in params:
-      log.warning('No "content" key in query parameters.')
-      return HttpResponseRedirect(view_url+fragment)
-    try:
-      page = Page.objects.get(name=page_name)
-    except Page.DoesNotExist:
-      log.warning('Page {!r} does not exist.'.format(page_name))
-      return HttpResponseRedirect(view_url+fragment)
-    edited_note = Note(
-      page=page,
-      content=params.get('content', ''),
-      visit=request.visit,
-      display_order=note.display_order+1,
-      protected=note.protected,
-      last_version=note
-    )
-    note.deleted = True
-    note.deleting_visit = request.visit
-    # Save both or, if something goes wrong, neither.
-    try:
-      edited_note.save()
-      note.save()
-    except django.db.Error:
-      pass
-    fragment = '#note_{}'.format(edited_note.id)
-  else:
-    #TODO: Email warning about detected spambots.
-    site = truncate(params.get('site'))
-    note = truncate(params.get('note'))
-    log.warning('Spambot ({0}) blocked from editing note {1} from page "{2}". Ruhuman field: {3!r}'
-                .format(request.visit.visitor, note, page_name, site))
+  if params.get('site') != '':
+    notes = [params.get('note')]
+    return warn_and_redirect_spambot(request, page_name, 'editing note', notes, view_url+fragment)
+  try:
+    note_id = int(params.get('note'))
+  except (TypeError, ValueError):
+    log.warning('Invalid note id for editing: {!r}'.format(params.get('note')))
+    return HttpResponseRedirect(view_url+fragment)
+  try:
+    note = Note.objects.get(pk=note_id)
+  except Note.DoesNotExist:
+    log.warning('Visitor "{}" tried to submit an edit to non-existent note #{}.'
+                .format(request.visit.visitor, note_id))
+    return HttpResponseRedirect(view_url+fragment)
+  fragment = '#note_{}'.format(note_id)
+  if note.protected and not is_admin_and_secure(request):
+    return HttpResponseRedirect(view_url+fragment)
+  if 'content' not in params:
+    log.warning('No "content" key in query parameters.')
+    return HttpResponseRedirect(view_url+fragment)
+  try:
+    page = Page.objects.get(name=page_name)
+  except Page.DoesNotExist:
+    log.warning('Page {!r} does not exist.'.format(page_name))
+    return HttpResponseRedirect(view_url+fragment)
+  edited_note = Note(
+    page=page,
+    content=params.get('content', ''),
+    visit=request.visit,
+    display_order=note.display_order+1,
+    protected=note.protected,
+    last_version=note
+  )
+  note.deleted = True
+  note.deleting_visit = request.visit
+  # Save both or, if something goes wrong, neither.
+  try:
+    edited_note.save()
+    note.save()
+  except django.db.Error:
+    pass
+  fragment = '#note_{}'.format(edited_note.id)
   return HttpResponseRedirect(view_url+fragment)
+
+
+def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=None):
+  #TODO: Email warning about detected spambots.
+  params = request.POST
+  site = truncate(params.get('site'))
+  if notes:
+    note_ids = [str(getattr(note, 'id', note)) for note in notes]
+    notes_str = ' '+', '.join(note_ids)
+  else:
+    notes_str = ''
+  log.warning('Spambot ({0}) blocked from {1}{2} from page "{3}". Ruhuman field: {4!r}'
+              .format(request.visit.visitor, action, notes_str, page_name, site))
+  if view_url is not None:
+    return HttpResponseRedirect(view_url)
 
 
 def get_notes_from_params(params):
