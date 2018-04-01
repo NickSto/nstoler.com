@@ -20,6 +20,7 @@ def view(request, page_name):
   format = params.get('format')
   select = params.get('select')
   admin_view = params.get('admin')
+  randomness = rand.randint(1, 1000000)
   try:
     note_id = int(params.get('note'))
   except (ValueError, TypeError):
@@ -46,7 +47,8 @@ def view(request, page_name):
   if format == 'plain':
     return HttpResponse('\n\n'.join(notes), content_type=settings.PLAINTEXT)
   else:
-    context = {'page':page_name, 'notes':notes, 'admin':admin_view, 'select':select}
+    context = {'page':page_name, 'notes':notes, 'admin':admin_view, 'select':select,
+               'randomness':randomness}
     return render(request, 'notepad/view.tmpl', context)
 
 
