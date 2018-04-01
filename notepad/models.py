@@ -36,4 +36,4 @@ class Move(ModelMixin, models.Model):
   new_page = models.ForeignKey(Page, models.PROTECT, null=True, blank=True, related_name='moves_to')
   old_display_order = models.IntegerField(null=True)
   new_display_order = models.IntegerField(null=True)
-  visit = models.OneToOneField('traffic.Visit', models.PROTECT)
+  visit = models.ForeignKey('traffic.Visit', models.PROTECT)
