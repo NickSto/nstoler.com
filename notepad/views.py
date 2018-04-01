@@ -212,6 +212,8 @@ def moveform(request, old_page_name):
     return warn_and_redirect_spambot(request, old_page_name, 'moving notes', notes, view_url)
   notes_list = []
   for note in notes:
+    if note.protected and not is_admin_and_secure(request):
+      continue
     content_formatted = urlize(escape(note.content))
     notes_list.append((note, content_formatted))
   context = {'page':old_page_name, 'notes':notes_list}
@@ -241,6 +243,8 @@ def move(request, old_page_name):
     new_page = Page(name=new_page_name)
     new_page.save()
   for note in notes:
+    if note.protected and not is_admin_and_secure(request):
+      continue
     move = Move(
       type='page',
       note=note,
