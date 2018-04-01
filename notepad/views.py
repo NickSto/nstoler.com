@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
 from django.db.models import Max
 import django.db
-from .models import Note, Page
+from .models import Note, Page, Move
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 import random as rand
 import string
@@ -197,10 +197,64 @@ def edit(request, page_name):
   try:
     edited_note.save()
     note.save()
-  except django.db.Error:
-    pass
+  except django.db.Error as dbe:
+    log.error('Error on saving edited note: {}'.format(dbe))
   fragment = '#note_{}'.format(edited_note.id)
   return HttpResponseRedirect(view_url+fragment)
+
+
+def moveform(request, old_page_name):
+  view_url = reverse('notepad:view', args=(old_page_name,))
+  params = request.POST
+  notes = get_notes_from_params(params)
+  if params.get('site') != '':
+    return warn_and_redirect_spambot(request, old_page_name, 'moving notes', notes, view_url)
+  notes_list = []
+  for note in notes:
+    content_formatted = urlize(escape(note.content))
+    notes_list.append((note, content_formatted))
+  context = {'page':old_page_name, 'notes':notes_list}
+  return render(request, 'notepad/moveform.tmpl', context)
+
+
+def move(request, old_page_name):
+  view_url = reverse('notepad:view', args=(old_page_name,))
+  params = request.POST
+  notes = get_notes_from_params(params)
+  if params.get('site') != '':
+    return warn_and_redirect_spambot(request, old_page_name, 'confirming move of notes', notes, view_url)
+  new_page_name = params.get('new_page')
+  if new_page_name:
+    view_url = reverse('notepad:view', args=(new_page_name,))
+  else:
+    log.warning('No new_page received for move.')
+    return HttpResponseRedirect(view_url)
+  try:
+    old_page = Page.objects.get(name=old_page_name)
+  except Page.DoesNotExist:
+    log.warning('Page {!r} does not exist.'.format(old_page_name))
+    return HttpResponseRedirect(view_url)
+  try:
+    new_page = Page.objects.get(name=new_page_name)
+  except Page.DoesNotExist:
+    new_page = Page(name=new_page_name)
+    new_page.save()
+  for note in notes:
+    move = Move(
+      type='page',
+      note=note,
+      old_page=old_page,
+      new_page=new_page,
+      visit=request.visit,
+    )
+    note.page = new_page
+    # Save both or, if something goes wrong, neither.
+    try:
+      move.save()
+      note.save()
+    except django.db.Error as dbe:
+      log.error('Error on saving Move or Note: {}'.format(dbe))
+  return HttpResponseRedirect(view_url)
 
 
 def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=None):
