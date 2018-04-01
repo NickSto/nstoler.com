@@ -53,8 +53,8 @@ pre.content {
   margin-bottom: 30px;
 }
 
-.modify-buttons button {
-  margin-bottom: 0;
+li.modify-buttons {
+  padding-bottom: 0;
 }
 
 textarea[name="content"] {
