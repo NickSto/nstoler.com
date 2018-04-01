@@ -28,7 +28,7 @@
               <a id="bottom"></a>
             {% endif %}
             <li id="note_{{ note.id }}" class="note list-group-item">
-              <input type="checkbox" class="checkbox" name="note_{{ note.id }}">
+              <input type="checkbox" class="checkbox" {% if select == 'all' %}checked{% endif %} name="note_{{ note.id }}">
               {% if admin %}
                 <div class="admin">
                   <table class="table table-bordered table-condensed">
@@ -99,6 +99,8 @@ Try adding something with the form below!</div>
               <input type="text" name="site">
             </div>
             <a class="btn btn-default" href="#top">▲ To top</a>
+            <a class="btn btn-default" href="{% url 'notepad:view' page %}?select=all#bottom">☑ Select all</a>
+            <a class="btn btn-default" href="{% url 'notepad:view' page %}#bottom">☐ Select none</a>
           </div>
         </footer>
       </form>

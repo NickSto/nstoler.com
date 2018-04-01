@@ -18,6 +18,7 @@ DISPLAY_ORDER_MARGIN = 1000
 def view(request, page_name):
   params = request.GET
   format = params.get('format')
+  select = params.get('select')
   admin_view = params.get('admin')
   try:
     note_id = int(params.get('note'))
@@ -45,7 +46,7 @@ def view(request, page_name):
   if format == 'plain':
     return HttpResponse('\n\n'.join(notes), content_type=settings.PLAINTEXT)
   else:
-    context = {'page':page_name, 'notes':notes, 'admin':admin_view}
+    context = {'page':page_name, 'notes':notes, 'admin':admin_view, 'select':select}
     return render(request, 'notepad/view.tmpl', context)
 
 
