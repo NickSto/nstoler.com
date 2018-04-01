@@ -87,7 +87,7 @@ Try adding something with the form below!</div>
           <li class="list-group-item modify-buttons">
             <button id="delete" class="btn btn-default">✕ Delete</button>
             <button id="edit" class="btn btn-default" formaction="{% url 'notepad:editform' page %}">✎ Edit</button>
-            <button id="move" class="btn btn-default" formaction="{% url 'notepad:moveform' page %}">🡒 Move to another page</button>
+            <button id="move" class="btn btn-default" formaction="{% url 'notepad:moveform' page %}">→ Move to another page</button>
           </li>
         </ul>
 
@@ -100,7 +100,7 @@ Try adding something with the form below!</div>
             </div>
             <a class="btn btn-default" href="#top">▲ To top</a>
             <a class="btn btn-default" href="{% url 'notepad:view' page %}?select=all#bottom">☑ Select all</a>
-            <a class="btn btn-default" href="{% url 'notepad:view' page %}#bottom">☐ Select none</a>
+            <a class="btn btn-default" href="{% url 'notepad:view' page %}#bottom">□ Select none</a>
           </div>
         </footer>
       </form>
