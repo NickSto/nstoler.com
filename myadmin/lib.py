@@ -27,3 +27,9 @@ def get_admin_cookie(request):
     except AdminCookie.DoesNotExist:
       pass
   return None
+
+
+def is_admin_and_secure(request):
+  admin_cookie = get_admin_cookie(request)
+  secure_connection = request.is_secure() or not settings.REQUIRE_HTTPS
+  return admin_cookie and secure_connection

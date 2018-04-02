@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
 from django.db.models import Max
 import django.db
-from myadmin.lib import get_admin_cookie, require_admin_and_privacy
+from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
 from utils import QueryParams, boolish
 from .models import Note, Page, Move
 import random as rand
@@ -298,11 +298,6 @@ def get_notes_from_params(params):
     notes.append(note)
   notes.sort(key=lambda note: (note.display_order, note.id))
   return notes
-
-
-def is_admin_and_secure(request):
-  admin_cookie = get_admin_cookie(request)
-  return admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)
 
 
 def truncate(s, max_len=100):

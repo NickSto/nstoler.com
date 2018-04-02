@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 from django.urls import reverse
 from .models import AdminCookie, AdminDigest
-from .lib import get_admin_cookie
+from .lib import get_admin_cookie, is_admin_and_secure
 import binascii
 import hashlib
 
@@ -122,16 +122,11 @@ def _submit_logout(request):
 
 def _submit_hash(request):
   password = request.POST['password']
-  admin_cookie = get_admin_cookie(request)
-  if not (admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS)):
-    authorized = True
-  else:
-    authorized = False
   digest = str(_get_hash(password), 'utf8')
   text = ('{}\n\nAlgorithm:\t{}\nHash:\t\t{}\nIterations:\t{}'
           .format(digest, ALGORITHM, HASH, ITERATIONS))
   # Only give out the salt to the admin user over HTTPS.
-  if authorized:
+  if is_admin_and_secure(request):
     text += '\nSalt:\t\t'+settings.ADMIN_SALT
   # Safe to return a response directly to this POST instead of redirecting because it doesn't
   # actually change anything on the server. We're just using a POST because it's potentially

@@ -4,8 +4,8 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAll
 from django.urls import reverse
 from django.utils.html import escape
 from django.db import DataError
+from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
 from .models import Visit, IpInfo
-from myadmin.lib import get_admin_cookie, require_admin_and_privacy
 from . import categorize
 from .ipinfo import set_timezone
 import logging
@@ -27,8 +27,7 @@ def monitor_redirect(request):
 def monitor(request):
   # Only allow access to admin users over HTTPS.
   this_user = request.visit.visitor.user.id
-  admin_cookie = get_admin_cookie(request)
-  if admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS):
+  if is_admin_and_secure(request):
     user = None
     admin = True
   else:
@@ -199,8 +198,7 @@ def view_ip(request, ip=None):
   if ip is None:
     ip = request.visit.visitor.ip
   # Only allow regular users to view their own IP address.
-  admin_cookie = get_admin_cookie(request)
-  if admin_cookie and (request.is_secure() or not settings.REQUIRE_HTTPS):
+  if is_admin_and_secure(request):
     admin = True
   else:
     ip = request.visit.visitor.ip
