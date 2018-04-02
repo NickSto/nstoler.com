@@ -27,25 +27,29 @@ def view(request, page_name):
     note_id = None
   show_deleted = params.get('include') == 'deleted'
   # Only allow showing deleted notes to the admin over HTTPS.
+  #TODO: Display deleted notes differently.
   if not is_admin_and_secure(request):
     show_deleted = False
     admin_view = False
-  #TODO: Display deleted notes differently.
-  if show_deleted:
-    note_objects = Note.objects.filter(page__name=page_name).order_by('display_order', 'id')
+  # Fetch the note(s).
+  if note_id:
+    try:
+      note = Note.objects.get(pk=note_id, page__name=page_name)
+      if note.deleted and not show_deleted:
+        # Don't show a deleted note w/o that option turned on.
+        notes = []
+      else:
+        notes = [note]
+    except Note.DoesNotExist:
+      notes = []
+  elif show_deleted:
+    notes = Note.objects.filter(page__name=page_name).order_by('display_order', 'id')
   else:
-    note_objects = Note.objects.filter(page__name=page_name, deleted=False).order_by('display_order', 'id')
-  notes = []
-  for note in note_objects:
-    if note_id is not None and note.id != note_id:
-      continue
-    if format == 'plain':
-      notes.append(note.content)
-    else:
-      content_formatted = urlize(escape(note.content))
-      notes.append((note, content_formatted))
+    notes = Note.objects.filter(page__name=page_name, deleted=False).order_by('display_order', 'id')
+  # Bundle up the data and display the notes.
   if format == 'plain':
-    return HttpResponse('\n\n'.join(notes), content_type=settings.PLAINTEXT)
+    contents = [note.content for note in notes]
+    return HttpResponse('\n\n'.join(contents), content_type=settings.PLAINTEXT)
   else:
     context = {'page':page_name, 'notes':notes, 'admin':admin_view, 'select':select,
                'randomness':randomness}
@@ -90,11 +94,7 @@ def confirm(request, page_name):
   params = request.POST
   notes = get_notes_from_params(params)
   if params.get('site') == '':
-    notes_list = []
-    for note in notes:
-      content_formatted = urlize(escape(note.content))
-      notes_list.append((note, content_formatted))
-    context = {'page':page_name, 'notes':notes_list}
+    context = {'page':page_name, 'notes':notes}
     return render(request, 'notepad/confirm.tmpl', context)
   else:
     warn_and_redirect_spambot(request, page_name, 'deleting notes', notes)
@@ -143,6 +143,7 @@ def editform(request, page_name):
   else:
     note = notes[0]
   if note and note.protected and not is_admin_and_secure(request):
+    # Prevent appearance of being able to edit protected notes.
     log.warning('Non-admin attempted to edit protected note {}.'.format(note.id))
     error = 'This note is protected.'
   if error:
@@ -177,6 +178,7 @@ def edit(request, page_name):
     return HttpResponseRedirect(view_url+fragment)
   fragment = '#note_{}'.format(note_id)
   if note.protected and not is_admin_and_secure(request):
+    # Prevent editing protected notes.
     return HttpResponseRedirect(view_url+fragment)
   if 'content' not in params:
     log.warning('No "content" key in query parameters.')
@@ -212,13 +214,10 @@ def moveform(request, old_page_name):
   notes = get_notes_from_params(params)
   if params.get('site') != '':
     return warn_and_redirect_spambot(request, old_page_name, 'moving notes', notes, view_url)
-  notes_list = []
-  for note in notes:
-    if note.protected and not is_admin_and_secure(request):
-      continue
-    content_formatted = urlize(escape(note.content))
-    notes_list.append((note, content_formatted))
-  context = {'page':old_page_name, 'notes':notes_list}
+  if not is_admin_and_secure(request):
+    # Prevent appearance of being able to move protected notes.
+    notes = [note for note in notes if not note.protected]
+  context = {'page':old_page_name, 'notes':notes}
   return render(request, 'notepad/moveform.tmpl', context)
 
 
@@ -246,6 +245,7 @@ def move(request, old_page_name):
     new_page.save()
   for note in notes:
     if note.protected and not is_admin_and_secure(request):
+      # Prevent moving protected notes.
       continue
     move = Move(
       type='page',

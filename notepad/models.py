@@ -1,4 +1,5 @@
 from django.db import models
+from django.template.defaultfilters import escape, urlize
 from utils import ModelMixin
 
 
@@ -19,6 +20,8 @@ class Note(ModelMixin, models.Model):
   display_order = models.IntegerField()
   last_version = models.OneToOneField('self', models.SET_NULL, null=True, blank=True,
                                       related_name='next_version')
+  def content_html(self):
+    return urlize(escape(self.content))
   def __str__(self):
     deleted = ''
     if self.deleted:

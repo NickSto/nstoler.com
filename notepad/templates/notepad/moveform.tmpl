@@ -46,14 +46,14 @@
             <li class="list-group-item header">
               <h3 class="page-name">{{ page }}</h3>
             </li>
-            {% for note, content in notes %}
+            {% for note in notes %}
               {% if forloop.last %}
                 <a id="bottom"></a>
               {% endif %}
               <li id="note_{{ note.id }}" class="note list-group-item">
                 <input type="hidden" name="note_{{ note.id }}" value="on">
                 {% autoescape off %}
-                  <pre class="content">{{ content }}</pre>
+                  <pre class="content">{{ note.content_html }}</pre>
                 {% endautoescape %}
                 <div class="clearfix"></div>
               </li>
