@@ -1,13 +1,16 @@
 from django.conf import settings
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, StreamingHttpResponse
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed, StreamingHttpResponse
 from django.urls import reverse
 from django.utils.html import escape
 from django.db import DataError
+import django.core.paginator
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
+from utils import QueryParams, boolish
 from .models import Visit, IpInfo
 from . import categorize
 from .ipinfo import set_timezone
+import collections
 import logging
 log = logging.getLogger(__name__)
 
@@ -23,128 +26,67 @@ def monitor_redirect(request):
 
 #TODO: A view to set a Visitor.label or Visitor.is_me, so I can do it via a link in the monitor.
 
-#TODO: Clean up this mess.
 def monitor(request):
-  # Only allow access to admin users over HTTPS.
+  # The query string parameters and their defaults.
+  params = QueryParams()
+  params.add('p', default=1, type=int)
+  params.add('perpage', default=PER_PAGE_DEFAULT, type=int)
+  params.add('include_me', default=False, type=boolish)
+  params.add('bot_thres', default=None, type=int)
+  params.add('user', type=int, default=None)
+  params.parse(request.GET)
   this_user = request.visit.visitor.user.id
-  if is_admin_and_secure(request):
-    user = None
-    admin = True
-  else:
-    user = request.visit.visitor.user.id
-    admin = False
-  # Get query parameters.
-  params = request.GET
-  page = int(params.get('p', 1))
-  per_page = int(params.get('per_page', PER_PAGE_DEFAULT))
-  include = params.get('include')
-  try:
-    bot_thres = int(params.get('bot_thres'))
-  except (ValueError, TypeError):
-    bot_thres = None
-  if admin and 'user' in params:
-    user = int(params['user'])
-  if page < 1:
-    page = 1
-  # Create a params dict for rendering new links.
-  new_params = params.copy()
-  new_params['p'] = page
-  new_params['per_page'] = per_page
-  if admin:
-    default_user = None
-  else:
-    default_user = this_user
+  admin = is_admin_and_secure(request)
+  # Non-admins can only view their own traffic.
+  if not admin:
+    params.params['user']['default'] = this_user
+    params['user'] = this_user
   # Obtain visits list from database.
-  if user is not None:
-    visits = Visit.objects.filter(visitor__user__id=user)
-  elif include == 'me':
-    visits = Visit.objects.order_by('-id')
+  if params['user'] is not None:
+    visits = Visit.objects.filter(visitor__user__id=params['user'])
+  elif params['include_me']:
+    visits = Visit.objects.all()
   else:
     visits = Visit.objects.exclude(visitor__user__id=1)
   # Exclude robots, if requested.
-  if bot_thres is not None and user is None:
-    visits = visits.filter(visitor__bot_score__lt=bot_thres)
-  total_visits = visits.count()
-  start = (page-1)*per_page
-  end = page*per_page
-  # Is this page beyond the last possible one?
-  if total_visits > 0 and page*per_page - total_visits >= per_page:
-    # Then redirect to the last possible page.
-    new_params['p'] = (total_visits-1) // per_page + 1
-    query_str = _construct_query_str(new_params, {'user':default_user})
-    return redirect(reverse('traffic_monitor')+query_str)
-  # Slice the list of all visits into an ordered list of the visits for this page.
-  visits = visits.order_by('-id')[start:end]
-  # Add this visit to the start of the list, if it's not there but should be.
-  if start == 0 and (user == this_user or (user is None and include == 'me')):
-    if len(visits) == 0:
-      log.info('No visits. Adding this one..')
-      visits = [request.visit]
-    elif visits[0].id != request.visit.id:
-      log.info('Adding this visit to the start..')
-      visits = [request.visit] + visits[:per_page-1]
+  if params['bot_thres'] is not None and params['user'] is None:
+    visits = visits.filter(visitor__bot_score__lt=params['bot_thres'])
+  # Order by id.
+  visits = visits.order_by('-id')
+  # Create a Paginator.
+  pages = django.core.paginator.Paginator(visits, params['perpage'])
+  try:
+    page = pages.page(params['p'])
+  except django.core.paginator.EmptyPage:
+    return HttpResponseRedirect(reverse('traffic:monitor')+str(params.but_with('p', pages.num_pages)))
   # Construct the navigation links.
-  link_data = []
-  if page > 1:
-    link_data.append(('Later', 'p', page-1))
+  links = collections.OrderedDict()
+  if page.has_previous():
+    links['Earlier'] = str(params.but_with('p', page.previous_page_number()))
   if admin:
-    if include == 'me':
-      link_data.append(('Hide me', 'include', None))
+    if params['include_me']:
+      links['Hide me'] = str(params.but_with('include_me', None))
     else:
-      link_data.append(('Include me', 'include', 'me'))
-  if admin:
-    if bot_thres is not None and bot_thres != 0:
-      link_data.append(('Show all', 'bot_thres', None))
-    if bot_thres is None or bot_thres > categorize.SCORES['bot_in_ua']:
-      link_data.append(('Hide robots', 'bot_thres', categorize.SCORES['bot_in_ua']))
-    if bot_thres is None or bot_thres > categorize.SCORES['sent_cookies']+1:
-      link_data.append(('Show humans', 'bot_thres', categorize.SCORES['sent_cookies']+1))
-  if total_visits > end:
-    link_data.append(('Earlier', 'p', page+1))
-  links = _construct_links(link_data, new_params, {'user':default_user})
+      links['Include me'] = str(params.but_with('include_me', True))
+    if params['bot_thres'] is not None and params['bot_thres'] != 0:
+      links['Show all'] = str(params.but_with('bot_thres', None))
+    if params['bot_thres'] is None or params['bot_thres'] > categorize.SCORES['bot_in_ua']:
+      links['Hide robots'] = str(params.but_with('bot_thres', categorize.SCORES['bot_in_ua']))
+    if params['bot_thres'] is None or params['bot_thres'] > categorize.SCORES['sent_cookies']+1:
+      links['Show humans'] = str(params.but_with('bot_thres', categorize.SCORES['sent_cookies']+1))
+  if page.has_next():
+    links['Later'] = str(params.but_with('p', page.next_page_number()))
+  for text, query in links.items():
+    log.info('{}:\t{}'.format(text, query))
   context = {
-    'visits': visits,
+    'visits': page,
     'admin':admin,
-    'start': start+1,
-    'end': min(end, start+len(visits)),
     'links': links,
     'timezone': set_timezone(request),  # Set and retrieve timezone.
     'ua_exact_thres': categorize.SCORES['ua_exact'],
     'referrer_exact_thres': categorize.SCORES['referrer_exact'],
   }
   return render(request, 'traffic/monitor.tmpl', context)
-
-
-def _construct_links(link_data, params, extra_defaults):
-  base = reverse('traffic_monitor')
-  links = []
-  for text, param, value in link_data:
-    params_tmp = params.copy()
-    params_tmp[param] = value
-    href = base+_construct_query_str(params_tmp, extra_defaults)
-    links.append((text, href))
-  return links
-
-
-def _construct_query_str(params, extra_defaults):
-  """Construct the query string, omitting default values and with parameters in a predetermined
-  order."""
-  defaults = {'p':1, 'user':1, 'include':None, 'bot_thres':None, 'per_page':PER_PAGE_DEFAULT}
-  defaults.update(extra_defaults)
-  query_str = ''
-  param_list = ['p', 'user', 'include', 'bot_thres', 'per_page']
-  for param in params:
-    if param not in param_list:
-      param_list.append(param)
-  for param in param_list:
-    value = params.get(param)
-    if value is not None and value != defaults[param]:
-      if query_str:
-        joiner = '&'
-      else:
-        joiner = '?'
-      query_str += '{}{}={}'.format(joiner, param, value)
-  return query_str
 
 
 @require_admin_and_privacy

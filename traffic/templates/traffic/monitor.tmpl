@@ -14,9 +14,9 @@
       {% if links %}
         <div class="sidebar">
             <ul class="nav nav-sidebar">
-              {% for text, href in links %}
+              {% for text, query in links.items %}
                 <li>
-                  <a href="{{ href }}">{{ text }}</a>
+                  <a href="{% url 'traffic_monitor' %}{{ query }}">{{ text }}</a>
                 </li>
               {% endfor %}
             </ul>
@@ -49,8 +49,8 @@
 
           {% if links %}
             <nav class="buttons sidebar-replacement">
-              {% for text, href in links %}
-                <a class="btn btn-default" href="{{ href }}">{{ text }}</a>
+              {% for text, query in links.items %}
+                <a class="btn btn-default" href="{% url 'traffic_monitor' %}{{ query }}">{{ text }}</a>
               {% endfor %}
             </nav>
           {% endif %}
@@ -60,8 +60,8 @@
             <li class="list-group-item header">
               <h3>Visits
                 <small>
-                  {% if end %}
-                    {{ start }} to {{ end }}
+                  {% if visits.has_other_pages %}
+                    {{ visits.start_index }} to {{ visits.end_index }}
                   {% endif %}
                 </small>
               </h3>
@@ -75,7 +75,7 @@
                       User
                     </th>
                     <td class="value">
-                      <a href="{% url 'traffic:monitor' %}?user={{ visit.visitor.user.id }}">{{ visit.visitor.user.id }}</a>
+                      <a href="{% url 'traffic_monitor' %}?user={{ visit.visitor.user.id }}">{{ visit.visitor.user.id }}</a>
                     </td>
                   </tr>
                   <tr>
@@ -180,8 +180,8 @@
 
           {% if links %}
             <nav class="buttons">
-              {% for text, href in links %}
-                <a class="btn btn-default" href="{{ href }}">{{ text }}</a>
+              {% for text, query in links.items %}
+                <a class="btn btn-default" href="{% url 'traffic_monitor' %}{{ query }}">{{ text }}</a>
               {% endfor %}
             </nav>
           {% endif %}
