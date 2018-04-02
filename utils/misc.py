@@ -71,7 +71,9 @@ class QueryParams(collections.OrderedDict):
       self.set(param_name, value)
 
   def add(self, param_name, default=None, type=lambda x: x):
-    """Add a canonical parameter, set its default value and type."""
+    """Add a canonical parameter, set its default value and type.
+    The type should be a callable. Incoming values will be passed through the callable before
+    storing. If it throws a TypeError or ValueError, the default will be stored instead."""
     self.params[param_name] = {'default':default, 'type':type}
     self[param_name] = default
 
@@ -120,6 +122,15 @@ class QueryParams(collections.OrderedDict):
       return '?'+'&'.join(components)
     else:
       return ''
+
+
+def boolish(value):
+  if value in (False, None, 0, '', 'False', 'false', '0'):
+    return False
+  elif value in (True, 1, 'True', 'true', '1'):
+    return True
+  else:
+    raise ValueError('Invalid boolish value {!r}.'.format(value))
 
 
 def http_request(host, path, secure=True, timeout=None, max_response=None):
