@@ -70,11 +70,16 @@ class QueryParams(collections.OrderedDict):
     for param_name, value in params_dict.items():
       self.set(param_name, value)
 
-  def add(self, param_name, default=None, type=lambda x: x):
+  def add(self, param_name, default=None, type=lambda x: x, min=None, max=None):
     """Add a canonical parameter, set its default value and type.
     The type should be a callable. Incoming values will be passed through the callable before
     storing. If it throws a TypeError or ValueError, the default will be stored instead."""
-    self.params[param_name] = {'default':default, 'type':type}
+    param = {'default':default, 'type':type}
+    if min is not None:
+      self.params['min'] = min
+    if max is not None:
+      self.params['max'] = max
+    self.params[param_name] = param
     self[param_name] = default
 
   def set(self, param_name, value):
@@ -91,6 +96,10 @@ class QueryParams(collections.OrderedDict):
     except (TypeError, ValueError):
       # If it's an invalid value, set it to be the default.
       parsed_value = param.get('default', None)
+    if 'min' in param and parsed_value < param['min']:
+      parsed_value = param['min']
+    if 'max' in param and parsed_value > param['max']:
+      parsed_value = param['max']
     self[param_name] = parsed_value
 
   def but_with(self, param_name, value):
