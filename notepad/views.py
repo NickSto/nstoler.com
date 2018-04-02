@@ -24,12 +24,11 @@ def view(request, page_name):
   params.add('showdeleted', default=False, type=boolish)
   params.add('select', default='none')
   params.parse(request.GET)
-  admin_view = params.get('admin')
   # Only allow showing deleted notes to the admin over HTTPS.
   #TODO: Display deleted notes differently.
   if not is_admin_and_secure(request):
     params['showdeleted'] = None
-    admin_view = False
+    params['admin'] = False
   # Fetch the note(s).
   if params['note']:
     try:
@@ -53,7 +52,7 @@ def view(request, page_name):
     params_tmp = params.but_with('reload', rand.randint(1, 1000000))
     select_all_query_str = str(params_tmp.but_with('select', 'all'))
     select_none_query_str = str(params_tmp.but_with('select', 'none'))
-    context = {'page':page_name, 'notes':notes, 'admin':admin_view, 'select':params['select'],
+    context = {'page':page_name, 'notes':notes, 'admin':params['admin'], 'select':params['select'],
                'select_all_query_str':select_all_query_str, 'select_none_query_str':select_none_query_str}
     return render(request, 'notepad/view.tmpl', context)
 
