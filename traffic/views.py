@@ -35,12 +35,21 @@ def monitor(request):
   params.add('bot_thres', default=None, type=int)
   params.add('user', type=int, default=None)
   params.parse(request.GET)
-  this_user = request.visit.visitor.user.id
   admin = is_admin_and_secure(request)
   # Non-admins can only view their own traffic.
   if not admin:
-    params.params['user'].default = this_user
-    params['user'] = this_user
+    this_user = request.visit.visitor.user.id
+    if params['user']:
+      # If they gave a user, but it's not themselves, redirect back to themself.
+      if params['user'] != this_user:
+        return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with('user', None)))
+    else:
+      # If they gave no user, that's fine. Silently show only themself.
+      params['user'] = this_user
+      params.params['user'].default = this_user
+  # If they gave an invalid page number, redirect back to 1.
+  if params['p'] < 1:
+    return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with('p', 1)))
   # Obtain visits list from database.
   if params['user'] is not None:
     visits = Visit.objects.filter(visitor__user__id=params['user'])
@@ -58,7 +67,7 @@ def monitor(request):
   try:
     page = pages.page(params['p'])
   except django.core.paginator.EmptyPage:
-    return HttpResponseRedirect(reverse('traffic:monitor')+str(params.but_with('p', pages.num_pages)))
+    return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with('p', pages.num_pages)))
   # Construct the navigation links.
   links = collections.OrderedDict()
   if page.has_previous():
@@ -76,8 +85,6 @@ def monitor(request):
       links['Show humans'] = str(params.but_with('bot_thres', categorize.SCORES['sent_cookies']+1))
   if page.has_next():
     links['Later'] = str(params.but_with('p', page.next_page_number()))
-  for text, query in links.items():
-    log.info('{}:\t{}'.format(text, query))
   context = {
     'visits': page,
     'admin':admin,
