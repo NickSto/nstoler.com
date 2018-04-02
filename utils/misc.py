@@ -74,11 +74,7 @@ class QueryParams(collections.OrderedDict):
     """Add a canonical parameter, set its default value and type.
     The type should be a callable. Incoming values will be passed through the callable before
     storing. If it throws a TypeError or ValueError, the default will be stored instead."""
-    param = {'default':default, 'type':type}
-    if min is not None:
-      self.params['min'] = min
-    if max is not None:
-      self.params['max'] = max
+    param = QueryParam(name=param_name, default=default, type=type, min=min, max=max)
     self.params[param_name] = param
     self[param_name] = default
 
@@ -87,19 +83,18 @@ class QueryParams(collections.OrderedDict):
     The value will be converted into the parameter's type.
     It doesn't have to be a canonical one. In that case, its order will be after all current
     canonical ones."""
-    param = self.params.get(param_name, {})
+    param = self.params.get(param_name, QueryParam(param_name))
     if param_name not in self.params:
       self.params[param_name] = param
-    param_type = param.get('type', lambda x: x)
     try:
-      parsed_value = param_type(value)
+      parsed_value = param.type(value)
     except (TypeError, ValueError):
       # If it's an invalid value, set it to be the default.
-      parsed_value = param.get('default', None)
-    if 'min' in param and parsed_value < param['min']:
-      parsed_value = param['min']
-    if 'max' in param and parsed_value > param['max']:
-      parsed_value = param['max']
+      parsed_value = param.default
+    if param.min is not None and parsed_value < param.min:
+      parsed_value = param.min
+    if param.max is not None and parsed_value > param.max:
+      parsed_value = param.max
     self[param_name] = parsed_value
 
   def but_with(self, param_name, value):
@@ -121,8 +116,8 @@ class QueryParams(collections.OrderedDict):
     """
     components = []
     for param_name, value in self.items():
-      param = self.params.get(param_name, {})
-      if value == param.get('default', None):
+      param = self.params.get(param_name, QueryParam(param_name))
+      if value == param.default:
         continue
       param_name_quoted = urllib.parse.quote(param_name)
       value_quoted = urllib.parse.quote(str(value))
@@ -131,6 +126,19 @@ class QueryParams(collections.OrderedDict):
       return '?'+'&'.join(components)
     else:
       return ''
+
+
+class QueryParam(object):
+
+  def __init__(self, name, default=None, type=lambda x: x, min=None, max=None):
+    self.name = name
+    self.default = default
+    self.type = type
+    self.min = min
+    self.max = max
+
+  def copy(self):
+    return QueryParam(self.name, default=self.default, type=self.type, min=self.min, max=self.max)
 
 
 def boolish(value):

@@ -39,7 +39,7 @@ def monitor(request):
   admin = is_admin_and_secure(request)
   # Non-admins can only view their own traffic.
   if not admin:
-    params.params['user']['default'] = this_user
+    params.params['user'].default = this_user
     params['user'] = this_user
   # Obtain visits list from database.
   if params['user'] is not None:
