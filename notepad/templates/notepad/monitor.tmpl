@@ -25,8 +25,8 @@
           {% if forloop.last %}
             <a id="bottom"></a>
           {% endif %}
-          <li id="page_{{ page }}" class="note list-group-item">
-            <pre class="content">{{ page }}</pre>
+          <li id="page_{{ page.id }}" class="note list-group-item">
+            <pre class="content">{% if page.name %}<a href="{% url 'notepad:view' page.name %}">{{ page.name }}</a>{% else %}{{ page.name }}{% endif %}</pre>
             <div class="clearfix"></div>
           </li>
         {% empty %}
