@@ -6,7 +6,7 @@ from django.template.defaultfilters import escape, urlize
 from django.db.models import Max
 import django.db
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
-from utils import QueryParams
+from utils import QueryParams, boolish
 from .models import Note, Page, Move
 import random as rand
 import string
@@ -20,8 +20,8 @@ def view(request, page_name):
   params = QueryParams()
   params.add('note', default=None, type=int)
   params.add('format', default='html')
-  params.add('admin', default=None)
-  params.add('showdeleted', default=None)
+  params.add('admin', default=False, type=boolish)
+  params.add('showdeleted', default=False, type=boolish)
   params.add('select', default='none')
   params.parse(request.GET)
   admin_view = params.get('admin')
