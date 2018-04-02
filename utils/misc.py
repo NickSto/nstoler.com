@@ -1,10 +1,12 @@
 from django.db import models
-import http.client
-import threading
-import functools
 import codecs
-import socket
+import collections
+import functools
+import http.client
 import logging
+import socket
+import threading
+import urllib.parse
 log = logging.getLogger(__name__)
 
 
@@ -28,7 +30,6 @@ class ModelMixin(object):
     class_name = type(self).__name__
     return class_name, args
 
-
   def generic_repr_format(self, name, max_len=100):
     if hasattr(self, name):
       value = getattr(self, name)
@@ -45,11 +46,89 @@ class ModelMixin(object):
     return None, None
 
 
+class QueryParams(collections.OrderedDict):
+  """A class to simplify handling query parameters and enable simpler query strings.
+  This encapsulates parsing the values of query strings, holding their values, and producing
+  altered query strings in a simplified format.
+  It works by first declaring the accepted ("canonical") query string parameters with add().
+  This object retains information on the preferred order of parameters, along with their default
+  values and type.
+  Then, you give parse() the parameters given by the user, and it will interpret the values
+  according to their expected type.
+  Then, you can continue using this object as a dict holding the parameter values, and getting and
+  setting them as you wish.
+  Finally, you can produce query strings by giving this object to str(). The query strings will list
+  the parameters in the preferred order, omitting parameters with the default values."""
+
+  def __init__(self):
+    self.params = collections.OrderedDict()
+
+  def parse(self, params_dict):
+    """Convenience function to set all the parameters at once.
+    Intended to be used like:
+      query_params.parse(request.GET)"""
+    for param_name, value in params_dict.items():
+      self.set(param_name, value)
+
+  def add(self, param_name, default=None, type=lambda x: x):
+    """Add a canonical parameter, set its default value and type."""
+    self.params[param_name] = {'default':default, 'type':type}
+    self[param_name] = default
+
+  def set(self, param_name, value):
+    """Set the value of a parameter.
+    The value will be converted into the parameter's type.
+    It doesn't have to be a canonical one. In that case, its order will be after all current
+    canonical ones."""
+    param = self.params.get(param_name, {})
+    if param_name not in self.params:
+      self.params[param_name] = param
+    param_type = param.get('type', lambda x: x)
+    try:
+      parsed_value = param_type(value)
+    except (TypeError, ValueError):
+      # If it's an invalid value, set it to be the default.
+      parsed_value = param.get('default', None)
+    self[param_name] = parsed_value
+
+  def but_with(self, param_name, value):
+    """Return a copy of the current object, but with the given parameter set to the given value."""
+    new_query_params = self.copy()
+    new_query_params.set(param_name, value)
+    return new_query_params
+
+  def copy(self):
+    copy = super().copy()
+    copy.params = collections.OrderedDict()
+    for param_name, param in self.params.items():
+      copy.params[param_name] = param.copy()
+    return copy
+
+  def __str__(self):
+    """Return a query string with the parameters set to their current values.
+    Preserves the canonical order of the parameters, and omits any whose current value is the default.
+    """
+    components = []
+    for param_name, value in self.items():
+      param = self.params.get(param_name, {})
+      if value == param.get('default', None):
+        continue
+      param_name_quoted = urllib.parse.quote(param_name)
+      value_quoted = urllib.parse.quote(str(value))
+      components.append('{}={}'.format(param_name_quoted, value_quoted))
+    if components:
+      return '?'+'&'.join(components)
+    else:
+      return ''
+
+
 def http_request(host, path, secure=True, timeout=None, max_response=None):
   """A very quick and simple function for making an HTTP request.
+  Returns the response as a str.
+  On failure, returns None.
   WARNING: This returns a str, so it does the bytes-to-str conversion. If a valid charset is in the
   Content-Type response header, it'll be fine, but if not it'll try utf-8, and if the decode fails,
-  so will this."""
+  so will this (and it'll return None)."""
   if secure:
     conex_class = http.client.HTTPSConnection
   else:
