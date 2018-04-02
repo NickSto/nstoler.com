@@ -5,8 +5,9 @@ from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
 from django.db.models import Max
 import django.db
-from .models import Note, Page, Move
 from myadmin.lib import get_admin_cookie, require_admin_and_privacy
+from utils import QueryParams
+from .models import Note, Page, Move
 import random as rand
 import string
 import logging
@@ -16,43 +17,44 @@ DISPLAY_ORDER_MARGIN = 1000
 
 
 def view(request, page_name):
-  params = request.GET
-  format = params.get('format')
-  select = params.get('select')
+  params = QueryParams()
+  params.add('note', default=None, type=int)
+  params.add('format', default='html')
+  params.add('admin', default=None)
+  params.add('showdeleted', default=None)
+  params.add('select', default='none')
+  params.parse(request.GET)
   admin_view = params.get('admin')
-  randomness = rand.randint(1, 1000000)
-  try:
-    note_id = int(params.get('note'))
-  except (ValueError, TypeError):
-    note_id = None
-  show_deleted = params.get('include') == 'deleted'
   # Only allow showing deleted notes to the admin over HTTPS.
   #TODO: Display deleted notes differently.
   if not is_admin_and_secure(request):
-    show_deleted = False
+    params['showdeleted'] = None
     admin_view = False
   # Fetch the note(s).
-  if note_id:
+  if params['note']:
     try:
-      note = Note.objects.get(pk=note_id, page__name=page_name)
-      if note.deleted and not show_deleted:
+      note = Note.objects.get(pk=params['note'], page__name=page_name)
+      if note.deleted and not params['showdeleted']:
         # Don't show a deleted note w/o that option turned on.
         notes = []
       else:
         notes = [note]
     except Note.DoesNotExist:
       notes = []
-  elif show_deleted:
+  elif params['showdeleted']:
     notes = Note.objects.filter(page__name=page_name).order_by('display_order', 'id')
   else:
     notes = Note.objects.filter(page__name=page_name, deleted=False).order_by('display_order', 'id')
   # Bundle up the data and display the notes.
-  if format == 'plain':
+  if params['format'] == 'plain':
     contents = [note.content for note in notes]
     return HttpResponse('\n\n'.join(contents), content_type=settings.PLAINTEXT)
   else:
-    context = {'page':page_name, 'notes':notes, 'admin':admin_view, 'select':select,
-               'randomness':randomness}
+    params_tmp = params.but_with('reload', rand.randint(1, 1000000))
+    select_all_query_str = str(params_tmp.but_with('select', 'all'))
+    select_none_query_str = str(params_tmp.but_with('select', 'none'))
+    context = {'page':page_name, 'notes':notes, 'admin':admin_view, 'select':params['select'],
+               'select_all_query_str':select_all_query_str, 'select_none_query_str':select_none_query_str}
     return render(request, 'notepad/view.tmpl', context)
 
 

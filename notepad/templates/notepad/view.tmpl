@@ -99,8 +99,8 @@ Try adding something with the form below!</div>
               <input type="text" name="site">
             </div>
             <a class="btn btn-default" href="#top">▲ To top</a>
-            <a class="btn btn-default" href="{% url 'notepad:view' page %}?select=all&reload={{ randomness }}#bottom">☑ Select all</a>
-            <a class="btn btn-default" href="{% url 'notepad:view' page %}?reload={{ randomness }}#bottom">□ Select none</a>
+            <a class="btn btn-default" href="{% url 'notepad:view' page %}{{ select_all_query_str }}#bottom">☑ Select all</a>
+            <a class="btn btn-default" href="{% url 'notepad:view' page %}{{ select_none_query_str }}#bottom">□ Select none</a>
           </div>
         </footer>
       </form>
