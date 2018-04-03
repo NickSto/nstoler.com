@@ -97,10 +97,22 @@ class QueryParams(collections.OrderedDict):
       parsed_value = param.max
     self[param_name] = parsed_value
 
-  def but_with(self, param_name, value):
-    """Return a copy of the current object, but with the given parameter set to the given value."""
+  def but_with(self, *args, **kwargs):
+    """Return a copy of the current object, but with the given parameter(s) set to the given value.
+    Either give keyword arguments, or positional arguments with alternating parameter names & values.
+    Usage:
+      params.but_with(p=1, user='me')
+      params.but_with('p', 1, 'user', 'me')
+    """
     new_query_params = self.copy()
-    new_query_params.set(param_name, value)
+    for i in range(0, len(args), 2):
+      if len(args) < i+2:
+        break
+      param_name = args[i]
+      value = args[i+1]
+      new_query_params.set(param_name, value)
+    for param_name, value in kwargs.items():
+      new_query_params.set(param_name, value)
     return new_query_params
 
   def copy(self):
