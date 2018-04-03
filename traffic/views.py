@@ -71,7 +71,7 @@ def monitor(request):
   # Construct the navigation links.
   links = collections.OrderedDict()
   if page.has_previous():
-    links['Earlier'] = str(params.but_with(p=page.previous_page_number()))
+    links['Later'] = str(params.but_with(p=page.previous_page_number()))
   if admin:
     if params['include_me']:
       links['Hide me'] = str(params.but_with(include_me=None))
@@ -84,7 +84,7 @@ def monitor(request):
     if params['bot_thres'] is None or params['bot_thres'] > categorize.SCORES['sent_cookies']+1:
       links['Show humans'] = str(params.but_with(bot_thres=categorize.SCORES['sent_cookies']+1))
   if page.has_next():
-    links['Later'] = str(params.but_with(p=page.next_page_number()))
+    links['Earlier'] = str(params.but_with(p=page.next_page_number()))
   context = {
     'visits': page,
     'admin':admin,
