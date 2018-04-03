@@ -16,6 +16,35 @@ log = logging.getLogger(__name__)
 DISPLAY_ORDER_MARGIN = 1000
 
 
+@require_admin_and_privacy
+def monitor(request):
+  params = QueryParams()
+  params.add('format', default='html', choices=('html', 'plain'))
+  params.add('showdeleted', type=boolish, default=False, choices=(True, False))
+  params.parse(request.GET)
+  # If one of the parameters was invalid, redirect to a fixed url.
+  # - QueryParams object will automatically set the parameter to a valid value.
+  if params.invalid_value:
+    return HttpResponseRedirect(reverse('notepad:monitor')+str(params))
+  if params['showdeleted']:
+    pages = Page.objects.order_by('name')
+    pages = sorted(pages, key=lambda page: page.name.lower())
+  else:
+    notes = Note.objects.filter(deleted=False).distinct('page')
+    pages = sorted([note.page for note in notes], key=lambda page: page.name.lower())
+  if params['format'] == 'plain':
+    text = '\n'.join([page.name for page in pages])
+    return HttpResponse(text, content_type=settings.PLAINTEXT)
+  else:
+    if params['showdeleted']:
+      showdeleted_query_str = str(params.but_with(showdeleted=False))
+    else:
+      showdeleted_query_str = str(params.but_with(showdeleted=True))
+    context = {'pages':pages, 'showdeleted':params['showdeleted'],
+               'showdeleted_query_str':showdeleted_query_str}
+    return render(request, 'notepad/monitor.tmpl', context)
+
+
 def view(request, page_name):
   params = QueryParams()
   params.add('note', type=int, default=None)
@@ -315,32 +344,3 @@ def random(request):
   alphabet = string.ascii_lowercase
   page_name = ''.join([rand.choice(alphabet) for i in range(5)])
   return redirect('notepad:view', page_name)
-
-
-@require_admin_and_privacy
-def monitor(request):
-  params = QueryParams()
-  params.add('format', default='html', choices=('html', 'plain'))
-  params.add('showdeleted', type=boolish, default=False, choices=(True, False))
-  params.parse(request.GET)
-  # If one of the parameters was invalid, redirect to a fixed url.
-  # - QueryParams object will automatically set the parameter to a valid value.
-  if params.invalid_value:
-    return HttpResponseRedirect(reverse('notepad:monitor')+str(params))
-  if params['showdeleted']:
-    pages = Page.objects.order_by('name')
-    pages = sorted(pages, key=lambda page: page.name.lower())
-  else:
-    notes = Note.objects.filter(deleted=False).distinct('page')
-    pages = sorted([note.page for note in notes], key=lambda page: page.name.lower())
-  if params['format'] == 'plain':
-    text = '\n'.join([page.name for page in pages])
-    return HttpResponse(text, content_type=settings.PLAINTEXT)
-  else:
-    if params['showdeleted']:
-      showdeleted_query_str = str(params.but_with(showdeleted=False))
-    else:
-      showdeleted_query_str = str(params.but_with(showdeleted=True))
-    context = {'pages':pages, 'showdeleted':params['showdeleted'],
-               'showdeleted_query_str':showdeleted_query_str}
-    return render(request, 'notepad/monitor.tmpl', context)
