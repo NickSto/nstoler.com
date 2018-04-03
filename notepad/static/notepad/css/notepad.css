@@ -45,8 +45,8 @@ pre.content {
   width: calc(100% - 25px);
 }
 
-#confirm {
-  margin-bottom: 40px;
+#notice {
+  margin-bottom: 50px;
 }
 
 #notes_container {

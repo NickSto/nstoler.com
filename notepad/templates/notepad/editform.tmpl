@@ -13,12 +13,14 @@
       <h2 id="title">Notepad</h2>
 
       {% if warning %}
-        <section id="error" class="panel panel-default">
-          <div class="panel-heading">
-            <h3>Warning</h3>
-          </div>
-          <div class="panel-body">
-            <p>{{ warning }}</p>
+        <section id="notice">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3>Warning</h3>
+            </div>
+            <div class="panel-body">
+              <p>{{ warning }}</p>
+            </div>
           </div>
         </section>
       {% endif %}
