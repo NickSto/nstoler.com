@@ -42,28 +42,7 @@
         </section>
 
         <section id="notes_container">
-          <ul id="notes" class="list-group">
-            <li class="list-group-item header">
-              <h3 class="page-name">{{ page }}</h3>
-            </li>
-            {% for note in notes %}
-              {% if forloop.last %}
-                <a id="bottom"></a>
-              {% endif %}
-              <li id="note_{{ note.id }}" class="note list-group-item">
-                <input type="hidden" name="note_{{ note.id }}" value="on">
-                {% autoescape off %}
-                  <pre class="content">{{ note.content_html }}</pre>
-                {% endautoescape %}
-                <div class="clearfix"></div>
-              </li>
-            {% empty %}
-              <li class="note list-group-item">
-                <div class="content">No notes selected!</div>
-                <div class="clearfix"></div>
-              </li>
-            {% endfor %}
-          </ul>
+          {% include 'notepad/noteslist.tmpl' with type='moveform' %}
         </section>
       </form>
     </div>

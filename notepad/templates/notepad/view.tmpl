@@ -19,77 +19,7 @@
         </div>
 
         {% csrf_token %}
-        <ul id="notes" class="list-group">
-          <li class="list-group-item header">
-            <h3 class="page-name">{{ page }}</h3>
-          </li>
-          {% for note in notes %}
-            {% if forloop.last %}
-              <a id="bottom"></a>
-            {% endif %}
-            <li id="note_{{ note.id }}" class="note list-group-item">
-              <input type="checkbox" class="checkbox" {% if select == 'all' %}checked{% endif %} name="note_{{ note.id }}">
-              {% if admin %}
-                <div class="admin">
-                  <table class="table table-bordered table-condensed">
-                    <tr class="names">
-                      <th>id</th>
-                      <th>deleted</th>
-                      {% if note.visit %}
-                        <th>added</th>
-                        <th>IP</th>
-                        {% if note.visit.visitor.label %}
-                          <th>label</th>
-                        {% endif %}
-                        <th>user</th>
-                        <th>cookie</th>
-                      {% endif %}
-                    </tr>
-                    <tr class="values">
-                      <td>{{ note.id }}</td>
-                      <td>{{ note.deleted }}</td>
-                      {% if note.visit %}
-                        <td>{{ note.visit.timestamp }} UTC</td>
-                        <td>
-                          <a href="{% url 'traffic:view_ip' note.visit.visitor.ip %}">{{ note.visit.visitor.ip }}</a>
-                        </td>
-                        {% if note.visit.visitor.label %}
-                          <td>{{ note.visit.visitor.label }}</td>
-                        {% endif %}
-                        <td><a href="{% url 'traffic_monitor' %}?user={{ note.visit.visitor.user.id }}">{{ note.visit.visitor.user.id }}</a></td>
-                        <td>{{ note.visit.visitor.cookie1 }}</td>
-                      {% endif %}
-                    </tr>
-                    {% if note.visit %}
-                      <tr>
-                        <th class="name">user agent</th>
-                        <td class="values" colspan="6">{{ note.visit.visitor.user_agent }}</td>
-                      </tr>
-                    {% endif %}
-                  </table>
-                </div>
-              {% endif %}
-              {% autoescape off %}
-                <pre class="content">{{ note.content_html }}</pre>
-              {% endautoescape %}
-              <div class="clearfix"></div>
-            </li>
-          {% empty %}
-            <li class="note list-group-item">
-              <div class="content">Nothing here yet!
-Try adding something with the form below!</div>
-              <div class="clearfix"></div>
-            </li>
-          {% endfor %}
-          <li class="list-group-item header">
-            <label>Modify selected notes</label>
-          </li>
-          <li class="list-group-item modify-buttons">
-            <button id="delete" class="btn btn-default">✕ Delete</button>
-            <button id="edit" class="btn btn-default" formaction="{% url 'notepad:editform' page %}">✎ Edit</button>
-            <button id="move" class="btn btn-default" formaction="{% url 'notepad:moveform' page %}">→ Move to another page</button>
-          </li>
-        </ul>
+        {% include 'notepad/noteslist.tmpl' with type='view' %}
 
         <footer>
           <div class="buttons">
