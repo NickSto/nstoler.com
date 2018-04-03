@@ -337,5 +337,10 @@ def monitor(request):
     text = '\n'.join([page.name for page in pages])
     return HttpResponse(text, content_type=settings.PLAINTEXT)
   else:
-    context = {'pages':pages}
+    if params['showdeleted']:
+      showdeleted_query_str = str(params.but_with(showdeleted=False))
+    else:
+      showdeleted_query_str = str(params.but_with(showdeleted=True))
+    context = {'pages':pages, 'showdeleted':params['showdeleted'],
+               'showdeleted_query_str':showdeleted_query_str}
     return render(request, 'notepad/monitor.tmpl', context)
