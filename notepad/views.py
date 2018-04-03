@@ -18,17 +18,21 @@ DISPLAY_ORDER_MARGIN = 1000
 
 def view(request, page_name):
   params = QueryParams()
-  params.add('note', default=None, type=int)
-  params.add('format', default='html')
-  params.add('admin', default=False, type=boolish)
-  params.add('showdeleted', default=False, type=boolish)
-  params.add('select', default='none')
+  params.add('note', type=int, default=None)
+  params.add('format', default='html', choices=('html', 'plain'))
+  params.add('admin', type=boolish, default=False, choices=(True, False))
+  params.add('showdeleted', type=boolish, default=False, choices=(True, False))
+  params.add('select', default='none', choices=('all', 'none'))
   params.parse(request.GET)
+  # If one of the parameters was invalid, redirect to a fixed url.
+  # - QueryParams object will automatically set the parameter to a valid value.
+  if params.invalid_value:
+    return HttpResponseRedirect(reverse('notepad:view', args=(page_name,))+str(params))
   # Only allow showing deleted notes to the admin over HTTPS.
   #TODO: Display deleted notes differently.
-  if not is_admin_and_secure(request):
-    params['showdeleted'] = None
-    params['admin'] = False
+  if not is_admin_and_secure(request) and (params['admin'] or params['showdeleted']):
+    query_str = str(params.but_with(admin=False, showdeleted=False))
+    return HttpResponseRedirect(reverse('notepad:view', args=(page_name,))+query_str)
   # Fetch the note(s).
   if params['note']:
     try:

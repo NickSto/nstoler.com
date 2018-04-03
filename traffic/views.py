@@ -29,12 +29,16 @@ def monitor_redirect(request):
 def monitor(request):
   # The query string parameters and their defaults.
   params = QueryParams()
-  params.add('p', default=1, type=int)
-  params.add('perpage', default=PER_PAGE_DEFAULT, type=int)
-  params.add('include_me', default=False, type=boolish)
+  params.add('p', type=int, default=1, min=1)
+  params.add('perpage', default=PER_PAGE_DEFAULT, type=int, min=1)
+  params.add('include_me', type=boolish, default=False, choices=(True, False))
   params.add('bot_thres', default=None, type=int)
-  params.add('user', type=int, default=None)
+  params.add('user', default=None, type=int)
   params.parse(request.GET)
+  # If one of the parameters was invalid, redirect to a fixed url.
+  # - QueryParams object will automatically set the parameter to a valid value.
+  if params.invalid_value:
+    return HttpResponseRedirect(reverse('traffic_monitor')+str(params))
   admin = is_admin_and_secure(request)
   # Non-admins can only view their own traffic.
   if not admin:
@@ -47,9 +51,6 @@ def monitor(request):
       # If they gave no user, that's fine. Silently show only themself.
       params['user'] = this_user
       params.params['user'].default = this_user
-  # If they gave an invalid page number, redirect back to 1.
-  if params['p'] < 1:
-    return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with(p=1)))
   # Obtain visits list from database.
   if params['user'] is not None:
     visits = Visit.objects.filter(visitor__user__id=params['user'])
