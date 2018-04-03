@@ -66,6 +66,10 @@ textarea[name="content"] {
   height: 150px;
 }
 
+#submit_note {
+  padding-bottom: 40px;
+}
+
 #submit_note .panel {
   margin-bottom: 10px;
 }
