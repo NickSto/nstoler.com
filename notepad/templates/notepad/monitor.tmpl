@@ -40,7 +40,7 @@
 
       <div class="buttons">
         <a class="btn btn-default" href="#top">To top</a>
-        <a class="btn btn-default" href="{% url 'notepad:monitor' %}{{ showdeleted_query_str }}">{% if showdeleted %}Hide{% else %}Show{% endif %} deleted</a>
+        <a class="btn btn-default" href="{% url 'notepad:monitor' %}{{ showdeleted_query_str }}#bottom">{% if showdeleted %}Hide{% else %}Show{% endif %} deleted</a>
         <a class="btn btn-default" href="{% url 'misc:export' %}">Export database</a>
       </div>
     </div>
