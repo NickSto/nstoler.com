@@ -49,11 +49,12 @@ def view(request, page_name):
     contents = [note.content for note in notes]
     return HttpResponse('\n\n'.join(contents), content_type=settings.PLAINTEXT)
   else:
-    params_tmp = params.but_with('reload', rand.randint(1, 1000000))
-    select_all_query_str = str(params_tmp.but_with('select', 'all'))
-    select_none_query_str = str(params_tmp.but_with('select', 'none'))
+    randomness = rand.randint(1, 1000000)
+    select_all_query_str = str(params.but_with(select='all', reload=randomness))
+    select_none_query_str = str(params.but_with(select='none', reload=randomness))
     context = {'page':page_name, 'notes':notes, 'admin':params['admin'], 'select':params['select'],
-               'select_all_query_str':select_all_query_str, 'select_none_query_str':select_none_query_str}
+               'select_all_query_str':select_all_query_str,
+               'select_none_query_str':select_none_query_str}
     return render(request, 'notepad/view.tmpl', context)
 
 

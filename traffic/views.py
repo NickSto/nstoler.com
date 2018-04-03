@@ -42,14 +42,14 @@ def monitor(request):
     if params['user']:
       # If they gave a user, but it's not themselves, redirect back to themself.
       if params['user'] != this_user:
-        return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with('user', None)))
+        return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with(user=None)))
     else:
       # If they gave no user, that's fine. Silently show only themself.
       params['user'] = this_user
       params.params['user'].default = this_user
   # If they gave an invalid page number, redirect back to 1.
   if params['p'] < 1:
-    return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with('p', 1)))
+    return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with(p=1)))
   # Obtain visits list from database.
   if params['user'] is not None:
     visits = Visit.objects.filter(visitor__user__id=params['user'])
@@ -67,24 +67,24 @@ def monitor(request):
   try:
     page = pages.page(params['p'])
   except django.core.paginator.EmptyPage:
-    return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with('p', pages.num_pages)))
+    return HttpResponseRedirect(reverse('traffic_monitor')+str(params.but_with(p=pages.num_pages)))
   # Construct the navigation links.
   links = collections.OrderedDict()
   if page.has_previous():
-    links['Earlier'] = str(params.but_with('p', page.previous_page_number()))
+    links['Earlier'] = str(params.but_with(p=page.previous_page_number()))
   if admin:
     if params['include_me']:
-      links['Hide me'] = str(params.but_with('include_me', None))
+      links['Hide me'] = str(params.but_with(include_me=None))
     else:
-      links['Include me'] = str(params.but_with('include_me', True))
+      links['Include me'] = str(params.but_with(include_me=True))
     if params['bot_thres'] is not None and params['bot_thres'] != 0:
-      links['Show all'] = str(params.but_with('bot_thres', None))
+      links['Show all'] = str(params.but_with(bot_thres=None))
     if params['bot_thres'] is None or params['bot_thres'] > categorize.SCORES['bot_in_ua']:
-      links['Hide robots'] = str(params.but_with('bot_thres', categorize.SCORES['bot_in_ua']))
+      links['Hide robots'] = str(params.but_with(bot_thres=categorize.SCORES['bot_in_ua']))
     if params['bot_thres'] is None or params['bot_thres'] > categorize.SCORES['sent_cookies']+1:
-      links['Show humans'] = str(params.but_with('bot_thres', categorize.SCORES['sent_cookies']+1))
+      links['Show humans'] = str(params.but_with(bot_thres=categorize.SCORES['sent_cookies']+1))
   if page.has_next():
-    links['Later'] = str(params.but_with('p', page.next_page_number()))
+    links['Later'] = str(params.but_with(p=page.next_page_number()))
   context = {
     'visits': page,
     'admin':admin,
