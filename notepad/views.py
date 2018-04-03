@@ -65,7 +65,7 @@ def view(request, page_name):
 def add(request, page_name):
   params = request.POST
   #TODO: Check if the notes were added to the main "notepad" page.
-  if params.get('site') == '':
+  if params.get('site') == '' or page_name == '':
     # Get or create the Page.
     try:
       page = Page.objects.get(name=page_name)
@@ -319,9 +319,21 @@ def random(request):
 
 @require_admin_and_privacy
 def monitor(request):
-  format = request.GET.get('format')
-  pages = Page.objects.order_by('name')
-  if format == 'plain':
+  params = QueryParams()
+  params.add('format', default='html', choices=('html', 'plain'))
+  params.add('showdeleted', type=boolish, default=False, choices=(True, False))
+  params.parse(request.GET)
+  # If one of the parameters was invalid, redirect to a fixed url.
+  # - QueryParams object will automatically set the parameter to a valid value.
+  if params.invalid_value:
+    return HttpResponseRedirect(reverse('notepad:monitor')+str(params))
+  if params['showdeleted']:
+    pages = Page.objects.order_by('name')
+    pages = sorted(pages, key=lambda page: page.name.lower())
+  else:
+    notes = Note.objects.filter(deleted=False).distinct('page')
+    pages = sorted([note.page for note in notes], key=lambda page: page.name.lower())
+  if params['format'] == 'plain':
     text = '\n'.join([page.name for page in pages])
     return HttpResponse(text, content_type=settings.PLAINTEXT)
   else:
