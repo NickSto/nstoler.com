@@ -18,7 +18,9 @@
                   <table class="table table-bordered table-condensed">
                     <tr class="names">
                       <th>id</th>
-                      <th>deleted</th>
+                      <th>display_order</th>
+                      <th>deleted?</th>
+                      <th>edited?</th>
                       {% if note.visit %}
                         <th>added</th>
                         <th>IP</th>
@@ -31,7 +33,13 @@
                     </tr>
                     <tr class="values">
                       <td>{{ note.id }}</td>
+                      <td>{{ note.display_order }}</td>
                       <td>{{ note.deleted }}</td>
+                      {% if note.last_version %}
+                      <td>True</td>
+                      {% else %}
+                      <td>False</td>
+                      {% endif %}
                       {% if note.visit %}
                         <td>{{ note.visit.timestamp }} UTC</td>
                         <td>
