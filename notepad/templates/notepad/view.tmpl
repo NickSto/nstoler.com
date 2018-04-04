@@ -29,8 +29,9 @@
               <input type="text" name="site">
             </div>
             <a class="btn btn-default" href="#top">▲ To top</a>
-            <a class="btn btn-default" href="{% url 'notepad:view' page %}{{ select_all_query_str }}#bottom">☑ Select all</a>
-            <a class="btn btn-default" href="{% url 'notepad:view' page %}{{ select_none_query_str }}#bottom">□ Select none</a>
+            {% for text, query in links.items %}
+              <a class="btn btn-default" href="{% url 'notepad:view' page %}{{ query }}#bottom">{{ text }}</a>
+            {% endfor %}
           </div>
         </footer>
       </form>

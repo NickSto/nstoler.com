@@ -8,6 +8,7 @@ import django.db
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
 from utils import QueryParams, boolish
 from .models import Note, Page, Move
+import collections
 import random as rand
 import string
 import logging
@@ -59,7 +60,8 @@ def view(request, page_name):
     return HttpResponseRedirect(reverse('notepad:view', args=(page_name,))+str(params))
   # Only allow showing deleted notes to the admin over HTTPS.
   #TODO: Display deleted notes differently.
-  if not is_admin_and_secure(request) and (params['admin'] or params['showdeleted']):
+  is_admin = is_admin_and_secure(request)
+  if not is_admin and (params['admin'] or params['showdeleted']):
     query_str = str(params.but_with(admin=False, showdeleted=False))
     return HttpResponseRedirect(reverse('notepad:view', args=(page_name,))+query_str)
   # Fetch the note(s).
@@ -82,12 +84,21 @@ def view(request, page_name):
     contents = [note.content for note in notes]
     return HttpResponse('\n\n'.join(contents), content_type=settings.PLAINTEXT)
   else:
+    links = collections.OrderedDict()
     randomness = rand.randint(1, 1000000)
-    select_all_query_str = str(params.but_with(select='all', reload=randomness))
-    select_none_query_str = str(params.but_with(select='none', reload=randomness))
-    context = {'page':page_name, 'notes':notes, 'admin':params['admin'], 'select':params['select'],
-               'select_all_query_str':select_all_query_str,
-               'select_none_query_str':select_none_query_str}
+    links['☑ Select all'] = str(params.but_with(select='all', reload=randomness))
+    links['□ Select none'] = str(params.but_with(select='none', reload=randomness))
+    if is_admin:
+      if params['admin']:
+        links['Admin off'] = str(params.but_with(admin=False))
+      else:
+        links['Admin on'] = str(params.but_with(admin=True))
+      if params['showdeleted']:
+        links['Hide deleted'] = str(params.but_with(showdeleted=False))
+      else:
+        links['Show deleted'] = str(params.but_with(showdeleted=True))
+    context = {'page':page_name, 'notes':notes, 'links':links,
+               'admin_view':params['admin'], 'select':params['select']}
     return render(request, 'notepad/view.tmpl', context)
 
 
