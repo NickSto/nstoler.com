@@ -103,21 +103,19 @@ def add(request, page_name):
         name=page_name
       )
       page.save()
-    # Find the highest display_order currently on the page.
-    stats = Note.objects.filter(page__name=page_name).aggregate(Max('display_order'))
-    max_display = stats.get('display_order__max')
-    if max_display is None:
-      max_display = 0
-    # Make the new display_order a lot greater than the previous max, to give room to place notes
-    # inbetween existing ones.
-    display_order = max_display + DISPLAY_ORDER_MARGIN
     # Create the Note.
     note = Note(
       page=page,
       content=params.get('content', ''),
       visit=request.visit,
-      display_order=display_order
+      display_order=1
     )
+    note.save()
+    # Set the display order to a multiple of its id. This should be greater than any other
+    # display_order, putting it last on the page. It should also keep the display_orders of notes
+    # across all pages increasing chronologically by default, giving a nicer order when moving a
+    # note into an existing page with other notes.
+    note.display_order = note.id * DISPLAY_ORDER_MARGIN
     note.save()
   else:
     warn_and_redirect_spambot(request, page_name, 'adding a note')
@@ -229,7 +227,7 @@ def edit(request, page_name):
     page=page,
     content=params.get('content', ''),
     visit=request.visit,
-    display_order=note.display_order+1,
+    display_order=note.display_order,
     protected=note.protected,
     last_version=note
   )
