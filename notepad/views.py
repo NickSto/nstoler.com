@@ -152,6 +152,10 @@ def delete(request, page_name):
   admin = None
   if params.get('site') == '':
     for note in notes:
+      if note.page.name != page_name:
+        log.warning('User attempted to delete note {} from page {!r}, but gave page name {!r}'
+                    .format(note.id, note.page.name, page_name))
+        continue
       if note.protected:
         if admin is None:
           admin = is_admin_and_secure(request)
@@ -223,6 +227,10 @@ def edit(request, page_name):
                 .format(request.visit.visitor, note_id))
     return HttpResponseRedirect(view_url+fragment)
   fragment = '#note_{}'.format(note_id)
+  if note.page.name != page_name:
+    log.warning('User tried to edit note {!r} from page {!r}, but gave page name {!r}.'
+                .format(note.id, note.page.name, page_name))
+    return HttpResponseRedirect(view_url+fragment)
   if note.protected and not is_admin_and_secure(request):
     # Prevent editing protected notes.
     return HttpResponseRedirect(view_url+fragment)
@@ -290,6 +298,10 @@ def move(request, old_page_name):
     new_page = Page(name=new_page_name)
     new_page.save()
   for note in notes:
+    if note.page.name != old_page_name:
+      log.warning('User tried to move note {!r} from page {!r}, but gave page name {!r}.'
+                  .format(note.id, note.page.name, old_page_name))
+      continue
     if note.protected and not is_admin_and_secure(request):
       # Prevent moving protected notes.
       continue
