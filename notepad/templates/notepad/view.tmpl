@@ -12,7 +12,7 @@
       <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
-      <form id="notes_container" name='delete_notes' method='post' action="{% url 'notepad:deleteform' page %}">
+      <form id="notes_container" name='note_actions' method='post'>
         <div class="buttons">
           <a class="btn btn-default" href="#bottom">▼ To bottom</a>
           <a class="btn btn-default" href="{% url 'notepad:random' %}">? Random page</a>
