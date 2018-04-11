@@ -134,12 +134,12 @@ def add(request, page_name):
   return HttpResponseRedirect(view_url+'#bottom')
 
 
-def confirm(request, page_name):
+def deleteform(request, page_name):
   params = request.POST
   notes = get_notes_from_params(params)
   if params.get('site') == '':
     context = {'page':page_name, 'notes':notes}
-    return render(request, 'notepad/confirm.tmpl', context)
+    return render(request, 'notepad/deleteform.tmpl', context)
   else:
     warn_and_redirect_spambot(request, page_name, 'deleting notes', notes)
   view_url = reverse('notepad:view', args=(page_name,))

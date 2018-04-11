@@ -1,14 +1,14 @@
 {% extends 'bootstrap.tmpl' %}
 {% load staticfiles %}
 
-{% block title %}{{ page }} - Confirm - Notepad{% endblock %}
+{% block title %}{{ page }} - Delete - Notepad{% endblock %}
 
 {% block stylesheet %}
   <link rel="stylesheet" href="{% static 'notepad/css/notepad.css' %}?via=html">
 {% endblock %}
 
 {% block content %}
-    <div id="main" class="confirm container-fluid">
+    <div id="main" class="deleteform container-fluid">
       <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
@@ -30,7 +30,7 @@
 
       <form id="notes_container" name="delete_notes" method="post" action="{% url 'notepad:delete' page %}" >
         {% csrf_token %}
-        {% include 'notepad/noteslist.tmpl' with type='confirm' %}
+        {% include 'notepad/noteslist.tmpl' with type='deleteform' %}
         <div class="ruhuman">
           <label for="site">Site:</label>
           <input type="text" name="site">
