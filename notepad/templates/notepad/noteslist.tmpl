@@ -84,9 +84,11 @@ Try adding something with the form below!</div>
             <label>Modify selected notes</label>
           </li>
           <li class="list-group-item modify-buttons">
-            <button id="delete" class="btn btn-default">✕ Delete</button>
-            <button id="edit" class="btn btn-default" formaction="{% url 'notepad:editform' page %}">✎ Edit</button>
-            <button id="move" class="btn btn-default" formaction="{% url 'notepad:moveform' page %}">→ Move to another page</button>
+            <button id="delete" class="btn btn-default" name="action" value="delete">✕ Delete</button>
+            <button id="edit" class="btn btn-default" name="action" value="edit" formaction="{% url 'notepad:editform' page %}">✎ Edit</button>
+            <button id="moveup" class="btn btn-default" name="action" value="moveup" formaction="{% url 'notepad:move' page %}">↑ Move up</button>
+            <button id="movedown" class="btn btn-default" name="action" value="movedown" formaction="{% url 'notepad:move' page %}">↓ Move down</button>
+            <button id="movepage" class="btn btn-default" name="action" value="movepage" formaction="{% url 'notepad:moveform' page %}">→ Move to another page</button>
           </li>
           {% endif %}
         </ul>

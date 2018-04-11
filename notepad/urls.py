@@ -10,8 +10,8 @@ urlpatterns = [
   url(r'^notepad/delete/(?P<page_name>.+)$', views.delete, name='delete'),
   url(r'^notepad/editform/(?P<page_name>.+)$', views.editform, name='editform'),
   url(r'^notepad/edit/(?P<page_name>.+)$', views.edit, name='edit'),
-  url(r'^notepad/moveform/(?P<old_page_name>.+)$', views.moveform, name='moveform'),
-  url(r'^notepad/move/(?P<old_page_name>.+)$', views.move, name='move'),
+  url(r'^notepad/moveform/(?P<page_name>.+)$', views.moveform, name='moveform'),
+  url(r'^notepad/move/(?P<page_name>.+)$', views.move, name='move'),
   url(r'^notepad/monitor$', views.monitor, name='monitor'),
   url(r'^(?P<page_name>.+)$', views.view, name='view'),
 ]

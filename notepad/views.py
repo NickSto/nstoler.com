@@ -262,25 +262,38 @@ def edit(request, page_name):
   return HttpResponseRedirect(view_url+fragment)
 
 
-def moveform(request, old_page_name):
-  view_url = reverse('notepad:view', args=(old_page_name,))
+def moveform(request, page_name):
+  view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params)
   if params.get('site') != '':
-    return warn_and_redirect_spambot(request, old_page_name, 'moving notes', notes, view_url)
+    return warn_and_redirect_spambot(request, page_name, 'moving notes', notes, view_url)
   if not is_admin_and_secure(request):
     # Prevent appearance of being able to move protected notes.
     notes = [note for note in notes if not note.protected]
-  context = {'page':old_page_name, 'notes':notes}
+  context = {'page':page_name, 'notes':notes}
   return render(request, 'notepad/moveform.tmpl', context)
 
 
-def move(request, old_page_name):
-  view_url = reverse('notepad:view', args=(old_page_name,))
+def move(request, page_name):
+  view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params)
   if params.get('site') != '':
-    return warn_and_redirect_spambot(request, old_page_name, 'confirming move of notes', notes, view_url)
+    return warn_and_redirect_spambot(request, page_name, 'confirming move of notes', notes, view_url)
+  action = params.get('action')
+  if action == 'movepage':
+    return _move_page(request, page_name, notes)
+  elif action in ('moveup', 'movedown'):
+    return _move_order(request, page_name, notes, action[4:])
+  else:
+    log.error('Unrecognized move action {!r}.'.format(action))
+    return HttpResponseRedirect(view_url)
+
+
+def _move_page(request, old_page_name, notes):
+  view_url = reverse('notepad:view', args=(old_page_name,))
+  params = request.POST
   new_page_name = params.get('new_page')
   if new_page_name:
     view_url = reverse('notepad:view', args=(new_page_name,))
@@ -320,6 +333,66 @@ def move(request, old_page_name):
     except django.db.Error as dbe:
       log.error('Error on saving Move or Note: {}'.format(dbe))
   return HttpResponseRedirect(view_url)
+
+
+def _move_order(request, page_name, notes, direction):
+  page_notes = Note.objects.filter(page__name=page_name, deleted=False).order_by('display_order', 'id')
+  # Save old display_orders.
+  old_orders = {}
+  for note in page_notes:
+    old_orders[note.id] = note.display_order
+  # Go through the notes in the opposite direction they're moving in.
+  # E.g. if we're moving notes down, then start from the last note and move up.
+  reverse_order = direction == 'down'
+  sorted_notes = sorted(page_notes, reverse=reverse_order, key=lambda note: (note.display_order, note.id))
+  # Set new display_orders.
+  for i in range(len(sorted_notes)):
+    note = sorted_notes[i]
+    if i == 0:
+      # We can't move this note earlier, since it's already at the end.
+      continue
+    last_note = sorted_notes[i-1]
+    if note not in notes:
+      # This isn't one of the notes being moved.
+      continue
+    if last_note in notes:
+      # Don't swap a note with another note being moved. They should all move in a block.
+      # If a bunch of notes in a block are already at the end, the first rule (i == 0) prevents the
+      # note at the end from moving, and this prevents the others in the block from moving past it.
+      continue
+    if note.protected and not is_admin_and_secure(request):
+      # Prevent moving protected notes.
+      continue
+    # Swap display orders.
+    note.display_order, last_note.display_order = last_note.display_order, note.display_order
+    # Swap positions in the list.
+    sorted_notes[i] = last_note
+    sorted_notes[i-1] = note
+  # Create Moves and save changes to database.
+  for note in page_notes:
+    if note.page.name != page_name:
+      log.warning('User tried to move note {!r} order on page {!r}, but gave page name {!r}.'
+                  .format(note.id, note.page.name, page_name))
+      continue
+    if note.display_order == old_orders[note.id]:
+      continue
+    move = Move(
+      type='order',
+      note=note,
+      old_display_order=old_orders[note.id],
+      new_display_order=note.display_order,
+      visit=request.visit,
+    )
+    log.info('Moving note {} display_order from {} to {}.'
+             .format(note.id, move.old_display_order, move.new_display_order))
+    # Save both or, if something goes wrong, neither.
+    try:
+      move.save()
+      note.save()
+    except django.db.Error as dbe:
+      log.error('Error on saving Move or Note: {}'.format(dbe))
+  view_url = reverse('notepad:view', args=(page_name,))
+  return HttpResponseRedirect(view_url+'#bottom')
 
 
 def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=None):
