@@ -14,6 +14,16 @@ Add `History` object to track the entire history of a note and its edited/moved 
 
 ## Editing notes
 
+### Features
+
+Add an "undo" button after moving notes up or down.
+- Use the Move objects to know what to undo.
+- How to tell the "view" view to show the undo, and what to undo?
+  - Option 1: Add a undo= query parameter.
+    - Value is a list of Move ids.
+  - Option 2: Allow a POST to the "view" view?
+    - Send Move ids as a POST parameter.
+
 ### HTML
 
 Icons/characters for buttons
