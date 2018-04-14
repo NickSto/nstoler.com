@@ -1,0 +1,125 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}Nicholas Stoler{% endblock %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{% static 'editpages/css/home.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+      {% if editing_item %}
+        <form id="edit-text" class="panel panel-default" method="post" action="{% url 'editpages:edittext' 'home' %}">
+          {% csrf_token %}
+          <input type="hidden" name="key" value="{{ item.key }}">
+          <div class="panel-heading">
+            <label for="content" class="panel-title">Edit text</label>
+          </div>
+          <textarea name="content" class="panel-body" rows="4">{{ item.content }}</textarea>
+          <input type="submit" class="btn btn-default" value="Submit">
+        </form>
+      {% endif %}
+
+      <form id="edit-items" method="post" action="{% url 'editpages:edititem' 'home' %}">
+        {% csrf_token %}
+        <div class="page-header">
+          <h1>{{ items.title.title|safe }}
+            {% if editing %}
+              <button class="btn btn-default btn-sm" name="item" value="{{ items.title.id }}">Edit</button>
+            {% endif %}
+          </h1>
+          {% if admin %}
+            {% if editing %}
+              <a class="btn btn-default" href="{% url 'editpages:view' 'home' %}?editing=true">Edit</a>
+            {% else %}
+              <a class="btn btn-default" href="{% url 'editpages:view' 'home' %}">View</a>
+            {% endif %}
+          {% endif %}
+        </div> <!-- .page-header -->
+
+        <div class="jumbotron">
+          <div id="intro">
+            <h3>{{ items.intro.title|safe }}
+              {% if editing %}
+                <button class="btn btn-default btn-sm" name="item" value="{{ items.intro.id }}">Edit</button>
+              {% endif %}
+            </h3>
+            <p>{{ items.intro.body|safe }}</p>
+          </div>
+          <div id="about-me">
+            <img class="img-thumbnail pull-right" id="selfie" src="/img/me.jpg?via=html">
+            <h3>{{ items.about-me.title|safe }}
+              {% if editing %}
+                <button class="btn btn-default btn-sm" name="item" value="{{ items.about-me.id }}">Edit</button>
+              {% endif %}
+            </h3>
+            <p>{{ items.about-me.body|safe }}</p>
+            <div class="clearfix"></div>
+          </div>
+        </div> <!-- .jumbotron -->
+      </form>
+
+      {% for list in lists %}
+        <ul class="list-group">
+          <li class="list-group-item header">
+            <h3>{{ list.title|safe }}
+              {% if editing %}
+                <form class="edit-list" method="post" action="{% url 'editpages:modifylist' 'home' %}">
+                  <input type="hidden" name="list" value="{{ list.id }}">
+                  <button class="btn btn-default btn-sm" name="action" value="edit">Edit</button>
+                  <button class="btn btn-default btn-sm" name="action" value="delete">Delete</button>
+                </form>
+              {% endif %}
+            </h3>
+          </li>
+          {% for item in list.items %}
+            <li class="list-group-item">
+              <h4 class="list-group-item-heading">{{ item.title|safe }}
+                {% if editing %}
+                  <form class="edit-list-item" method="post" action="{% url 'editpages:modifylistitem' 'home' %}">
+                    <input type="hidden" name="item" value="{{ item.id }}">
+                    <button class="btn btn-default btn-sm" name="action" value="edit">Edit</button>
+                    <button class="btn btn-default btn-sm" name="action" value="delete">Delete</button>
+                  </form>
+                {% endif %}
+              </h4>
+              <p class="list-group-item-text">{{ item.body|safe }}</p>
+            </li>
+          {% endfor %}
+          {% if editing %}
+            <li class="list-group-item header">
+              <label>Add an item</label>
+            </li>
+            <li class="list-group-item">
+              <form id="add-list-item" method="post" action="{% url 'editpages:addlistitem' 'home' %}">
+                {% csrf_token %}
+                <label>Title:</label>
+                <input class="list-group-item-heading" type="text" name="title">
+                <textarea class="list-group-item-text" name="body" rows="3"></textarea>
+                <input type="submit" class="btn btn-default" value="Submit">
+              </form>
+            </li>
+          {% endif %}
+        </ul> <!-- .list-group -->
+      {% endfor %}
+
+      {% if editing %}
+        <form id="add-list" class="list-group" method="post" action="{% url 'editpages:addlist' 'home' %}">
+          {% csrf_token %}
+          <ul>
+            <li class="list-group-item header">
+              <label>Add a list</label>
+            </li>
+            <li class="list-group-item">
+              <label>Title:</label>
+              <input type="text" name="title">
+              <input type="submit" class="btn btn-default" value="Submit">
+            </li>
+          </ul>
+        </form>
+      {% endif %}
+
+    </div> <!-- .container -->
+{% endblock %}
