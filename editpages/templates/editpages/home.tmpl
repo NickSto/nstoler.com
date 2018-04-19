@@ -4,6 +4,7 @@
 {% block title %}Nicholas Stoler{% endblock %}
 
 {% block stylesheet %}
+    <link rel="stylesheet" href="{% static 'editpages/css/style.css' %}?via=html">
     <link rel="stylesheet" href="{% static 'editpages/css/home.css' %}?via=html">
 {% endblock %}
 
@@ -31,15 +32,15 @@
           <div class="panel-body">
             {% if display_type == 'title-body' %}
               <label for="title">Title:</label>
-              <input type="text" name="title" value="{{ item.title }}">
+              <input type="text" class="editpages-input" name="title" value="{{ item.title }}">
               <div>
-                <textarea name="body" rows="4">{{ item.body }}</textarea>
+                <textarea class="editpages-input" name="body" rows="4">{{ item.body }}</textarea>
               </div>
             {% elif display_type == 'title' %}
               <label for="title">Title:</label>
-              <input type="text" name="title" value="{{ item.title }}">
+              <input type="text" class="editpages-input" name="title" value="{{ item.title }}">
             {% else %}
-              <textarea name="content" rows="4">{{ item.note.content }}</textarea>
+              <textarea class="editpages-input" name="content" rows="4">{{ item.note.content }}</textarea>
             {% endif %}
             <input type="submit" class="btn btn-default" value="Submit">
           </div>
@@ -139,7 +140,7 @@
           <li class="list-group-item header">
             <h3>{{ list.mtitle|safe }}
               {% if editing %}
-                <form class="edit-list" method="post">
+                <form class="edit-list pull-right" method="post">
                   {% csrf_token %}
                   <input type="hidden" name="type" value="listitem">
                   <input type="hidden" name="id" value="{{ list.id }}">
@@ -157,7 +158,7 @@
               <li class="list-group-item">
                 <h4 class="list-group-item-heading">{{ item.mtitle|safe }}
                   {% if editing %}
-                    <form class="modify-list-item" method="post">
+                    <form class="edit-list-item pull-right" method="post">
                       {% csrf_token %}
                       <input type="hidden" name="type" value="listitem">
                       <input type="hidden" name="display-type" value="title-body">
@@ -183,9 +184,9 @@
                 <input type="hidden" name="type" value="listitem">
                 <input type="hidden" name="parent_id" value="{{ list.id }}">
                 <label>Title:</label>
-                <input class="list-group-item-heading" type="text" name="title">
+                <input type="text" class="editpages-input list-group-item-heading" name="title">
                 <div>
-                  <textarea class="list-group-item-text" name="body" rows="3"></textarea>
+                  <textarea class="editpages-input list-group-item-text" name="body" rows="3"></textarea>
                 </div>
                 <input type="submit" class="btn btn-default" value="Submit">
               </form>
@@ -204,7 +205,7 @@
             </li>
             <li class="list-group-item">
               <label>Title:</label>
-              <input type="text" name="title">
+              <input type="text" class="editpages-input" name="title">
               <input type="submit" class="btn btn-default" value="Submit">
             </li>
           </ul>
