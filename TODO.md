@@ -1,8 +1,51 @@
-# Port from 1.0
+# Home page
 
-Small utilities?
-http://nstoler.com/misc/dataurl.html
-http://nstoler.com/misc/urlconv.html
+## Make it dynamic?
+
+Instead of the info getting outdated because it's a pain to change, store it in the database and present "edit" buttons to me.
+
+Don't have to go nuts making it completely changeable, but I could store the text for each bit in the database. I could even allow adding/deleting entries from each main section ("Work", "Web Projects").
+
+To avoid mistakes of the past (see: instawiki), I should explicitly only allow editing text, not the structure of the html (aside from a special feature for adding the above list entries). If I want to change the structure or display, that's when I go in and edit the html template, test it, commit it, and push it up.
+
+### Caching
+
+This would be a good time to invest in caching.
+- The page doesn't change often, so I can set long TTLs.
+- Avoiding a trip to the database would eliminate a lot of latency.
+- BUT: This would probably prevent visits from being logged.
+
+
+### Implementation
+
+I'll just store each bit of text keyed by an identifier. Yes, this is what NoSQL was made for, but I'm not making a whole dependency on that just for this one thing.
+- One table, two columns: key and text.
+- The identifier should be general, not specific to one page structure.
+  - "about-me", not "jumbotron-aside"
+
+How to handle links? I need to be able to easily write them, as well as other little markup like italics. But I don't want to accept and inject raw html, even from an authenticated user.
+- Use a subset of markdown?
+
+Saving edit history
+- I'd like to have a record of past versions of the text.
+- I could use the same methods as with Notepad, with a `deleted` and `last_version` attribute.
+  - Hell, I could actually use the Notepad infrastructure.
+    - Would need to add an attribute to store the key for each bit of text.
+    - Could actually use the special page name "", which is actually kind of accurate.
+  - Okay, so maybe I store the text as Notepad notes, but it's probably still a good idea to make some custom models for this system.
+    - The custom models would store the key, and point to a Notepad `Note`.
+
+Models
+- A generic `Text` object, storing a key and a reference to a Notepad `Note`.
+  - Nothing more fancy or specialized, except the list stuff below.
+- A `List` for each list of things.
+  - A `ListItem` for each item in the list.
+    - Store the item title separately or just use markdown (`##`) to indicate it?
+      - If stored separately, probably should be stored in its own Note.
+        - So I don't have to specially code version history stuff for it.
+    - Have an attribute for special things like the [PDF] notation?
+- Something to store meta-history, like `Move` in Notepad.
+  - Track when I add, remove, or reorder a `List` or `ListItem`.
 
 # Notepad
 
