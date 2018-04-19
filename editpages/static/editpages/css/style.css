@@ -5,8 +5,12 @@ input[type="text"].editpages-input, textarea.editpages-input {
 }
 
 input[type="text"].editpages-input {
-  width: calc(100% - 45px);
+  width: calc(100% - 55px);
   margin-left: 5px;
+}
+
+label.editpages-title {
+  width: 40px;
 }
 
 textarea.editpages-input {
@@ -16,4 +20,3 @@ textarea.editpages-input {
 input.btn.editpages-input {
   margin-top: 5px;
 }
-
