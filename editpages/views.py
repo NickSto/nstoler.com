@@ -285,8 +285,8 @@ def get_view_url(page, editing=True):
     query_str = '?editing=true'
   else:
     query_str = ''
-  if page == 'home':
-    return reverse('editpages_home')+query_str
+  if page == 'home' and not editing:
+    return reverse('editpages_home')
   else:
     return reverse('editpages:view', args=(page,))+query_str
 
