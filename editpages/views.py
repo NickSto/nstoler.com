@@ -38,8 +38,7 @@ def view(request, page):
     if is_admin:
       editing = True
     else:
-      view_url = reverse('editpages:view', args=(page,))
-      return HttpResponseRedirect(view_url)
+      return HttpResponseRedirect(get_view_url(page))
   context = {'editing':editing, 'editing_text':False, 'admin':is_admin}
   return show_page(request, page, context)
 
@@ -285,10 +284,10 @@ def get_view_url(page, editing=True):
     query_str = '?editing=true'
   else:
     query_str = ''
-  if page == 'home' and not editing:
-    return reverse('editpages_home')
-  else:
+  if editing:
     return reverse('editpages:view', args=(page,))+query_str
+  else:
+    return reverse('editpages_{}'.format(page))
 
 
 def compose_content(title, body, content):
