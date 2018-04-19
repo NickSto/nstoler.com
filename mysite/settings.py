@@ -52,7 +52,6 @@ INSTALLED_APPS = [
   'notepad',
   'traffic',
   'myadmin',
-  'pages',
   'editpages',
   'wikihistory',
   'django.contrib.admin',
