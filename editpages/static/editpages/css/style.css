@@ -1,15 +1,19 @@
 
-input.editpages-input, textarea.editpages-input {
+input[type="text"].editpages-input, textarea.editpages-input {
   margin-top: 5px;
   margin-bottom: 5px;
 }
 
-input.editpages-input {
+input[type="text"].editpages-input {
   width: calc(100% - 45px);
   margin-left: 5px;
 }
 
 textarea.editpages-input {
   width: 100%;
+}
+
+input.btn.editpages-input {
+  margin-top: 5px;
 }
 

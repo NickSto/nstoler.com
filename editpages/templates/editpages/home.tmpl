@@ -42,7 +42,7 @@
             {% else %}
               <textarea class="editpages-input" name="content" rows="4">{{ item.note.content }}</textarea>
             {% endif %}
-            <input type="submit" class="btn btn-default" value="Submit">
+            <input type="submit" class="editpages-input btn btn-default" value="Submit">
           </div>
         </form>
       {% endif %}
@@ -88,8 +88,8 @@
                 </p>
               {% endif %}
             </div>
+            <input type="submit" class="editpages-input btn btn-default" value="Delete">
           </div>
-          <input type="submit" class="btn btn-default" value="Delete">
         </form>
       {% endif %}
 
