@@ -137,7 +137,10 @@ def deleteitem(request, page):
   item = get_by_key_or_id(item_type, page, params['key'], params['id'])
   item.deleted = True
   item.deleting_visit = request.visit
+  item.note.deleted = True
+  item.note.deleting_visit = request.visit
   item.save()
+  item.note.save()
   return HttpResponseRedirect(get_view_url(page))
 
 
