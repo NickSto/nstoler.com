@@ -48,6 +48,10 @@ th.name, tr.names > th {
   font-weight: normal;
 }
 
+code {
+  color: #575757;
+}
+
 .input {
   margin-top: 10px;
 }
