@@ -15,6 +15,7 @@ static/.well-known
 static/myadmin
 static/notepad
 static/pages
+static/editpages
 static/traffic
 static/wikihistory
 static/ET

@@ -17,6 +17,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.views.generic.base import RedirectView
 import traffic.views
+import editpages.views
 import pages.views
 
 urlpatterns = [
@@ -27,6 +28,8 @@ urlpatterns = [
   url(r'^yourgenome$', pages.views.yourgenome, name='pages_yourgenome'),
   url(r'^yourgenome/$', RedirectView.as_view(url='/yourgenome', permanent=True)),
   url(r'^pages/', include('pages.urls')),
+  url(r'^$', editpages.views.view, kwargs={'page':'home'}, name='editpages_home'),
+  url(r'^editpages/', include('editpages.urls')),
   url(r'^admin/', include('myadmin.urls')),
   url(r'^wikihistory/', include('wikihistory.urls')),
   url(r'^ET/', include('ET.urls')),

@@ -49,10 +49,11 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
   'ET',
   'misc',
-  'pages',
   'notepad',
   'traffic',
   'myadmin',
+  'pages',
+  'editpages',
   'wikihistory',
   'django.contrib.admin',
   'django.contrib.auth',

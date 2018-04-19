@@ -1,117 +1,361 @@
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
+from django.template.defaultfilters import escape
 from django.urls import reverse
-from django.template.defaultfilters import escape, urlize
-import re
+from django.template import TemplateDoesNotExist
+from django.db import transaction, DatabaseError
+import os
+import logging
+from utils import QueryParams
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
-from .models import Item, List, ListItem
+from notepad.models import Note, Page
+from notepad.views import DISPLAY_ORDER_MARGIN
+from .templatetags.markdown import parse_markdown
+from .models import Item, ListItem, Move
+log = logging.getLogger(__name__)
+class Log(object):
+  def __init__(self):
+    self.messages = []
+  def info(self, message):
+    self.messages.append(message)
+  error = info
+  def __str__(self):
+    return '\n'.join(self.messages)
+log = Log()
 
+EDITPAGES_NAMESPACE = '__editpages__'
+ITEM_TYPES = {'item':Item, 'listitem':ListItem}
 
 ##### Views ######
 
 def view(request, page):
+  log.info('In view().')
   params = request.GET
   is_admin = is_admin_and_secure(request)
+  editing = False
   if params.get('editing'):
     if is_admin:
       editing = True
     else:
       view_url = reverse('editpages:view', args=(page,))
       return HttpResponseRedirect(view_url)
-  items = get_items()
-  lists = get_lists()
-  context = {'items':items, 'lists':lists, 'editing':editing, 'editing_item':False, 'admin':is_admin}
-  if page == 'home':
-    return render(request, 'editpages/home.tmpl', context)
+  context = {'editing':editing, 'editing_text':False, 'admin':is_admin}
+  return show_page(request, page, context)
+
+
+@require_admin_and_privacy
+def edititemform(request, page):
+  log.info('In edititemform().')
+  params = QueryParams()
+  params.add('key')
+  params.add('id', type=int)
+  params.add('type', choices=('item', 'listitem'))
+  params.add('display-type')
+  params.parse(request.POST)
+  log.info('Composing edit form for item: key {!r}, id {!r}'.format(params['key'], params['id']))
+  item_type = ITEM_TYPES.get(params['type'])
+  if not item_type:
+    log.error('Invalid type {!r}.'.format(request.POST.get('type')))
+    return HttpResponseRedirect(get_view_url(page))
+  item = get_by_key_or_id(item_type, page, params['key'], params['id'])
+  if item is None:
+    log.info('No item found. Using a dummy.')
+    item = {'id':params['id'], 'key':params['key'], 'note':{'content':''}}
+  # Determine whether the item has a title, body, or neither.
+  display_type = 'title-body'
+  if params['display-type']:
+    display_type = params['display-type']
+  elif params['key']:
+    display_type_key = params['key']+'-display-type'
+    if params.get(display_type_key) is not None:
+      display_type = params[display_type_key]
+  context = {'editing':True, 'editing_text':True, 'editing_item':True, 'admin':True, 'item':item,
+             'display_type':display_type, 'type':params['type']}
+  return show_page(request, page, context)
+
+
+@require_admin_and_privacy
+def edititem(request, page):
+  log.info('In edititem() for page {!r}'.format(page))
+  params = QueryParams()
+  params.add('key')
+  params.add('id', type=int)
+  params.add('type', choices=('item', 'listitem'))
+  params.add('content')
+  params.add('title')
+  params.add('body')
+  params.parse(request.POST)
+  log.info('Editing item: key {!r}, id {!r}'.format(params['key'], params['id']))
+  item_type = ITEM_TYPES.get(params['type'])
+  if not item_type:
+    log.error('Invalid type {!r}.'.format(request.POST.get('type')))
+    return HttpResponseRedirect(get_view_url(page))
+  item = get_by_key_or_id(item_type, page, params['key'], params['id'])
+  content = compose_content(params['title'], params['body'], params['content'])
+  if item:
+    log.info('Editing existing item.')
+    edit_item(page, item, content, request.visit)
+  elif params['type'] == 'item':
+    # Won't work for ListItems, but they can't be created via edititem anyway.
+    log.info('Creating new item.')
+    create_item(item_type, page, content, request.visit, key=params['key'])
   else:
-    return HttpResponseNotFound('Invalid page name {!r}.'.format(page), content_type=settings.PLAINTEXT)
+    log.error('Warning: Cannot edit nonexistent ListItem.')
+  return HttpResponseRedirect(get_view_url(page))
+
+
+@require_admin_and_privacy
+def deleteitemform(request, page):
+  log.info('In deleteitemform().')
+  params = QueryParams()
+  params.add('type', choices=('item', 'listitem'))
+  params.add('key')
+  params.add('id', type=int)
+  params.parse(request.POST)
+  item_type = ITEM_TYPES.get(params['type'])
+  if not item_type:
+    log.error('Invalid type {!r}.'.format(request.POST.get('type')))
+    return HttpResponseRedirect(get_view_url(page))
+  item = get_by_key_or_id(item_type, page, params['key'], params['id'])
+  context = {'editing':True, 'deleting_text':True, 'item':item, 'type':params['type']}
+  return show_page(request, page, context)
+
+
+@require_admin_and_privacy
+def deleteitem(request, page):
+  log.info('In deleteitemform().')
+  params = QueryParams()
+  params.add('type', choices=('item', 'listitem'))
+  params.add('key')
+  params.add('id', type=int)
+  params.parse(request.POST)
+  item_type = ITEM_TYPES.get(params['type'])
+  if not item_type:
+    log.error('Invalid type {!r}.'.format(request.POST.get('type')))
+    return HttpResponseRedirect(get_view_url(page))
+  item = get_by_key_or_id(item_type, page, params['key'], params['id'])
+  item.deleted = True
+  item.deleting_visit = request.visit
+  item.save()
+  return HttpResponseRedirect(get_view_url(page))
+
+
+@require_admin_and_privacy
+def additem(request, page):
+  log.info('In addlistitem() for page {!r}'.format(page))
+  params = QueryParams()
+  params.add('type', choices=('item', 'listitem'))
+  params.add('title')
+  params.add('body')
+  params.add('content')
+  params.add('key')
+  params.add('parent_key')
+  params.add('parent_id', type=int)
+  params.parse(request.POST)
+  item_type = ITEM_TYPES.get(params['type'])
+  if not item_type:
+    log.error('Invalid type {!r}.'.format(request.POST.get('type')))
+    return HttpResponseRedirect(get_view_url(page))
+  content = compose_content(params['title'], params['body'], params['content'])
+  parent_list = get_by_key_or_id(item_type, page, params['parent_key'], params['parent_id'])
+  create_item(item_type, page, content, request.visit, key=params['key'], parent_list=parent_list)
+  return HttpResponseRedirect(get_view_url(page))
+
+
+@require_admin_and_privacy
+def moveitem(request, page):
+  log.info('In moveitem().')
+  params = QueryParams()
+  params.add('action', choices=('moveup', 'movedown'))
+  params.add('type', choices=('item', 'listitem'))
+  params.add('key')
+  params.add('id', type=int)
+  params.parse(request.POST)
+  if params['type'] != 'listitem':
+    log.error('Invalid type {!r}.'.format(request.POST.get('type')))
+    return HttpResponseRedirect(get_view_url(page))
+  item_type = ITEM_TYPES.get(params['type'])
+  item = get_by_key_or_id(item_type, page, params['key'], params['id'])
+  if not item:
+    log.error('No item found by key {!r} or id {}.'.format(params['key'], params['id']))
+    return HttpResponseRedirect(get_view_url(page))
+  if item.parent:
+    siblings = item.parent.sorted_items()
+  else:
+    log.info('Item has no parent. Using root lists.')
+    siblings = get_root_lists(page)
+  if params['action'] == 'movedown':
+    siblings = reversed(siblings)
+  last_item = None
+  for this_item in siblings:
+    if this_item == item and last_item is not None:
+      this_move = Move(
+        type='position',
+        item=this_item,
+        old_display_order=this_item.display_order,
+        new_display_order=last_item.display_order,
+        visit=request.visit,
+      )
+      last_move = Move(
+        type='position',
+        item=last_item,
+        old_display_order=last_item.display_order,
+        new_display_order=this_item.display_order,
+        visit=request.visit,
+      )
+      this_item.display_order = this_move.new_display_order
+      last_item.display_order = last_move.new_display_order
+      try:
+        with transaction.atomic():
+          this_item.save()
+          this_move.save()
+          last_item.save()
+          last_move.save()
+      except DatabaseError as dbe:
+        log.error('Error on saving moves: {}'.format(dbe))
+      break
+    last_item = this_item
+  return HttpResponseRedirect(get_view_url(page))
 
 
 ##### Functions #####
 
-def get_items():
-  item_objs = Item.objects.all()
+def show_page(request, page, context):
+  log.info('In show_page().')
+  added_context = {'editing':False, 'editing_text':False, 'deleting_text':False, 'admin':False}
+                   # 'stderr':log}
+  added_context['items'] = get_items(page)
+  added_context['root_lists'] = get_root_lists(page)
+  log.info('Found {} items, {} root lists.'
+           .format(len(added_context['items']), len(added_context['root_lists'])))
+  for key, value in added_context.items():
+    if key not in context:
+      context[key] = value
+  #TODO: Sanitize `page`?
+  try:
+    return render(request, 'editpages/{}.tmpl'.format(page), context)
+  except TemplateDoesNotExist:
+    return HttpResponseNotFound('Invalid page name {!r}.'.format(page), content_type=settings.PLAINTEXT)
+
+
+def get_by_key_or_id(obj_type, page, key, id):
+  if key:
+    try:
+      return obj_type.objects.get(page=page, key=key)
+    except obj_type.DoesNotExist:
+      log.error('{} not found by key {!r}'.format(obj_type.__name__, key))
+  elif id:
+    try:
+      return obj_type.objects.get(page=page, pk=id)
+    except obj_type.DoesNotExist:
+      log.error('{} not found by id {}'.format(obj_type.__name__, id))
+  return None
+
+
+def get_items(page):
   items = {}
-  for item_obj in item_objs:
-    if item_obj.note.deleted:
+  for item in Item.objects.filter(page=page):
+    if not item.note:
+      log.error('Found Item with missing note! Key: {!r}.'.format(item.key))
       continue
-    item = parse_content(item_obj.note.content)
-    if not item:
+    if item.note.deleted:
       continue
-    item['id'] = item_obj.id
-    items[item_obj.key] = item
+    if hasattr(item, 'deleted') and item.deleted:
+      continue
+    if item.key:
+      # Is there already something with that key?
+      if item.key in items:
+        # Items take precedence over ListItems. Don't overwrite an Item with a ListItem.
+        if isinstance(items[item.key], ListItem):
+          continue
+      items[item.key] = item
   return items
 
 
-def get_lists():
-  list_objs = List.objects.filter(deleted=False).order_by('display_order')
-  lists = []
-  for list_obj in list_objs:
-    title = parse_markdown(escape(list_obj.title.note.content))
-    list_dict = {'id':list_obj.id, 'title':title, 'items':[]}
-    for item_obj in sorted(list_obj.items, key=lambda item: item.display_order):
-      if item_obj.deleted:
-        continue
-      item = parse_content(item_obj.note.content)
-      if not item:
-        continue
-      item['id'] = item_obj.id
-      list_dict['items'].append(item)
-    lists.append(list_dict)
-  return lists
+def get_root_lists(page):
+  return ListItem.objects.filter(page=page, parent=None, deleted=False).order_by('display_order')
 
 
-def parse_content(content):
-  item = {'title':'', 'body':''}
-  lines = content.splitlines()
-  if not lines:
-    return None
-  if lines[0].startswith('#'):
-    item['title'] = parse_markdown(escape(lines[0].lstrip('#').strip()))
-    lines = lines[1:]
-  item['body'] = parse_markdown(escape('\n'.join(lines)))
-  return item
-
-
-def parse_markdown(markdown, span_lines=False):
-  """Parse a small subset of Markdown: italics/bold, and links.
-  italics are only recognized with the * syntax, bold with **.
-  links are only recognized in the form of [title](url)."""
-  #TODO: Just use the Markdown package.
-  #      py-gfm can get it close to Github syntax: https://pypi.python.org/pypi/py-gfm
-  if span_lines:
-    lines = [markdown]
+def get_view_url(page, editing=True):
+  if editing:
+    query_str = '?editing=true'
   else:
-    lines = markdown.splitlines()
-  html_lines = []
-  for line in lines:
-    html = parse_links(line)
-    html = parse_style(html, '**', 'strong')
-    html = parse_style(html, '*', 'em')
-    html_lines.append(html)
-  return '\n'.join(html_lines)
+    query_str = ''
+  if page == 'home':
+    return reverse('editpages_home')+query_str
+  else:
+    return reverse('editpages:view', args=(page,))+query_str
 
 
-def parse_links(markdown):
-  return re.sub(r'\[([^]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', markdown)
+def compose_content(title, body, content):
+  if content is None:
+    content = ''
+    if title is not None:
+      content = '# '+title+'\n'
+    if body is not None:
+      content += body
+  return content
 
 
-def parse_style(markdown, delim='**', tag='strong'):
-  html = ''
-  fields = markdown.split(delim)
-  i = 0
-  while i < len(fields):
-    if i < len(fields)-1 and fields[i].endswith('\\'):
-      html += fields[i] + delim
-      i += 1
-    elif i <= len(fields)-3:
-      html += '{0}<{tag}>{1}</{tag}>'.format(fields[i], fields[i+1], tag=tag)
-      i += 2
-    elif i == len(fields)-2:
-      html += fields[i] + delim
-      i += 1
-    else:
-      html += fields[i]
-      i += 1
-  return html
+def get_or_create_page(editpages_page):
+  notepad_page = EDITPAGES_NAMESPACE+'/'+editpages_page
+  page, created = Page.objects.get_or_create(name=notepad_page)
+  return page
+
+
+def edit_item(page_name, item, content, visit):
+  page = get_or_create_page(page_name)
+  last_version = item.note
+  last_version.deleted = True
+  last_version.deleting_visit = visit
+  note = Note(
+    page=page,
+    content=content,
+    display_order=last_version.display_order,
+    protected=last_version.protected,
+    visit=visit,
+  )
+  log.info('About to save new note.')
+  try:
+    with transaction.atomic():
+      last_version.save()
+      note.save()
+  except DatabaseError as dbe:
+    log.error('Error on saving edited note: {}'.format(dbe))
+  item.note = note
+  log.info('About to save edited item {!r}, replacing note {!r} with new content {!r}'
+           .format(item.key, note.id, note.content[:30]))
+  item.save()
+  log.info('Success saving.')
+
+
+def create_item(item_type, page_name, content, visit, key=None, parent_list=None):
+  page = get_or_create_page(page_name)
+  note = Note(
+    page=page,
+    content=content,
+    visit=visit,
+    protected=True,
+    display_order=1
+  )
+  log.info('About to save new Note {!r}'.format(note.content[:30]))
+  note.save()
+  note.display_order = note.id * DISPLAY_ORDER_MARGIN
+  note.save()
+  item = item_type(
+    page=os.path.basename(page.name),
+    note=note
+  )
+  if key:
+    item.key = key
+  if item_type is ListItem:
+    item.display_order = 1
+  if parent_list:
+    item.parent = parent_list
+  log.info('About to save new {} (key {!r}), with content {!r}.'
+           .format(item_type.__name__, item.key, note.content[:30]))
+  item.save()
+  if item_type is ListItem:
+    item.display_order = item.id * DISPLAY_ORDER_MARGIN
+    item.save()

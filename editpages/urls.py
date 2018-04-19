@@ -6,11 +6,10 @@ app_name = 'editpages'
 
 urlpatterns = [
   url(r'^view/(?P<page>.+)', views.view, name='view'),
-  url(r'^edittext/(?P<page>.+)', views.edittext, name='edittext'),
+  url(r'^additem/(?P<page>.+)', views.additem, name='additem'),
+  url(r'^edititemform/(?P<page>.+)', views.edititemform, name='edititemform'),
   url(r'^edititem/(?P<page>.+)', views.edititem, name='edititem'),
-  url(r'^modifylist/(?P<page>.+)', views.modifylist, name='modifylist'),
-  url(r'^modifylistitem/(?P<page>.+)', views.modifylistitem, name='modifylistitem'),
-  url(r'^addlist/(?P<page>.+)', views.addlist, name='addlist'),
-  url(r'^addlistitem/(?P<page>.+)', views.addlistitem, name='addlistitem'),
-  url(r'^$', views.view, kwargs={'page':'home'}, name='view_home'),
+  url(r'^deleteitemform/(?P<page>.+)', views.deleteitemform, name='deleteitemform'),
+  url(r'^deleteitem/(?P<page>.+)', views.deleteitem, name='deleteitem'),
+  url(r'^moveitem/(?P<page>.+)', views.moveitem, name='moveitem'),
 ]
