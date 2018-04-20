@@ -1,6 +1,9 @@
+import json
 from django.template.defaultfilters import escape
 from django.db import models
 from utils import ModelMixin
+from notepad.models import Note
+from traffic.models import Visit
 from .templatetags.markdown import parse_markdown
 
 
@@ -12,9 +15,9 @@ class Item(ModelMixin, models.Model):
   type = 'item'
   page = models.CharField(max_length=200)
   key = models.CharField(max_length=200)
-  attributes = models.TextField()  # JSON-encoded key/values.
-  note = models.ForeignKey('notepad.Note', models.SET_NULL, null=True, blank=True,
-                           related_name='editpages_item')
+  attributes = models.ForeignKey(Note, models.SET_NULL, null=True, blank=True,
+                                 related_name='attr_item')  # JSON-encoded key/values.
+  note = models.ForeignKey(Note, models.SET_NULL, null=True, blank=True, related_name='editpages_item')
   def content(self):
     if self.note:
       return self.note.content
@@ -47,6 +50,18 @@ class Item(ModelMixin, models.Model):
     return '\n'.join(output_lines)
   def mbody(self):
     return parse_markdown(escape(self.body()))
+  def jattrs(self):
+    if self.attributes:
+      try:
+        data = json.loads(self.attributes.content)
+      except json.JSONDecodeError:
+        return {}
+      if isinstance(data, dict):
+        return data
+      else:
+        return {}
+    else:
+      return {}
   def __str__(self):
     content = self.note.content
     if len(content) > 66:
@@ -56,13 +71,12 @@ class Item(ModelMixin, models.Model):
 
 class ListItem(Item):
   type = 'listitem'
-  parent = models.ForeignKey('self', models.SET_NULL, null=True, blank=True,
-                             related_name='items')
+  parent = models.ForeignKey('self', models.SET_NULL, null=True, blank=True, related_name='items')
   display_order = models.IntegerField()
-  adding_visit = models.OneToOneField('traffic.Visit', models.SET_NULL, null=True, blank=True,
+  adding_visit = models.OneToOneField(Visit, models.SET_NULL, null=True, blank=True,
                                       related_name='added_listitem')
   deleted = models.BooleanField(default=False)
-  deleting_visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True,
+  deleting_visit = models.ForeignKey(Visit, models.SET_NULL, null=True, blank=True,
                                      related_name='deleted_listitem')
   def sorted_items(self):
     return self.items.order_by('display_order', 'id')
@@ -81,4 +95,4 @@ class Move(ModelMixin, models.Model):
                                  related_name='moves_from')
   new_parent = models.ForeignKey(ListItem, models.PROTECT, null=True, blank=True,
                                  related_name='moves_to')
-  visit = models.ForeignKey('traffic.Visit', models.PROTECT, related_name='editpages_move')
+  visit = models.ForeignKey(Visit, models.PROTECT, related_name='editpages_move')
