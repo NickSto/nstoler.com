@@ -157,6 +157,13 @@
             {% if not item.deleted %}
               <li class="list-group-item">
                 <h4 class="list-group-item-heading">{{ item.mtitle|safe }}
+                  {% if item.jattrs.tags %}
+                    <small>
+                      {% for tag in item.jattrs.tags %}
+                        <span class="label label-default">{{ tag }}</span>
+                      {% endfor %}
+                    </small>
+                  {% endif %}
                   {% if editing %}
                     <form class="edit-list-item pull-right" method="post">
                       {% csrf_token %}
