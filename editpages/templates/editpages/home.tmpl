@@ -101,7 +101,7 @@
           {% if editing %}
             <a class="btn btn-default pull-right" href="{% url 'editpages_home' %}">View</a>
           {% else %}
-            <a class="btn btn-default pull-right" href="{% url 'editpages_home' %}?editing=true">Edit</a>
+            <a class="btn btn-default pull-right" href="{% url 'editpages:view' 'home' %}?editing=true">Edit</a>
           {% endif %}
         {% endif %}
         <div class="page-header">
