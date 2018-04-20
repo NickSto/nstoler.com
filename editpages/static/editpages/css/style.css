@@ -4,13 +4,22 @@ input[type="text"].editpages-input, textarea.editpages-input {
   margin-bottom: 5px;
 }
 
-input[type="text"].editpages-input {
+input[type="text"][name="title"].editpages-input {
   width: calc(100% - 55px);
   margin-left: 5px;
 }
 
 label.editpages-title {
   width: 40px;
+}
+
+input[type="text"][name="attributes"].editpages-input {
+  width: calc(100% - 90px);
+  margin-left: 5px;
+}
+
+label.editpages-attributes {
+  width: 75px;
 }
 
 textarea.editpages-input {

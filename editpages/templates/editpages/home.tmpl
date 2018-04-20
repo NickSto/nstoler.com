@@ -42,6 +42,10 @@
             {% else %}
               <textarea class="editpages-input" name="content" rows="4">{{ item.note.content }}</textarea>
             {% endif %}
+            <div>
+              <label for="attributes" class="editpages-attributes">Attributes:</label>
+              <input type="text" class="editpages-input" name="attributes" value="{{ item.attributes.content }}">
+            </div>
             <input type="submit" class="editpages-input btn btn-default" value="Submit">
           </div>
         </form>

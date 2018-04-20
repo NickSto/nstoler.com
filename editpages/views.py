@@ -5,8 +5,8 @@ from django.template.defaultfilters import escape
 from django.urls import reverse
 from django.template import TemplateDoesNotExist
 from django.db import transaction, DatabaseError
-import os
 import logging
+import os
 from utils import QueryParams
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
 from notepad.models import Note, Page
@@ -27,7 +27,8 @@ log = Log()
 EDITPAGES_NAMESPACE = '__editpages__'
 ITEM_TYPES = {'item':Item, 'listitem':ListItem}
 
-##### Views ######
+
+##### Views #####
 
 def view(request, page):
   log.info('In view().')
@@ -84,6 +85,7 @@ def edititem(request, page):
   params.add('content')
   params.add('title')
   params.add('body')
+  params.add('attributes')
   params.parse(request.POST)
   log.info('Editing item: key {!r}, id {!r}'.format(params['key'], params['id']))
   item_type = ITEM_TYPES.get(params['type'])
@@ -94,11 +96,11 @@ def edititem(request, page):
   content = compose_content(params['title'], params['body'], params['content'])
   if item:
     log.info('Editing existing item.')
-    edit_item(page, item, content, request.visit)
+    edit_item(item, content, params['attributes'], request.visit)
   elif params['type'] == 'item':
     # Won't work for ListItems, but they can't be created via edititem anyway.
     log.info('Creating new item.')
-    create_item(item_type, page, content, request.visit, key=params['key'])
+    create_item(item_type, page, content, params['attributes'], request.visit, key=params['key'])
   else:
     log.error('Warning: Cannot edit nonexistent ListItem.')
   return HttpResponseRedirect(get_view_url(page))
@@ -306,48 +308,50 @@ def get_or_create_page(editpages_page):
   return page
 
 
-def edit_item(page_name, item, content, visit):
-  page = get_or_create_page(page_name)
-  last_version = item.note
+def edit_item(item, content, attributes, visit):
+  if content != item.note.content:
+    item.note = edit_note(item.note, content, visit)
+  if attributes:
+    if item.attributes:
+      if attributes != item.attributes.content:
+        item.attributes = edit_note(item.attributes, attributes, visit)
+    else:
+      item.attributes = create_note(item.note.page, attributes, visit)
+  item.save()
+
+
+def edit_note(note, new_content, visit):
+  last_version = note
   last_version.deleted = True
   last_version.deleting_visit = visit
   note = Note(
-    page=page,
-    content=content,
+    page=last_version.page,
+    content=new_content,
     display_order=last_version.display_order,
     protected=last_version.protected,
-    visit=visit,
+    visit=visit
   )
-  log.info('About to save new note.')
   try:
     with transaction.atomic():
       last_version.save()
       note.save()
   except DatabaseError as dbe:
     log.error('Error on saving edited note: {}'.format(dbe))
-  item.note = note
-  log.info('About to save edited item {!r}, replacing note {!r} with new content {!r}'
-           .format(item.key, note.id, note.content[:30]))
-  item.save()
-  log.info('Success saving.')
+    raise
+  return note
 
 
-def create_item(item_type, page_name, content, visit, key=None, parent_list=None):
+def create_item(item_type, page_name, content, attributes, visit, key=None, parent_list=None):
   page = get_or_create_page(page_name)
-  note = Note(
-    page=page,
-    content=content,
-    visit=visit,
-    protected=True,
-    display_order=1
-  )
-  log.info('About to save new Note {!r}'.format(note.content[:30]))
-  note.save()
-  note.display_order = note.id * DISPLAY_ORDER_MARGIN
-  note.save()
+  note = create_note(page, content, visit)
+  if attributes:
+    attr_note = create_note(page, attributes, visit)
+  else:
+    attr_note = None
   item = item_type(
     page=os.path.basename(page.name),
-    note=note
+    note=note,
+    attributes=attr_note
   )
   if key:
     item.key = key
@@ -361,3 +365,17 @@ def create_item(item_type, page_name, content, visit, key=None, parent_list=None
   if item_type is ListItem:
     item.display_order = item.id * DISPLAY_ORDER_MARGIN
     item.save()
+
+
+def create_note(page, content, visit):
+  note = Note(
+    page=page,
+    content=content,
+    visit=visit,
+    protected=True,
+    display_order=1
+  )
+  note.save()
+  note.display_order = note.id * DISPLAY_ORDER_MARGIN
+  note.save()
+  return note
