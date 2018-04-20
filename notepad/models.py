@@ -12,7 +12,7 @@ class Page(ModelMixin, models.Model):
 class Note(ModelMixin, models.Model):
   page = models.ForeignKey(Page, models.SET_NULL, null=True, blank=True)
   content = models.TextField()
-  visit = models.OneToOneField('traffic.Visit', models.SET_NULL, null=True, blank=True)
+  visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True)
   protected = models.BooleanField(default=False)  # Only admin can delete.
   deleted = models.BooleanField(default=False)
   deleting_visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True,
