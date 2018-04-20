@@ -16,6 +16,7 @@ label.editpages-title {
 input[type="text"][name="attributes"].editpages-input {
   width: calc(100% - 90px);
   margin-left: 5px;
+  font-family: monospace;
 }
 
 label.editpages-attributes {
