@@ -14,15 +14,6 @@ from notepad.views import DISPLAY_ORDER_MARGIN
 from .templatetags.markdown import parse_markdown
 from .models import Item, ListItem, Move
 log = logging.getLogger(__name__)
-class Log(object):
-  def __init__(self):
-    self.messages = []
-  def info(self, message):
-    self.messages.append(message)
-  error = info
-  def __str__(self):
-    return '\n'.join(self.messages)
-log = Log()
 
 EDITPAGES_NAMESPACE = '__editpages__'
 ITEM_TYPES = {'item':Item, 'listitem':ListItem}
@@ -31,7 +22,6 @@ ITEM_TYPES = {'item':Item, 'listitem':ListItem}
 ##### Views #####
 
 def view(request, page):
-  log.info('In view().')
   params = request.GET
   is_admin = is_admin_and_secure(request)
   editing = False
@@ -46,7 +36,6 @@ def view(request, page):
 
 @require_admin_and_privacy
 def edititemform(request, page):
-  log.info('In edititemform().')
   params = QueryParams()
   params.add('key')
   params.add('id', type=int)
@@ -77,7 +66,6 @@ def edititemform(request, page):
 
 @require_admin_and_privacy
 def edititem(request, page):
-  log.info('In edititem() for page {!r}'.format(page))
   params = QueryParams()
   params.add('key')
   params.add('id', type=int)
@@ -108,7 +96,6 @@ def edititem(request, page):
 
 @require_admin_and_privacy
 def deleteitemform(request, page):
-  log.info('In deleteitemform().')
   params = QueryParams()
   params.add('type', choices=('item', 'listitem'))
   params.add('key')
@@ -125,7 +112,6 @@ def deleteitemform(request, page):
 
 @require_admin_and_privacy
 def deleteitem(request, page):
-  log.info('In deleteitemform().')
   params = QueryParams()
   params.add('type', choices=('item', 'listitem'))
   params.add('key')
@@ -147,7 +133,6 @@ def deleteitem(request, page):
 
 @require_admin_and_privacy
 def additem(request, page):
-  log.info('In addlistitem() for page {!r}'.format(page))
   params = QueryParams()
   params.add('type', choices=('item', 'listitem'))
   params.add('title')
@@ -169,7 +154,6 @@ def additem(request, page):
 
 @require_admin_and_privacy
 def moveitem(request, page):
-  log.info('In moveitem().')
   params = QueryParams()
   params.add('action', choices=('moveup', 'movedown'))
   params.add('type', choices=('item', 'listitem'))
@@ -226,9 +210,7 @@ def moveitem(request, page):
 ##### Functions #####
 
 def show_page(request, page, context):
-  log.info('In show_page().')
   added_context = {'editing':False, 'editing_text':False, 'deleting_text':False, 'admin':False}
-                   # 'stderr':log}
   added_context['items'] = get_items(page)
   added_context['root_lists'] = get_root_lists(page)
   log.info('Found {} items, {} root lists.'

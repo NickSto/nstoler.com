@@ -11,10 +11,6 @@
 {% block content %}
     <div class="container">
 
-      {% if stderr %}
-      <pre>{{ stderr }}</pre>
-      {% endif %}
-
       {% if editing_text %}
         <form id="edit-text" class="panel panel-default" method="post" action="{% url 'editpages:edititem' 'home' %}">
           {% csrf_token %}

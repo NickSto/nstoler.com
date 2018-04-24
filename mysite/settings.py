@@ -206,7 +206,7 @@ LOGGING = {
   }
 }
 
-for _app in INSTALLED_APPS:
+for _app in INSTALLED_APPS + ['utils']:
   if not _app.startswith('django.'):
     LOGGING['loggers'][_app] = {
       'handlers': ['console', 'logfile'],
