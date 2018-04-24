@@ -17,4 +17,6 @@ urlpatterns = [
   url(r'^sessionrecover$', views.sessionrecover, name='sessionrecover'),
   url(r'^export/$', RedirectView.as_view(url='../export', permanent=True)),
   url(r'^export$', views.export, name='export'),
+  url(r'^captcha/(?P<name>.+)$', views.captcha, name='captcha'),
+  url(r'^captchasubmit/(?P<name>.+)$', views.captchasubmit, name='captchasubmit'),
 ]

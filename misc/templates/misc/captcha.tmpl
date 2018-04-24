@@ -1,0 +1,35 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}Get protected info{% endblock %}
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'misc/css/setcookie.css' %}?via=html">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <!-- TODO: Figure out a CORS setting that'll work instead of crossorigin="anonymous" -->
+  <!-- TODO: Figure out why this hash won't work:
+    integrity="sha256-1dJkH6ZlZQ7vn6/snqt////buX58y6hoZ1E3/d4yWoE=" -->
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+      <section>
+        <noscript>
+          <h4>Notice: Javascript is required for this page's functionality.</h4>
+        </noscript>
+      </section>
+      <section class="panel panel-shrink">
+        <div class="panel-heading">
+          <h4>{{ title }}</h4>
+        </div>
+        <form class="panel-body" method="post" action="{% url 'misc:captchasubmit' name %}">
+          {% csrf_token %}
+          <p>{{ body }}</p>
+          {% if show_captcha %}
+            <div class="g-recaptcha" data-sitekey="6LeyolQUAAAAAIDb_O3a3MrH7IA9Jj9hYlAQOWXR"></div>
+            <input type="submit" value="Submit">
+          {% endif %}
+        </form>
+      </section>
+    </div>
+{% endblock content %}

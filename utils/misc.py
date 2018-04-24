@@ -1,12 +1,15 @@
-from django.db import models
 import codecs
 import collections
 import functools
 import http.client
+import json
 import logging
+import requests
 import socket
 import threading
 import urllib.parse
+from django.conf import settings
+from django.db import models
 log = logging.getLogger(__name__)
 
 
@@ -168,6 +171,31 @@ def boolish(value):
     return True
   else:
     raise ValueError('Invalid boolish value {!r}.'.format(value))
+
+
+def recaptcha_verify(response_token, ip=None):
+  # https://developers.google.com/recaptcha/docs/verify
+  log.info('Verifying..')
+  params = {
+    'secret': settings.RECAPTCHA_SECRET,
+    'response': response_token,
+  }
+  if ip:
+    params['remoteip'] = ip
+  response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=params)
+  try:
+    api_response = json.loads(response.text[:1000])
+  except json.JSONDecodeError:
+    return False
+  if not api_response.get('success'):
+    log.warning('reCAPTCHA came back invalid. Error codes: {!r}'
+                .format(api_response.get('error-codes')))
+    return False
+  if not api_response.get('hostname') in settings.ALLOWED_HOSTS:
+    log.warning('reCAPTCHA validated, but hostname is wrong. Saw {hostname!r}.'.format(**api_response))
+    return False
+  #TODO: Validate timestamp ('challenge_ts').
+  return True
 
 
 def http_request(host, path, secure=True, timeout=None, max_response=None):
