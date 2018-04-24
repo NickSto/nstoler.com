@@ -83,5 +83,5 @@ def captchasubmit(request, name):
     return render(request, 'misc/captcha.tmpl', context)
   response = params.get('g-recaptcha-response')
   if not recaptcha_verify(response):
-    context['body'] = 'Invalid CAPTCHA response!'
+    context['body'] = 'Invalid CAPTCHA response or problem verifying it!'
   return render(request, 'misc/captcha.tmpl', context)

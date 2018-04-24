@@ -175,14 +175,18 @@ def boolish(value):
 
 def recaptcha_verify(response_token, ip=None):
   # https://developers.google.com/recaptcha/docs/verify
-  log.info('Verifying..')
   params = {
     'secret': settings.RECAPTCHA_SECRET,
     'response': response_token,
   }
   if ip:
     params['remoteip'] = ip
-  response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=params)
+  try:
+    response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=params)
+  except requests.exceptions.RequestException as error:
+    log.error('Error making request to reCAPTCHA API. Encountered a {}: {}'
+              .format(type(error).__name__, error))
+    return False
   try:
     api_response = json.loads(response.text[:1000])
   except json.JSONDecodeError:
