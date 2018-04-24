@@ -182,7 +182,8 @@ def recaptcha_verify(response_token, ip=None):
   if ip:
     params['remoteip'] = ip
   try:
-    response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=params)
+    response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=params,
+                             timeout=4)
   except requests.exceptions.RequestException as error:
     log.error('Error making request to reCAPTCHA API. Encountered a {}: {}'
               .format(type(error).__name__, error))
