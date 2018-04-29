@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.views.generic.base import RedirectView
 import traffic.views
 import editpages.views
+import horcrux.views
 
 urlpatterns = [
   # url(r'^admin/', include(admin.site.urls)),
@@ -31,6 +32,9 @@ urlpatterns = [
   url(r'^admin/', include('myadmin.urls')),
   url(r'^wikihistory/', include('wikihistory.urls')),
   url(r'^ET/', include('ET.urls')),
+  url(r'^horcrux$', horcrux.views.main, name='horcrux_main'),
+  url(r'^horcrux/$', RedirectView.as_view(url='/horcrux', permanent=True)),
+  url(r'^horcrux/', include('horcrux.urls')),
   # If nothing else matches, send it to notepad.
   url(r'', include('notepad.urls')),
 ]

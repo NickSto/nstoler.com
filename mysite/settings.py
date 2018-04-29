@@ -56,6 +56,7 @@ INSTALLED_APPS = [
   'notepad',
   'traffic',
   'myadmin',
+  'horcrux',
   'editpages',
   'wikihistory',
   'django.contrib.admin',

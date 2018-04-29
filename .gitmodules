@@ -7,3 +7,9 @@
 [submodule "ET"]
 	path = ET
 	url = https://github.com/NickSto/ET.git
+[submodule "utillib"]
+	path = utillib
+	url = https://github.com/NickSto/utillib.git
+[submodule "horcrux"]
+	path = horcrux
+	url = https://github.com/NickSto/horcrux.git
