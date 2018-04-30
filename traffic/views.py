@@ -151,6 +151,7 @@ def view_ip(request, ip=None):
   if is_admin_and_secure(request):
     admin = True
   else:
+    admin = False
     ip = request.visit.visitor.ip
   # Get query parameters.
   params = request.GET
