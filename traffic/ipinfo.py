@@ -2,19 +2,19 @@ from django.conf import settings
 from django.utils import timezone
 from .models import IpInfo
 from datetime import datetime
-import utils
 import pytz
-import json
 import logging
+import urllib.parse
+from utils import http_request, HttpError
 log = logging.getLogger(__name__)
 
 
-FREEGEOIP_DOMAIN = 'freegeoip.net'
-FREEGEOIP_PATH = '/json/{}'
-IPINFO_DOMAIN = 'ipinfo.io'
-IPINFO_PATH = '/{}'
-TZAPI_DOMAIN = 'timezoneapi.io'  # Requires https.
-TZAPI_PATH = '/api/ip?ip={}'
+# http for lower latency (and we don't care that much about this kind of attack).
+#TODO: Replace with ipstack.com: https://github.com/apilayer/freegeoip#readme
+FREEGEOIP_URL = 'http://freegeoip.net/json/{}'
+IPINFO_URL = 'http://ipinfo.io/{}'
+# requires https
+TZAPI_URL = 'https://timezoneapi.io/api/ip?ip={}'
 MAX_RESPONSE = 65536
 DEFAULT_TIMEOUT = 1
 TTL_DEFAULT = 24*60*60  # Cache IpInfo data for 1 day.
@@ -82,9 +82,7 @@ def get_freegeoip_data(ip, timeout=DEFAULT_TIMEOUT):
   They uniquely get us the timezone. And the country field isn't abbreviated.
   All other data is also available from ipinfo.io.
   Limit: 15,000 requests per hour (as of Oct 2017)"""
-  response = get_api_data(FREEGEOIP_DOMAIN,
-                          FREEGEOIP_PATH.format(ip),
-                          secure=False,  # for lower latency
+  response = get_api_data(FREEGEOIP_URL.format(ip),
                           timeout=timeout,
                           max_response=MAX_RESPONSE)
   if response is None:
@@ -113,9 +111,7 @@ def get_ipinfo_data(ip, timeout=DEFAULT_TIMEOUT):
   They uniquely get us the ASN, ISP, and hostname
   All other data is also available from freegeoip.net.
   Limit: 1000 requests per day (as of Oct 2017)."""
-  response = get_api_data(IPINFO_DOMAIN,
-                          IPINFO_PATH.format(ip),
-                          secure=False,  # for lower latency
+  response = get_api_data(IPINFO_URL.format(ip),
                           timeout=timeout,
                           max_response=MAX_RESPONSE)
   if response is None:
@@ -156,14 +152,14 @@ def get_ipinfo_data(ip, timeout=DEFAULT_TIMEOUT):
   return our_data
 
 
-def get_api_data(domain, path, secure=True, timeout=DEFAULT_TIMEOUT, max_response=MAX_RESPONSE):
-  response = utils.http_request(domain, path, secure=secure, timeout=timeout, max_response=max_response)
-  if response:
-    try:
-      return json.loads(response)
-    except json.JSONDecodeError:
-      return None
-  else:
+def get_api_data(url, timeout=DEFAULT_TIMEOUT, max_response=MAX_RESPONSE):
+  try:
+    response = http_request(url, timeout=timeout, max_response=max_response, json=True)
+    return response
+  except HttpError as error:
+    domain = urllib.parse.urlparse(url).netloc
+    log.error('Error making request to {} API ({}): {}'
+              .format(domain, error.type, error.message))
     return None
 
 

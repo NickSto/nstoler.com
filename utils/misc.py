@@ -1,11 +1,7 @@
-import codecs
 import collections
 import functools
-import http.client
-import json
 import logging
 import requests
-import socket
 import threading
 import urllib.parse
 from django.conf import settings
@@ -182,91 +178,71 @@ def recaptcha_verify(response_token, ip=None):
   if ip:
     params['remoteip'] = ip
   try:
-    response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=params,
-                             timeout=4)
-  except requests.exceptions.RequestException as error:
-    log.error('Error making request to reCAPTCHA API. Encountered a {}: {}'
-              .format(type(error).__name__, error))
+    response = http_request('https://www.google.com/recaptcha/api/siteverify', post_params=params,
+                            timeout=4, json=True)
+  except HttpError as error:
+    log.error('Error making request to reCAPTCHA API ({}): {}'
+              .format(error.type, error.message))
     return False
-  try:
-    api_response = json.loads(response.text[:1000])
-  except json.JSONDecodeError:
-    return False
-  if not api_response.get('success'):
+  if not response.get('success'):
     log.warning('reCAPTCHA came back invalid. Error codes: {!r}'
-                .format(api_response.get('error-codes')))
+                .format(response.get('error-codes')))
     return False
-  if not api_response.get('hostname') in settings.ALLOWED_HOSTS:
-    log.warning('reCAPTCHA validated, but hostname is wrong. Saw {hostname!r}.'.format(**api_response))
+  if not response.get('hostname') in settings.ALLOWED_HOSTS:
+    log.warning('reCAPTCHA validated, but hostname is wrong. Saw {hostname!r}.'.format(**response))
     return False
   #TODO: Validate timestamp ('challenge_ts').
   return True
 
 
-def http_request(host, path, secure=True, timeout=None, max_response=None):
+class HttpError(Exception):
+  """A wrapper for all the things that can go wrong in http_request()."""
+  def __init__(self, exception=None, error_type=None, message=None):
+    self.exception = exception
+    if self.exception is not None:
+      self.type = type(exception).__name__
+      self.message = str(exception)
+    if error_type is not None:
+      self.type = error_type
+    if message is not None:
+      self.message = message
+    self.args = (self.message or '',)
+  def __str__(self):
+    output = type(self).__name__
+    if self.type is not None:
+      output += ' ('+self.type+')'
+    if self.message is not None:
+      output += ': '+self.message
+    return output
+
+
+def http_request(url, post_params=None, timeout=None, max_response=None, json=False):
   """A very quick and simple function for making an HTTP request.
-  Returns the response as a str.
-  On failure, returns None.
-  WARNING: This returns a str, so it does the bytes-to-str conversion. If a valid charset is in the
-  Content-Type response header, it'll be fine, but if not it'll try utf-8, and if the decode fails,
-  so will this (and it'll return None)."""
-  if secure:
-    conex_class = http.client.HTTPSConnection
+  Returns the response as a str, unless `json` is True.
+  On failure, raises an HttpError."""
+  try:
+    if post_params:
+      response = requests.post(url, data=post_params, timeout=timeout)
+    else:
+      response = requests.get(url, timeout=timeout)
+  except requests.exceptions.RequestException as error:
+    raise HttpError(exception=error)
+  if response.status_code != 200:
+    raise HttpError(
+      error_type='status_code',
+      message='Error making request: response code {} ({}).'
+              .format(response.status_code, response.reason)
+    )
+  if json:
+    try:
+      return response.json()
+    except json.JSONDecodeError as error:
+      raise HttpError(
+        exception=error,
+        message='Response not valid JSON: {!r}'.format(response.text)
+      )
   else:
-    conex_class = http.client.HTTPConnection
-  try:
-    if timeout is None:
-      conex = conex_class(host)
-    else:
-      conex = conex_class(host, timeout=timeout)
-    conex.request('GET', path)
-    response = conex.getresponse()
-    if response.status != 200:
-      if secure:
-        url = 'https://'+host+path
-      else:
-        url = 'http://'+host+path
-      log.warning('Received response {} from {}'.format(response.status, url))
-      conex.close()
-      return None
-    if max_response is None:
-      response_bytes = response.read()
-    else:
-      response_bytes = response.read(max_response)
-    content_type = response.headers.get('Content-Type')
-    encoding = get_encoding(content_type)
-    if encoding:
-      response_str = str(response_bytes, encoding)
-    else:
-      try:
-        response_str = str(response_bytes, 'utf8')
-      except UnicodeError:
-        return None
-    conex.close()
-    return response_str
-  except (http.client.HTTPException, socket.error):
-    return None
-
-
-def get_encoding(content_type):
-  if not content_type:
-    return None
-  fields = content_type.split(';')
-  if len(fields) != 2:
-    return None
-  mime_encoding = fields[1]
-  fields = mime_encoding.split('=')
-  if len(fields) != 2:
-    return None
-  key, encoding = fields
-  if key.strip().lower() != 'charset':
-    return None
-  encoding = encoding.strip().lower()
-  try:
-    codecs.getencoder(encoding)
-    return encoding
-  except LookupError:
-    return None
+    return response.text
 
 
 # From https://stackoverflow.com/questions/18420699/multithreading-for-python-django/28913218#28913218
