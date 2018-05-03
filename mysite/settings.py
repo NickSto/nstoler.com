@@ -41,6 +41,8 @@ ALLOWED_HOSTS = []
 # Must be overridden in protected_settings.py.
 CONTACT_EMAIL = ''
 RECAPTCHA_SECRET = ''
+PERSONAL_EMAIL = ''
+PERSONAL_PHONE = ''
 
 #TODO: Check out these security settings:
 #      https://docs.djangoproject.com/en/1.11/ref/middleware/#module-django.middleware.security

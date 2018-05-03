@@ -49,7 +49,8 @@ th.name, tr.names > th {
 }
 
 code {
-  color: #575757;
+  color: #444;
+  background-color: #fff;
 }
 
 .input {
