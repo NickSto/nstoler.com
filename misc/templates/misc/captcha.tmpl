@@ -6,9 +6,7 @@
 {% block stylesheet %}
   <link rel="stylesheet" href="{% static 'misc/css/setcookie.css' %}?via=html">
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-  <!-- TODO: Figure out a CORS setting that'll work instead of crossorigin="anonymous" -->
-  <!-- TODO: Figure out why this hash won't work:
-    integrity="sha256-1dJkH6ZlZQ7vn6/snqt////buX58y6hoZ1E3/d4yWoE=" -->
+  <!-- Unfortunately, we can't include an integrity hash because Google constantly changes the content of this script. -->
 {% endblock %}
 
 {% block content %}
