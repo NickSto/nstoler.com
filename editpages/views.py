@@ -213,8 +213,6 @@ def show_page(request, page, context):
   added_context = {'editing':False, 'editing_text':False, 'deleting_text':False, 'admin':False}
   added_context['items'] = get_items(page)
   added_context['root_lists'] = get_root_lists(page)
-  log.info('Found {} items, {} root lists.'
-           .format(len(added_context['items']), len(added_context['root_lists'])))
   for key, value in added_context.items():
     if key not in context:
       context[key] = value
