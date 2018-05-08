@@ -27,9 +27,6 @@ REQUIRE_HTTPS = False
 # It can even be obtained from the web interface by the admin.
 ADMIN_SALT = '5586ae9e10fb6681f37332b26180358b1492dfc990646de79618d33ab3fba597'
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'h2!94u-kg77+5me^t!=nqwo8tnfb6syjexlk5(0d21xd@2p587'
 
@@ -44,6 +41,7 @@ RECAPTCHA_SECRET = ''
 PERSONAL_EMAIL = ''
 PERSONAL_PHONE = ''
 
+#TODO: https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 #TODO: Check out these security settings:
 #      https://docs.djangoproject.com/en/1.11/ref/middleware/#module-django.middleware.security
 # SECURE_BROWSER_XSS_FILTER
