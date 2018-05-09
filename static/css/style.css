@@ -81,3 +81,16 @@ select {
   border-radius: 4px;
   padding: 2px;
 }
+
+.center-hack {
+  text-align: center;
+}
+
+.gallery {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.w512 {
+  width: 512px;
+}
