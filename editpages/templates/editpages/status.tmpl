@@ -1,0 +1,139 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}Server Status{% endblock %}
+
+{% block stylesheet %}
+    <link rel="stylesheet" href="{% static 'editpages/css/style.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+
+      {% if editing_text %}
+        <form id="edit-text" class="panel panel-default" method="post" action="{% url 'editpages:edititem' 'status' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="edit">
+          <input type="hidden" name="type" value="{{ type }}">
+          <input type="hidden" name="key" value="{{ item.key }}">
+          <input type="hidden" name="id" value="{{ item.id }}">
+          <div class="panel-heading">
+            {% if item.key %}
+              <label for="content" class="panel-title">Edit text for <code>{{ item.key }}</code></label>
+            {% else %}
+              <label for="content" class="panel-title">Edit list item text</label>
+            {% endif %}
+          </div>
+          <div class="panel-body">
+            {% if display_type == 'title-body' %}
+              <label class="editpages-title" for="title">Title:</label>
+              <input type="text" class="editpages-input" name="title" value="{{ item.title }}">
+              <div>
+                <textarea class="editpages-input" name="body" rows="4">{{ item.body }}</textarea>
+              </div>
+            {% elif display_type == 'title' %}
+              <label class="editpages-title" for="title">Title:</label>
+              <input type="text" class="editpages-input" name="title" value="{{ item.title }}">
+            {% else %}
+              <textarea class="editpages-input" name="content" rows="4">{{ item.note.content }}</textarea>
+            {% endif %}
+            <div>
+              <label for="attributes" class="editpages-attributes">Attributes:</label>
+              <input type="text" class="editpages-input" name="attributes" value="{{ item.attributes.content }}">
+            </div>
+            <input type="submit" class="editpages-input btn btn-default" value="Submit">
+          </div>
+        </form>
+      {% endif %}
+
+      {% if deleting_text %}
+        <form id="delete-text" class="panel panel-default" method="post" action="{% url 'editpages:deleteitem' 'status' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="type" value="{{ type }}">
+          <input type="hidden" name="key" value="{{ item.key }}">
+          <input type="hidden" name="id" value="{{ item.id }}">
+          <div class="panel-heading">
+            <label for="content" class="panel-title">
+              Delete
+                {% if item.key %}
+                  <code>{{ item.key }}</code>?
+                {% else %}
+                  {% if item.parent %}
+                    list item
+                  {% else %}
+                    list
+                  {% endif %}
+                  {% if item.title %}
+                    "{{ item.mtitle|safe }}"?
+                  {% else %}
+                    "{{ item.mcontent|safe }}"?
+                  {% endif %}
+                {% endif %}
+            </label>
+          </div>
+          <div class="panel-body">
+            <div>
+              {% if item.title %}
+                <h2>
+                  {{ item.mtitle|safe }}
+                </h2>
+                <p>
+                  {{ item.mbody|safe }}
+                </p>
+              {% else %}
+                <p>
+                  {{ item.mcontent|safe }}
+                </p>
+              {% endif %}
+            </div>
+            <input type="submit" class="editpages-input btn btn-default" value="Delete">
+          </div>
+        </form>
+      {% endif %}
+
+      <form id="edit-items" method="post" action="{% url 'editpages:edititemform' 'status' %}">
+        {% csrf_token %}
+        <input type="hidden" name="type" value="item">
+        <input type="hidden" name="action" value="edit">
+        {% if admin %}
+          {% if editing %}
+            <a class="btn btn-default pull-right" href="{% url 'editpages_status' %}">View</a>
+          {% else %}
+            <a class="btn btn-default pull-right" href="{% url 'editpages:view' 'status' %}?editing=true">Edit</a>
+          {% endif %}
+        {% endif %}
+        <header>
+          <h1 id="title">{{ items.title.mtitle|safe }}
+            {% if editing %}
+              <input type="hidden" name="title-display-type" value="title">
+              <button class="btn btn-default btn-sm" name="key" value="title">Edit</button>
+            {% endif %}
+          </h1>
+        </header>
+
+        <section id="memory" class="panel">
+          <div class="panel-heading">
+            <h3>{{ items.memory.mtitle|safe }}
+              {% if editing %}
+                <button class="btn btn-default btn-sm" name="key" value="memory">Edit</button>
+              {% endif %}
+            </h3>
+          </div>
+          <div class="panel-body">
+            <div class="gallery center-hack">
+              <div class="center-block">
+                <a href="/img/mem.png">
+                  <img class="img-responsive img-thumbnail" src="/img/mem.png?via=html"/>
+                </a>
+              </div>
+            </div>
+            <p>
+              {{ items.memory.mbody|safe }}
+            </p>
+          </div>
+        </section>
+      </form>
+
+    </div> <!-- .container -->
+{% endblock %}

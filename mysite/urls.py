@@ -29,6 +29,8 @@ urlpatterns = [
   url(r'^$', editpages.views.view, kwargs={'page':'home'}, name='editpages_home'),
   url(r'^yourgenome$', editpages.views.view, kwargs={'page':'yourgenome'}, name='editpages_yourgenome'),
   url(r'^yourgenome/$', RedirectView.as_view(url='/yourgenome', permanent=True)),
+  url(r'^status$', editpages.views.view, kwargs={'page':'status'}, name='editpages_status'),
+  url(r'^status/$', RedirectView.as_view(url='/status', permanent=True)),
   url(r'^admin/', include('myadmin.urls')),
   url(r'^wikihistory/', include('wikihistory.urls')),
   url(r'^ET/', include('ET.urls')),
