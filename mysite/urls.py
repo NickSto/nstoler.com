@@ -36,6 +36,8 @@ urlpatterns = [
   url(r'^ET/', include('ET.urls')),
   url(r'^horcrux$', horcrux.views.main, name='horcrux_main'),
   url(r'^horcrux/$', RedirectView.as_view(url='/horcrux', permanent=True)),
+  url(r'^horcruxes$', RedirectView.as_view(url='/horcrux', permanent=True)),
+  url(r'^horcruxes/$', RedirectView.as_view(url='/horcrux', permanent=True)),
   url(r'^horcrux/', include('horcrux.urls')),
   # If nothing else matches, send it to notepad.
   url(r'', include('notepad.urls')),
