@@ -36,7 +36,7 @@ def middleware(get_response):
 def get_or_create_visit_and_visitor(request):
   """Do the actual work of logging the visit. Return the Visit object."""
   request_data = unpack_request(request)
-  visitor = get_or_create_visitor(request_data)
+  visitor = get_or_create_visitor(**request_data)
   visit = create_visit(request_data, visitor, request.COOKIES)
   run_background_tasks(visitor, request_data)
   return visit
@@ -149,24 +149,21 @@ def unpack_request(request):
   }
 
 
-def get_or_create_visitor(request_data):
+def get_or_create_visitor(ip=None, user_agent=None, cookie1=None, cookie2=None, **kwargs):
   """Find a Visitor by ip, user_agent, and cookies sent (only visitors_v1/2).
   If no exact match for the Visitor is found, create one. In that case, if a Visitor with a matching
   cookie can be found, assume it's the same User."""
-  visitor, user, label = get_visitor_user_and_label(request_data['ip'],
-                                                    request_data['user_agent'],
-                                                    request_data['cookie1'],
-                                                    request_data['cookie2'])
+  visitor, user, label = get_visitor_user_and_label(ip, user_agent, cookie1, cookie2)
   if not user:
     user = User()
     user.save()
     log.info('Created new User (id {})'.format(user.id))
   if not visitor:
     visitor = Visitor(
-      ip=request_data['ip'],
-      user_agent=request_data['user_agent'],
-      cookie1=request_data['cookie1'],
-      cookie2=request_data['cookie2'],
+      ip=ip,
+      user_agent=user_agent,
+      cookie1=cookie1,
+      cookie2=cookie2,
       label=label,
       user=user,
       version=2,

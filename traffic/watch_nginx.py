@@ -133,8 +133,8 @@ def watch(source, ignore_via=(), ignore_ua=()):
       logging.info('Ignoring request from user agent "{user_agent}"'.format(**fields))
       continue
     # Get the Visitor matching these identifiers or create one.
-    main_cookies = get_cookie_values(fields['cookies'], COOKIE1_NAME, COOKIE2_NAME)
-    visitor = traffic.lib.get_or_create_visitor(fields['ip'], main_cookies, fields['user_agent'])
+    cookie1, cookie2 = get_cookie_values(fields['cookies'], COOKIE1_NAME, COOKIE2_NAME)
+    visitor = traffic.lib.get_or_create_visitor(fields['ip'], fields['user_agent'], cookie1, cookie2)
     # Create this Visit and save it.
     visit = traffic.models.Visit(
       timestamp=datetime.fromtimestamp(fields['timestamp'], tz=pytz.utc),
