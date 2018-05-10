@@ -48,11 +48,6 @@ th.name, tr.names > th {
   font-weight: normal;
 }
 
-code {
-  color: #444;
-  background-color: #fff;
-}
-
 .input {
   margin-top: 10px;
 }
@@ -72,6 +67,15 @@ code {
 
 .btn-file input[type="file"] {
   display: none;
+}
+
+h5 {
+  font-weight: 700;
+}
+
+code {
+  color: #444;
+  background-color: #fff;
 }
 
 select {
