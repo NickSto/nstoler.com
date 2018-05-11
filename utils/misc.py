@@ -2,9 +2,11 @@ import collections
 import functools
 import logging
 import requests
+import smtplib
 import threading
 import urllib.parse
 from django.conf import settings
+from django.core.mail import send_mail
 from django.db import models
 log = logging.getLogger(__name__)
 
@@ -254,3 +256,16 @@ def async(function):
     t.daemon = True
     t.start()
   return wrapped_fxn
+
+
+def email_admin(subject, body):
+  for key in ('EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_HOST_USER', 'EMAIL_HOST_PASSWORD'):
+    if not (hasattr(settings, key) and getattr(settings, key)):
+      log.error('Failed sending email. Missing settings.{}.'.format(key))
+      return False
+  mails = 0
+  try:
+    mails = send_mail(subject, body, settings.EMAIL_HOST_USER, [settings.PERSONAL_EMAIL])
+  except smtplib.SMTPException as error:
+    log.error('Failed sending email to {}: {}'.format(settings.EMAIL_HOST_USER, error))
+  return mails > 0

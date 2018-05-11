@@ -5,3 +5,4 @@ from .misc import async
 from .misc import QueryParams
 from .misc import boolish
 from .misc import recaptcha_verify
+from .misc import email_admin
