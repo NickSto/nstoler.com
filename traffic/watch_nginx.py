@@ -19,7 +19,7 @@ import django.conf
 COOKIE1_NAME = 'visitors_v1'
 COOKIE2_NAME = 'visitors_v2'
 ARG_DEFAULTS = {'log_file':sys.stdin, 'site':'mysite', 'ignore_via':('html','css','js'),
-                'volume':logging.ERROR, 'log':sys.stderr,
+                'volume':logging.ERROR, 'log':sys.stderr, 'sensitive_files':('master.hc',),
                 'ignore_ua':('Pingdom.com_bot_version','Functional Tester')}
 DESCRIPTION = """"""
 
@@ -37,6 +37,9 @@ def make_argparser():
   parser.add_argument('-u', '--ignore-ua',
     help='Ignore requests from user agent strings which begin with any of these strings. Give as a '
          'comma-delimited list. Default: %(default)s')
+  parser.add_argument('-s', '--sensitive-files',
+    help='Email an alert if any of these files are accessed. Triggered if the path basename equals '
+         'any of these comma-delimited strings. Default: %(default)s')
   parser.add_argument('-S', '--site',
     help='Django project name. Default: %(default)s')
   parser.add_argument('-l', '--log', type=argparse.FileType('w'),
@@ -57,7 +60,7 @@ def main(argv):
 
   init_django(args.site)
 
-  list_args = process_list_args(args, ('ignore_via', 'ignore_ua'))
+  list_args = process_list_args(args, ('ignore_via', 'ignore_ua', 'sensitive_files'))
 
   watch(args.log_file, **list_args)
 
@@ -93,11 +96,12 @@ def process_list_args(args, list_args):
   return processed_values
 
 
-def watch(source, ignore_via=(), ignore_ua=()):
+def watch(source, ignore_via=(), ignore_ua=(), sensitive_files=()):
   logging.debug('Called watch({}, ignore_via={!r}, ignore_ua={!r})'
                 .format(source, ignore_via, ignore_ua))
   import traffic.models
   import traffic.lib
+  import utils
 
   if source is not sys.stdin:
     tail_proc = subprocess.Popen(['tail', '-n', '0', '--follow=name', source],
@@ -108,6 +112,7 @@ def watch(source, ignore_via=(), ignore_ua=()):
     fields = parse_log_line(line)
     if not fields:
       continue
+    alert_if_sensitive(sensitive_files, **fields)
     # Skip requests that weren't served directly by Nginx.
     if fields['handler'] == 'django':
       if fields['uid_set']:
@@ -160,10 +165,53 @@ def watch(source, ignore_via=(), ignore_ua=()):
     logging.info('Created visit {}.'.format(visit.id))
 
 
+class DummyRequest(object):
+  def __init__(self, cookies):
+    self.COOKIES = {}
+    for name, morsel in cookies.items():
+      self.COOKIES[name] = morsel.value
+
+
+def alert_if_sensitive(sensitive_files, ip=None, scheme=None, host=None, nginx_path=None,
+                       nginx_query_str=None, referrer=None, code=None, size=None, user_agent=None,
+                       cookies=None, **kwargs):
+  if cookies is None:
+    cookies = {}
+  import utils
+  import myadmin.lib
+  if os.path.basename(nginx_path) in sensitive_files:
+    filename = os.path.basename(nginx_path)
+    # Don't alert if it's just me.
+    is_admin = myadmin.lib.get_admin_cookie(DummyRequest(cookies))
+    if is_admin:
+      logging.info('Download of {} detected, but vistor seems to be me.'.format(filename))
+      return
+    subject = 'Visitor downloaded {}!'.format(filename)
+    url = '{}://{}{}'.format(scheme, host, nginx_path)
+    if nginx_query_str and nginx_query_str != '-':
+      url += '?'+nginx_query_str
+    cookies_list = ['{}:\t{}'.format(name, morsel.value) for name, morsel in cookies.items()]
+    if cookies_list:
+      cookies_str = '\n  '+'\n  '.join(cookies_list)
+    else:
+      cookies_str = 'None'
+    if referrer and referrer != '-':
+      referrer_value = referrer
+    else:
+      referrer_value = None
+    body = ('A visitor from IP address {0} accessed {1} (referrer: {2!r}).\n\n'
+            'User agent: {3}\n\n'
+            'Cookies received: {4}\n\n'
+            'Response code: {5}, bytes served: {6}\n'
+            .format(ip, url, referrer_value, user_agent, cookies_str, code, size))
+    logging.warning('Download of {} detected. Email alert sent.'.format(filename))
+    utils.email_admin(subject, body)
+
+
 def parse_log_line(line_raw):
     """Fields, as their nginx variable names and the alias I use in this code:
     The numbers in the columns are how many times I've seen the value be "-" or "" in my logs.
-        nginx             my name             "-"      ""
+        nginx             fields key          "-"      ""
     0:  $msec             timestamp             0       0
     1:  $remote_addr      ip                    0       0
     2:  $request_method   method             8874       0
