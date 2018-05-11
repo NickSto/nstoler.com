@@ -425,7 +425,7 @@ def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=N
               'Ruhuman field: {ruhuman!r}'.format(**msg_data))
   email_body = ('Spambot from {ip} blocked from {action}{notes} from page "{page}".\n'
                 'Ruhuman field: {ruhuman!r}\n'
-                'User agent: {user_agent}'
+                'User agent: {user_agent}\n'
                 'Cookies sent:\n'
                 '  {cookies}\n'
                 '{content}\n'
