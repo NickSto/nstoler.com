@@ -6,7 +6,7 @@ from django.template.defaultfilters import escape, urlize
 from django.db.models import Max
 import django.db
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
-from utils import QueryParams, boolish
+from utils import QueryParams, boolish, email_admin
 from .models import Note, Page, Move
 import collections
 import random as rand
@@ -129,7 +129,7 @@ def add(request, page_name):
     note.display_order = note.id * DISPLAY_ORDER_MARGIN
     note.save()
   else:
-    warn_and_redirect_spambot(request, page_name, 'adding a note')
+    warn_and_redirect_spambot(request, page_name, 'adding a note', content=params.get('content', ''))
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
@@ -395,8 +395,7 @@ def _move_order(request, page_name, notes, direction):
   return HttpResponseRedirect(view_url+'#bottom')
 
 
-def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=None):
-  #TODO: Email warning about detected spambots.
+def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=None, content=None):
   params = request.POST
   site = truncate(params.get('site'))
   if notes:
@@ -404,8 +403,34 @@ def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=N
     notes_str = ' '+', '.join(note_ids)
   else:
     notes_str = ''
-  log.warning('Spambot ({0}) blocked from {1}{2} from page "{3}". Ruhuman field: {4!r}'
-              .format(request.visit.visitor, action, notes_str, page_name, site))
+  if content is None:
+    content_line = ''
+  else:
+    content_line = 'Content: {}'.format(content)
+  cookies = []
+  for cookie in request.visit.cookies_got.all():
+    cookies.append('{}:\t{}'.format(cookie.name, cookie.value))
+  msg_data = {
+    'visitor': request.visit.visitor,
+    'action': action,
+    'notes': notes_str,
+    'page': page_name,
+    'ruhuman': site,
+    'content': content_line,
+    'ip': request.visit.visitor.ip,
+    'cookies': '\n  '.join(cookies),
+    'user_agent': request.visit.visitor.user_agent,
+  }
+  log.warning('Spambot ({visitor}) blocked from {action}{notes} from page "{page}". '
+              'Ruhuman field: {ruhuman!r}'.format(**msg_data))
+  email_body = ('Spambot from {ip} blocked from {action}{notes} from page "{page}".\n'
+                'Ruhuman field: {ruhuman!r}\n'
+                'User agent: {user_agent}'
+                'Cookies sent:\n'
+                '  {cookies}\n'
+                '{content}\n'
+                .format(**msg_data))
+  email_admin('Spambot blocked', email_body)
   if view_url is not None:
     return HttpResponseRedirect(view_url)
 
