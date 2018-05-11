@@ -176,7 +176,7 @@ def alert_if_sensitive(sensitive_files, ip=None, scheme=None, host=None, nginx_p
     # Don't alert if it's just me.
     is_admin = myadmin.lib.get_admin_cookie(DummyRequest(cookies))
     if is_admin:
-      logging.info('Download of {} detected, but vistor seems to be me.'.format(filename))
+      logging.warning('Download of {} detected, but vistor seems to be me.'.format(filename))
       return
     subject = 'Visitor downloaded {}!'.format(filename)
     url = '{}://{}{}'.format(scheme, host, nginx_path)
