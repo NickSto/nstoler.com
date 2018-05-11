@@ -18,36 +18,32 @@ import django.conf
 
 COOKIE1_NAME = 'visitors_v1'
 COOKIE2_NAME = 'visitors_v2'
-ARG_DEFAULTS = {'log_file':sys.stdin, 'site':'mysite', 'ignore_via':('html','css','js'),
-                'volume':logging.ERROR, 'log':sys.stderr, 'sensitive_files':('master.hc',),
-                'ignore_ua':('Pingdom.com_bot_version','Functional Tester')}
-DESCRIPTION = """"""
+DESCRIPTION = """Watch the traffic log for visits not logged by Django, and log them to the
+database."""
+
 
 def make_argparser():
-
   parser = argparse.ArgumentParser(description=DESCRIPTION)
-  parser.set_defaults(**ARG_DEFAULTS)
-
-  parser.add_argument('log_file', metavar='path/to/traffic2.log', nargs='?',
+  parser.add_argument('log_file', metavar='path/to/traffic2.log', nargs='?', default=sys.stdin,
     help='Nginx traffic log file. Omit to read from stdin.')
-  parser.add_argument('-v', '--ignore-via',
+  parser.add_argument('-v', '--ignore-via', type=split_csv, default='html,css,js',
     help='Ignore requests with a "via" query string parameter matching any of these values. '
          'This is a system to filter out requests for resources included in the HTML of pages, '
-         'not initiated directly by the user. Give as a comma-delimited list. Default: %(default)s')
-  parser.add_argument('-u', '--ignore-ua',
+         'not initiated directly by the user. Give as a comma-delimited list. Default: "%(default)s"')
+  parser.add_argument('-u', '--ignore-ua', type=split_csv, default='Pingdom.com_bot_version,Functional Tester',
     help='Ignore requests from user agent strings which begin with any of these strings. Give as a '
-         'comma-delimited list. Default: %(default)s')
-  parser.add_argument('-s', '--sensitive-files',
+         'comma-delimited list. Default: "%(default)s"')
+  parser.add_argument('-s', '--sensitive-files', type=split_csv, default='master.hc',
     help='Email an alert if any of these files are accessed. Triggered if the path basename equals '
-         'any of these comma-delimited strings. Default: %(default)s')
-  parser.add_argument('-S', '--site',
-    help='Django project name. Default: %(default)s')
-  parser.add_argument('-l', '--log', type=argparse.FileType('w'),
+         'any of these comma-delimited strings. Default: "%(default)s"')
+  parser.add_argument('-S', '--site', default='mysite',
+    help='Django project name. Default: "%(default)s"')
+  parser.add_argument('-l', '--log', type=argparse.FileType('w'), default=sys.stderr,
     help='Print log messages to this file instead of to stderr. Warning: Will overwrite the file.')
   parser.add_argument('-q', '--quiet', dest='volume', action='store_const', const=logging.CRITICAL)
   parser.add_argument('-V', '--verbose', dest='volume', action='store_const', const=logging.INFO)
-  parser.add_argument('-D', '--debug', dest='volume', action='store_const', const=logging.DEBUG)
-
+  parser.add_argument('-D', '--debug', dest='volume', action='store_const', const=logging.DEBUG,
+    default=logging.ERROR)
   return parser
 
 
@@ -56,18 +52,12 @@ def main(argv):
   parser = make_argparser()
   args = parser.parse_args(argv[1:])
 
-  init_logging(args.log, args.volume)
+  logging.basicConfig(stream=args.log, level=args.volume, format='%(message)s')
 
   init_django(args.site)
 
-  list_args = process_list_args(args, ('ignore_via', 'ignore_ua', 'sensitive_files'))
-
-  watch(args.log_file, **list_args)
-
-
-def init_logging(log_stream, log_level):
-  logging.basicConfig(stream=log_stream, level=log_level, format='%(message)s')
-  tone_down_logger()
+  watch(args.log_file, ignore_via=args.ignore_via, ignore_ua=args.ignore_ua,
+        sensitive_files=args.sensitive_files)
 
 
 def init_django(site):
@@ -103,7 +93,9 @@ def watch(source, ignore_via=(), ignore_ua=(), sensitive_files=()):
   import traffic.lib
   import utils
 
-  if source is not sys.stdin:
+  if source is sys.stdin:
+    stream = sys.stdin
+  else:
     tail_proc = subprocess.Popen(['tail', '-n', '0', '--follow=name', source],
                                  stdout=subprocess.PIPE, universal_newlines=True)
     stream = tail_proc.stdout
@@ -369,12 +361,11 @@ def find_visit_by_timestamp(timestamp, selectors={}, tolerance=0.05, max_tries=8
     return None
 
 
-def tone_down_logger():
-  """Change the logging level names from all-caps to capitalized lowercase.
-  E.g. "WARNING" -> "Warning" (turn down the volume a bit in your log files)"""
-  for level in (logging.CRITICAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG):
-    level_name = logging.getLevelName(level)
-    logging.addLevelName(level, level_name.capitalize())
+def split_csv(csv_str):
+  if csv_str is None:
+    return []
+  else:
+    return csv_str.split(',')
 
 
 def fail(message):
