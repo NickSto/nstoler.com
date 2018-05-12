@@ -112,7 +112,7 @@
           </h1>
         </header>
 
-        <section id="memory" class="panel">
+        <section id="memory-free" class="panel">
           <div class="panel-heading">
             <h3>{{ items.memory.mtitle|safe }}
               {% if editing %}
@@ -131,6 +131,45 @@
             <p>
               {{ items.memory.mbody|safe }}
             </p>
+          </div>
+        </section>
+
+        <section id="memory-used" class="panel">
+          <div class="panel-heading">
+            <h3>{{ items.memory_used.mtitle|safe }}
+              {% if editing %}
+                <button class="btn btn-default btn-sm" name="key" value="memory_used">Edit</button>
+              {% endif %}
+            </h3>
+          </div>
+          <div class="panel-body">
+            <p>{{ items.memory_used.mbody|safe }}</p>
+            <h4>{{ items.uwsgi_mem.mtitle|safe }}
+              {% if editing %}
+                <button class="btn btn-default btn-sm" name="key" value="uwsgi_mem">Edit</button>
+              {% endif %}
+            </h4>
+            <div class="gallery center-hack">
+              <div class="center-block">
+                <a href="/img/mem-uwsgi.png">
+                  <img class="img-responsive img-thumbnail" src="/img/mem-uwsgi.png?via=html"/>
+                </a>
+              </div>
+            </div>
+            <p>{{ items.uwsgi_mem.mbody|safe }}</p>
+            <h4>{{ items.postgres_mem.mtitle|safe }}
+              {% if editing %}
+                <button class="btn btn-default btn-sm" name="key" value="postgres_mem">Edit</button>
+              {% endif %}
+            </h4>
+            <div class="gallery center-hack">
+              <div class="center-block">
+                <a href="/img/mem-postgres.png">
+                  <img class="img-responsive img-thumbnail" src="/img/mem-postgres.png?via=html"/>
+                </a>
+              </div>
+            </div>
+            <p>{{ items.postgres_mem.mbody|safe }}</p>
           </div>
         </section>
       </form>
