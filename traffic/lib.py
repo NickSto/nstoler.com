@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 
 ALPHABET1 = string.ascii_lowercase + string.ascii_uppercase + string.digits + '+-'
 COOKIE_MAX_AGE = 10*365*24*60*60  # 10 years
+PINGDOM_UA = 'Pingdom.com_bot_version_'
 
 
 def middleware(get_response):
@@ -21,7 +22,7 @@ def middleware(get_response):
   def wrapper(request):
     params = request.GET
     via = params.get('via')
-    if via in ('js', 'css', 'html'):
+    if via in ('js', 'css', 'html') or skip_visit(request):
       request.visit = None
     else:
       request.visit = get_or_create_visit_and_visitor(request)
@@ -147,6 +148,14 @@ def unpack_request(request):
     'query_str': headers.get('QUERY_STRING') or request.GET.urlencode(),
     'referrer': headers.get('HTTP_REFERER')
   }
+
+
+def skip_visit(request):
+  user_agent = request.META.get('HTTP_USER_AGENT', '')
+  path = request.path_info
+  if user_agent.startswith(PINGDOM_UA) and path == '/':
+    return True
+  return False
 
 
 def get_or_create_visitor(ip=None, user_agent=None, cookie1=None, cookie2=None, **kwargs):
