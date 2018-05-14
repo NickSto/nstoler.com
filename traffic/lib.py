@@ -38,7 +38,9 @@ def get_or_create_visit_and_visitor(request):
   """Do the actual work of logging the visit. Return the Visit object."""
   request_data = unpack_request(request)
   visitor = get_or_create_visitor(**request_data)
+  log.debug('Got or created Visitor {}.'.format(visitor.id))
   visit = create_visit(request_data, visitor, request.COOKIES)
+  log.debug('Created visit {}.'.format(visit.id))
   run_background_tasks(visitor, request_data)
   return visit
 
@@ -48,6 +50,7 @@ def run_background_tasks(visitor, request_data):
   """Execute tasks which aren't necessary to finish before the request is returned.
   Currently: Get IpInfo and the Visitor.bot_score."""
   # timeout=10 because there's no rush in a background thread.
+  log.debug('Running background tasks..')
   ipinfo = ip_to_ipinfo(visitor.ip, timeout=10)
   if ipinfo:
     log.info('Success getting IpInfo for {}'.format(visitor.ip))
