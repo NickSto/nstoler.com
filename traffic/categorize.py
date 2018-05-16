@@ -42,6 +42,12 @@ class Classifier(object):
   def __init__(self, bot_strings=read_bot_strings(DEFAULT_ROBOTS_CONFIG_PATH)):
     self.bot_strings = bot_strings
 
+  def reload(self, bot_strings=None):
+    if bot_strings is None:
+      self.bot_strings = read_bot_strings(DEFAULT_ROBOTS_CONFIG_PATH)
+    else:
+      self.bot_strings = bot_strings
+
   def is_robot(self, visit, thres=99):
     visit_data = unpack_visit(visit)
     bot_score = self.get_bot_score(**visit_data)
@@ -209,7 +215,7 @@ def mark_all_robots(query_robots=False, start=0, end=None):
   # Re-load robots.yaml.
   if end is None:
     end = Visit.objects.count()+1
-  classifier = Classifier()
+  classifier.reload()
   likely_bots = 0
   likely_humans = 0
   for visit in Visit.objects.filter(id__gte=start, id__lte=end):
