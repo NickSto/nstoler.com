@@ -172,6 +172,18 @@
                       </td>
                     </tr>
                   {% endif %}
+                  <tr>
+                    <th class="name">
+                      Response
+                    </th>
+                    <td class="value">
+                      {% if visit == this_visit %}
+                        200
+                      {% else %}
+                        {{ visit.response }}{% if visit.location %}: <a target="_blank" href="{{ visit.location }}">{{ visit.location }}</a>{% endif %}
+                      {% endif %}
+                    </td>
+                  </tr>
                 </table>
                 <div class="clearfix"></div>
               </li>

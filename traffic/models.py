@@ -59,6 +59,8 @@ class Visit(ModelMixin, models.Model):
   cookies_got = models.ManyToManyField(Cookie, related_name='visits_getting')
   cookies_set = models.ManyToManyField(Cookie, related_name='visits_setting')
   visitor = models.ForeignKey(Visitor, models.PROTECT)
+  response = models.IntegerField(default=None, null=True, blank=True)
+  location = models.URLField(max_length=4095, null=True, blank=True)
   def __str__(self):
     return '{}: {}'.format(self.timestamp, self.url)
   @property

@@ -115,6 +115,7 @@ def watch(source, ignore_via=(), ignore_ua=(), sensitive_files=()):
       path=fields['path'],
       query_str=fields['query_str'],
       referrer=fields['referrer'],
+      response=fields['code'],
       visitor=visitor
     )
     visit.save()

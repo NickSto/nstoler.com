@@ -90,6 +90,7 @@ def monitor(request):
     'visits': page,
     'admin':admin,
     'links': links,
+    'this_visit': request.visit,
     'timezone': set_timezone(request),  # Set and retrieve timezone.
     'ua_exact_thres': categorize.SCORES['ua_exact'],
     'referrer_exact_thres': categorize.SCORES['referrer_exact'],

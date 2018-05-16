@@ -29,6 +29,10 @@ def middleware(get_response):
     # Send the request to the view and get the response.
     response = get_response(request)
     if request.visit is not None:
+      request.visit.response = response.status_code
+      if hasattr(response, 'url'):
+        request.visit.location = response.url
+      request.visit.save()
       response = set_cookies(request.visit, response)
     return response
   return wrapper
