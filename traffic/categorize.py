@@ -32,8 +32,10 @@ def read_bot_strings(robots_config_path):
   try:
     with open(robots_config_path) as robots_config_file:
       bot_strings = yaml.safe_load(robots_config_file)
+    log.info('Successfully read {!r}, finding {} kinds of strings.'
+             .format(robots_config_path, len(bot_strings.get('user_agent', ()))))
   except OSError as error:
-    log.warning('OSError on trying to read {}: {}'.format(robots_config_path, error))
+    log.error('OSError on trying to read {}: {}'.format(robots_config_path, error))
     return empty_strings
   return bot_strings
 
