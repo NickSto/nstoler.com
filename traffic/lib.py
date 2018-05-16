@@ -57,6 +57,7 @@ def run_background_tasks(visitor, request_data):
   else:
     log.warning('Failed getting IpInfo for {}'.format(visitor.ip))
   visitor.bot_score = get_bot_score(**request_data)
+  log.info('Determined a bot score of {}.'.format(visitor.bot_score))
   visitor.save()
   # Have to close the new connection Django made for this thread.
   connection.close()
