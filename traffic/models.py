@@ -69,7 +69,7 @@ class Visit(ModelMixin, models.Model):
     if url == '':
       return url
     elif self.scheme == '':
-      return 'http:'+url
+      return '????:'+url
     else:
       return url
   @url.setter
