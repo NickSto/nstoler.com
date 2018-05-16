@@ -193,7 +193,7 @@
             <a class="btn btn-default" href="{% url 'misc:export' %}">Export database</a>
             <form class="inline" name="markallbots" method="post" action="{% url 'traffic:markallbots' %}">
               {% csrf_token %}
-              <input type="submit" class="btn btn-default" href="{% url 'traffic:markallbots' %}" value="Mark robots">
+              <input type="submit" class="btn btn-default" value="Mark robots">
             </form>
           </nav>
         {% endif %}
