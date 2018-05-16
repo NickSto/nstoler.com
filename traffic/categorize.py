@@ -25,7 +25,7 @@ SCORES = {
 }
 
 
-def load_bot_strings(robots_config_path=DEFAULT_ROBOTS_CONFIG_PATH):
+def read_bot_strings(robots_config_path):
   empty_strings = {'user_agent': collections.defaultdict(list)}
   if yaml is None:
     return empty_strings
@@ -36,6 +36,95 @@ def load_bot_strings(robots_config_path=DEFAULT_ROBOTS_CONFIG_PATH):
     log.warning('OSError on trying to read {}: {}'.format(robots_config_path, error))
     return empty_strings
   return bot_strings
+
+
+class Classifier(object):
+  def __init__(self, bot_strings=read_bot_strings(DEFAULT_ROBOTS_CONFIG_PATH)):
+    self.bot_strings = bot_strings
+
+  def is_robot(self, visit, thres=99):
+    visit_data = unpack_visit(visit)
+    bot_score = self.get_bot_score(**visit_data)
+    return bot_score > thres
+
+  def get_bot_score(self, path='', host='', query_str='', referrer='', user_agent='',
+                    cookie1='', cookie2='', query_robots=True, **kwargs):
+    # Check the user_agent and referrer against the database of known robots.
+    if query_robots:
+      nulls = {'ip':None, 'cookie1':None, 'cookie2':None}
+      if user_agent:
+        robots = Robot.objects.filter(user_agent=user_agent, **nulls)
+        if robots:
+          # The user_agent is in at least one Robot entry. If the entry(s) has a referrer field and
+          # it matches, we have a ua+referrer match. Otherwise, the Robot(s)' referrer must be empty,
+          # or we could be matching a Robot with the right user_agent but a different referrer.
+          # And if both fields are specified in the Robot, both must match.
+          if referrer and robots.filter(referrer=referrer):
+            # Highest score: Its full user_agent and referrer are in a single Robot entry.
+            return SCORES['ua+referrer']
+          elif robots.filter(referrer=None):
+            # 2nd highest score: Its full user_agent is in the list of known robots.
+            return SCORES['ua_exact']
+      if referrer:
+        if Robot.objects.filter(referrer=referrer, user_agent=None, **nulls):
+          # 3rd highest score: Its full referrer is in the list of known robots.
+          return SCORES['referrer_exact']
+    #TODO: Add match in Robot database for the path (e.g. "/wp-login.php")
+    # 4th highest score: Its user_agent includes strings of known bots in certain places.
+    if self.is_robot_ua(user_agent):
+      return SCORES['ua_contains']
+    # 5th highest score: All the request fields are empty (but maybe with a path of "/").
+    all_fields_empty = not (host or query_str or referrer or user_agent or cookie1 or cookie2)
+    path_is_default = (path == '/' or path == '' or path is None)
+    if all_fields_empty and path_is_default:
+      return SCORES['empty']
+    # 6th highest score: If the HOST field it provided isn't one of ours.
+    if invalid_host(host):
+      return SCORES['bad_host']
+    # 7th highest score: If "bot" appears anywhere in the user_agent.
+    if user_agent and 'bot' in user_agent.lower():
+      return SCORES['bot_in_ua']
+    # 2nd lowest score: Its user_agent starts with "Mozilla/" followed by a number.
+    if is_mozilla_ua(user_agent):
+      # Lowest score: It also sent cookies. Possible repeat visitor.
+      if cookie1 or cookie2:
+        return SCORES['sent_cookies']
+      else:
+        return SCORES['mozilla_ua']
+    #TODO: Absolute lowest score: This User has executed a totally regular interaction at least once:
+    #      It made a first request, received a cookie, made a second, sending it back, and including
+    #      a referrer from the same domain, etc.
+    # Default: 0
+    return 0
+
+  def is_robot_ua(self, user_agent):
+    ua_strings = self.bot_strings['user_agent']
+    if user_agent is None or user_agent == '':
+      return True
+    # Does the user_agent contain a known bot name in the standard position?
+    ua_halves = user_agent.split('compatible; ')
+    if len(ua_halves) >= 2:
+      # Look for it after 'compatible; ' and before '/', ';', or whitespace.
+      bot_name = ua_halves[1].split('/')[0].split(';')[0]
+      if bot_name in ua_strings['names']:
+        return True
+      # Check for bot names that contain whitespace (same as above, but don't split on whitespace)
+      bot_name = bot_name.split()[0]
+      if bot_name in ua_strings['space_delim']:
+        return True
+    # Does the user_agent start with a known bot name?
+    fields = user_agent.split('/')
+    if fields[0] in ua_strings['startswith']:
+      return True
+    # Does the 2nd space-delimited word match a known bot name?
+    fields = user_agent.split()
+    if len(fields) > 1 and fields[1] in ua_strings['2nd_word']:
+      return True
+    # It's not a known bot.
+    return False
+
+
+classifier = Classifier()
 
 
 def unpack_visit(visit):
@@ -54,66 +143,11 @@ def unpack_visit(visit):
   return data
 
 
-def is_robot(visit, thres=99, bot_strings=load_bot_strings()):
-  visit_data = unpack_visit(visit)
-  bot_score = get_bot_score(bot_strings=bot_strings, **visit_data)
-  return bot_score > thres
-
-
-def get_bot_score(path='', host='', query_str='', referrer='', user_agent='', cookie1='', cookie2='',
-                  query_robots=True, bot_strings=load_bot_strings(), **kwargs):
-  # Check the user_agent and referrer against the database of known robots.
-  if query_robots:
-    nulls = {'ip':None, 'cookie1':None, 'cookie2':None}
-    if user_agent:
-      robots = Robot.objects.filter(user_agent=user_agent, **nulls)
-      if robots:
-        # The user_agent is in at least one Robot entry. If the entry(s) has a referrer field and
-        # it matches, we have a ua+referrer match. Otherwise, the Robot(s)' referrer must be empty,
-        # or we could be matching a Robot with the right user_agent but a different referrer.
-        # And if both fields are specified in the Robot, both must match.
-        if referrer and robots.filter(referrer=referrer):
-          # Highest score: Its full user_agent and referrer are in a single Robot entry.
-          return SCORES['ua+referrer']
-        elif robots.filter(referrer=None):
-          # 2nd highest score: Its full user_agent is in the list of known robots.
-          return SCORES['ua_exact']
-    if referrer:
-      if Robot.objects.filter(referrer=referrer, user_agent=None, **nulls):
-        # 3rd highest score: Its full referrer is in the list of known robots.
-        return SCORES['referrer_exact']
-  #TODO: Add match in Robot database for the path (e.g. "/wp-login.php")
-  # 4th highest score: Its user_agent includes strings of known bots in certain places.
-  if is_robot_ua(bot_strings, user_agent):
-    return SCORES['ua_contains']
-  # 5th highest score: All the request fields are empty (but maybe with a path of "/").
-  all_fields_empty = not (host or query_str or referrer or user_agent or cookie1 or cookie2)
-  path_is_default = (path == '/' or path == '')
-  if all_fields_empty and path_is_default:
-    return SCORES['empty']
-  # 6th highest score: If the HOST field it provided isn't one of ours.
-  if invalid_host(host):
-    return SCORES['bad_host']
-  # 7th highest score: If "bot" appears anywhere in the user_agent.
-  if 'bot' in user_agent.lower():
-    return SCORES['bot_in_ua']
-  # 2nd lowest score: Its user_agent starts with "Mozilla/" followed by a number.
-  if is_mozilla_ua(user_agent):
-    # Lowest score: It also sent cookies. Possible repeat visitor.
-    if cookie1 or cookie2:
-      return SCORES['sent_cookies']
-    else:
-      return SCORES['mozilla_ua']
-  #TODO: Absolute lowest score: This User has executed a totally regular interaction at least once:
-  #      It made a first request, received a cookie, made a second, sending it back, and including
-  #      a referrer from the same domain, etc.
-  # Default: 0
-  return 0
-
-
 def invalid_host(host):
   """In the visitor's HTTP request, did it provide a HOST which isn't ours?
   Check every level of subdomains to allow things like "www.nstoler.com" to match "nstoler.com"."""
+  if host is None:
+    return True
   domain = ''
   for subdomain in reversed(host.split('.')):
     if domain:
@@ -125,34 +159,9 @@ def invalid_host(host):
   return True
 
 
-def is_robot_ua(bot_strings, user_agent):
-  ua_strings = bot_strings['user_agent']
-  if user_agent is None or user_agent == '':
-    return True
-  # Does the user_agent contain a known bot name in the standard position?
-  ua_halves = user_agent.split('compatible; ')
-  if len(ua_halves) >= 2:
-    # Look for it after 'compatible; ' and before '/', ';', or whitespace.
-    bot_name = ua_halves[1].split('/')[0].split(';')[0]
-    if bot_name in ua_strings['names']:
-      return True
-    # Check for bot names that contain whitespace (same as above, but don't split on whitespace)
-    bot_name = bot_name.split()[0]
-    if bot_name in ua_strings['space_delim']:
-      return True
-  # Does the user_agent start with a known bot name?
-  fields = user_agent.split('/')
-  if fields[0] in ua_strings['startswith']:
-    return True
-  # Does the 2nd space-delimited word match a known bot name?
-  fields = user_agent.split()
-  if len(fields) > 1 and fields[1] in ua_strings['2nd_word']:
-    return True
-  # It's not a known bot.
-  return False
-
-
 def is_mozilla_ua(user_agent):
+  if user_agent is None:
+    return False
   first_word = user_agent.split()[0]
   fields = first_word.split('/')
   if len(fields) <= 1:
@@ -200,12 +209,12 @@ def mark_all_robots(query_robots=False, start=0, end=None):
   # Re-load robots.yaml.
   if end is None:
     end = Visit.objects.count()+1
-  bot_strings = load_bot_strings()
+  classifier = Classifier()
   likely_bots = 0
   likely_humans = 0
   for visit in Visit.objects.filter(id__gte=start, id__lte=end):
     visit_data = unpack_visit(visit)
-    bot_score = get_bot_score(query_robots=query_robots, bot_strings=bot_strings, **visit_data)
+    bot_score = classifier.get_bot_score(query_robots=query_robots, **visit_data)
     prev_score = visit.visitor.bot_score
     # Set the Visitor's bot_score to the one we just determined if it hasn't been set yet, or if
     # the new score is further from zero than the previous one.

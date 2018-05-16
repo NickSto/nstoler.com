@@ -1,6 +1,6 @@
 from django.db import connection
 from .models import Visit, Visitor, User, Cookie
-from .categorize import get_bot_score
+from .categorize import classifier
 from .ipinfo import ip_to_ipinfo
 from utils import async
 import string
@@ -56,7 +56,7 @@ def run_background_tasks(visitor, request_data):
     log.info('Success getting IpInfo for {}'.format(visitor.ip))
   else:
     log.warning('Failed getting IpInfo for {}'.format(visitor.ip))
-  visitor.bot_score = get_bot_score(**request_data)
+  visitor.bot_score = classifier.get_bot_score(**request_data)
   log.info('Determined a bot score of {}.'.format(visitor.bot_score))
   visitor.save()
   # Have to close the new connection Django made for this thread.
