@@ -183,7 +183,9 @@ def parse_log_line(line_raw):
     try:
       fields['code'] = int(fields['code'])
     except ValueError:
-      if fields['code'] != '':
+      if fields['code'] == '':
+        fields['code'] = None
+      else:
         logging.warn('Non-integer, non-"-" HTTP response code: "{code}".'.format(**fields))
     # Cookies
     fields['cookies'] = http.cookies.SimpleCookie()
@@ -211,6 +213,10 @@ def unpack_request(fields, cookie1, cookie2):
 
 def ignore_request(fields, ignore_via, ignore_ua):
   ignore = False
+  # Skip requests which were immediately denied by nginx.
+  if fields['code'] == 444:
+    logging.info('Ignoring request refused by nginx (code {}).'.format(fields['code']))
+    return True
   # Skip requests for resources via certain sources.
   query = urllib.parse.parse_qs(fields['query_str'])
   via = query.get('via', ('',))[0]
