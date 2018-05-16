@@ -31,7 +31,8 @@ def make_argparser():
     help='Ignore requests with a "via" query string parameter matching any of these values. '
          'This is a system to filter out requests for resources included in the HTML of pages, '
          'not initiated directly by the user. Give as a comma-delimited list. Default: "%(default)s"')
-  parser.add_argument('-u', '--ignore-ua', type=split_csv, default='Pingdom.com_bot_version,Functional Tester',
+  parser.add_argument('-u', '--ignore-ua', type=split_csv,
+    default='Pingdom.com_bot_version,Functional Tester',
     help='Ignore requests from user agent strings which begin with any of these strings. Give as a '
          'comma-delimited list. Default: "%(default)s"')
   parser.add_argument('-s', '--sensitive-files', type=split_csv, default='master.hc',
@@ -109,6 +110,9 @@ def watch(source, ignore_via=(), ignore_ua=(), sensitive_files=()):
     if not fields:
       continue
     alert_if_sensitive(sensitive_files, **fields)
+    # Check generic ignore criteria.
+    if ignore_request(fields, ignore_via, ignore_ua):
+      continue
     # Skip requests that weren't served directly by Nginx.
     if fields['handler'] == 'django':
       if fields['uid_set']:
@@ -117,21 +121,6 @@ def watch(source, ignore_via=(), ignore_ua=(), sensitive_files=()):
         add_cookie2_to_old_visit(**fields)
       else:
         logging.info('Ignoring request already handled by {handler}.'.format(**fields))
-      continue
-    # Skip requests for resources via certain sources.
-    query = urllib.parse.parse_qs(fields['query_str'])
-    via = query.get('via', ('',))[0]
-    if via in ignore_via:
-      logging.info('Ignoring request with via={}.'.format(via))
-      continue
-    # Skip requests by certain user agents.
-    ignore = False
-    for ua in ignore_ua:
-      if fields['user_agent'] and fields['user_agent'].startswith(ua):
-        ignore = True
-        break
-    if ignore:
-      logging.info('Ignoring request from user agent "{user_agent}"'.format(**fields))
       continue
     # Get the Visitor matching these identifiers or create one.
     cookie1, cookie2 = get_cookie_values(fields['cookies'], COOKIE1_NAME, COOKIE2_NAME)
@@ -280,6 +269,24 @@ def parse_log_line(line_raw):
       fields['path'] += ';'+params
     fields['query_str'] = url_parts[4]
     return fields
+
+
+def ignore_request(fields, ignore_via, ignore_ua):
+  ignore = False
+  # Skip requests for resources via certain sources.
+  query = urllib.parse.parse_qs(fields['query_str'])
+  via = query.get('via', ('',))[0]
+  if via in ignore_via:
+    logging.info('Ignoring request with via={}.'.format(via))
+    return True
+  # Skip requests by certain user agents.
+  for ua in ignore_ua:
+    if fields['user_agent'] and fields['user_agent'].startswith(ua):
+      ignore = True
+      break
+  if ignore:
+    logging.info('Ignoring request from user agent "{user_agent}"'.format(**fields))
+  return ignore
 
 
 def get_cookie_values(cookies, *cookie_names):
