@@ -18,6 +18,7 @@ import django.conf
 
 COOKIE1_NAME = 'visitors_v1'
 COOKIE2_NAME = 'visitors_v2'
+DEFAULT_LOG_LEVEL = logging.ERROR
 DESCRIPTION = """Watch the traffic log for visits not logged by Django, and log them to the
 database."""
 
@@ -42,8 +43,7 @@ def make_argparser():
     help='Print log messages to this file instead of to stderr. Warning: Will overwrite the file.')
   parser.add_argument('-q', '--quiet', dest='volume', action='store_const', const=logging.CRITICAL)
   parser.add_argument('-V', '--verbose', dest='volume', action='store_const', const=logging.INFO)
-  parser.add_argument('-D', '--debug', dest='volume', action='store_const', const=logging.DEBUG,
-    default=logging.ERROR)
+  parser.add_argument('-D', '--debug', dest='volume', action='store_const', const=logging.DEBUG)
   return parser
 
 
@@ -52,9 +52,13 @@ def main(argv):
   parser = make_argparser()
   args = parser.parse_args(argv[1:])
 
-  logging.basicConfig(stream=args.log, level=args.volume, format='%(message)s')
-
   init_django(args.site)
+
+  if args.volume:
+    log_level = args.volume
+  else:
+    log_level = get_log_level(DEFAULT_LOG_LEVEL)
+  logging.basicConfig(stream=args.log, level=log_level, format='%(message)s')
 
   watch(args.log_file, ignore_via=args.ignore_via, ignore_ua=args.ignore_ua,
         sensitive_files=args.sensitive_files)
@@ -87,8 +91,8 @@ def process_list_args(args, list_args):
 
 
 def watch(source, ignore_via=(), ignore_ua=(), sensitive_files=()):
-  logging.debug('Called watch({}, ignore_via={!r}, ignore_ua={!r})'
-                .format(source, ignore_via, ignore_ua))
+  logging.info('Called watch({}, ignore_via={!r}, ignore_ua={!r}, sensitive_files={!r})'
+                .format(source, ignore_via, ignore_ua, sensitive_files))
   import traffic.models
   import traffic.lib
   import utils
@@ -154,7 +158,17 @@ def watch(source, ignore_via=(), ignore_ua=(), sensitive_files=()):
         logging.info('$uid_set is present. Added {}={} to the Visit.'
                      .format(cookie.name, cookie.value))
     visit.save()
-    logging.info('Created visit {}.'.format(visit.id))
+    logging.info('Created visit {}. Now starting background tasks..'.format(visit.id))
+    request_data = unpack_request(fields, cookie1, cookie2)
+    traffic.lib.run_background_tasks(visitor, request_data)
+
+
+def unpack_request(fields, cookie1, cookie2):
+  """Turn our log data into the same format produced by traffic.lib.unpack_request()."""
+  request_data = fields.copy()
+  request_data['cookie1'] = cookie1
+  request_data['cookie2'] = cookie2
+  return request_data
 
 
 class DummyRequest(object):
@@ -359,6 +373,15 @@ def find_visit_by_timestamp(timestamp, selectors={}, tolerance=0.05, max_tries=8
     return visit
   else:
     return None
+
+
+def get_log_level(default):
+  import django.conf
+  try:
+    level_name = django.conf.settings.LOGGING['loggers']['traffic']['level']
+    return getattr(logging, level_name, default)
+  except KeyError:
+    return default
 
 
 def split_csv(csv_str):
