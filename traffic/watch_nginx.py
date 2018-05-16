@@ -72,28 +72,9 @@ def init_django(site):
   django.setup()
 
 
-def process_list_args(args, list_args):
-  """Parse all the arguments which are given as comma-delimited lists, and return tuples."""
-  processed_values = {}
-  for list_arg in list_args:
-    arg_value = getattr(args, list_arg)
-    if arg_value:
-      if isinstance(arg_value, tuple):
-        # The default value is already a tuple, so we can just add it.
-        processed_values[list_arg] = arg_value
-      else:
-        # If the user gave a list, it's a comma-delimited string.
-        arg_value_list = arg_value.split(',')
-        processed_values[list_arg] = tuple(arg_value_list)
-    else:
-      # If the user gave an empty string, it should be parsed as an empty tuple.
-      processed_values[list_arg] = ()
-  return processed_values
-
-
 def watch(source, ignore_via=(), ignore_ua=(), sensitive_files=()):
   logging.info('Called watch({}, ignore_via={!r}, ignore_ua={!r}, sensitive_files={!r})'
-                .format(source, ignore_via, ignore_ua, sensitive_files))
+               .format(source, ignore_via, ignore_ua, sensitive_files))
   import traffic.models
   import traffic.lib
   import utils
@@ -150,57 +131,6 @@ def watch(source, ignore_via=(), ignore_ua=(), sensitive_files=()):
     logging.info('Created visit {}. Now starting background tasks..'.format(visit.id))
     request_data = unpack_request(fields, cookie1, cookie2)
     traffic.lib.run_background_tasks(visitor, request_data)
-
-
-def unpack_request(fields, cookie1, cookie2):
-  """Turn our log data into the same format produced by traffic.lib.unpack_request()."""
-  request_data = fields.copy()
-  request_data['cookie1'] = cookie1
-  request_data['cookie2'] = cookie2
-  return request_data
-
-
-class DummyRequest(object):
-  def __init__(self, cookies):
-    self.COOKIES = {}
-    for name, morsel in cookies.items():
-      self.COOKIES[name] = morsel.value
-
-
-def alert_if_sensitive(sensitive_files, ip=None, scheme=None, host=None, nginx_path=None,
-                       nginx_query_str=None, referrer=None, code=None, size=None, user_agent=None,
-                       cookies=None, **kwargs):
-  if cookies is None:
-    cookies = {}
-  import utils
-  import myadmin.lib
-  if os.path.basename(nginx_path) in sensitive_files:
-    filename = os.path.basename(nginx_path)
-    # Don't alert if it's just me.
-    is_admin = myadmin.lib.get_admin_cookie(DummyRequest(cookies))
-    if is_admin:
-      logging.warning('Download of {} detected, but vistor seems to be me.'.format(filename))
-      return
-    subject = 'Visitor downloaded {}!'.format(filename)
-    url = '{}://{}{}'.format(scheme, host, nginx_path)
-    if nginx_query_str and nginx_query_str != '-':
-      url += '?'+nginx_query_str
-    cookies_list = ['{}:\t{}'.format(name, morsel.value) for name, morsel in cookies.items()]
-    if cookies_list:
-      cookies_str = '\n  '+'\n  '.join(cookies_list)
-    else:
-      cookies_str = 'None'
-    if referrer and referrer != '-':
-      referrer_value = referrer
-    else:
-      referrer_value = None
-    body = ('A visitor from IP address {0} accessed {1} (referrer: {2!r}).\n\n'
-            'User agent: {3}\n\n'
-            'Cookies received: {4}\n\n'
-            'Response code: {5}, bytes served: {6}\n'
-            .format(ip, url, referrer_value, user_agent, cookies_str, code, size))
-    logging.warning('Download of {} detected. Email alert sent.'.format(filename))
-    utils.email_admin(subject, body)
 
 
 def parse_log_line(line_raw):
@@ -269,6 +199,14 @@ def parse_log_line(line_raw):
       fields['path'] += ';'+params
     fields['query_str'] = url_parts[4]
     return fields
+
+
+def unpack_request(fields, cookie1, cookie2):
+  """Turn our log data into the same format produced by traffic.lib.unpack_request()."""
+  request_data = fields.copy()
+  request_data['cookie1'] = cookie1
+  request_data['cookie2'] = cookie2
+  return request_data
 
 
 def ignore_request(fields, ignore_via, ignore_ua):
@@ -380,6 +318,49 @@ def find_visit_by_timestamp(timestamp, selectors={}, tolerance=0.05, max_tries=8
     return visit
   else:
     return None
+
+
+class DummyRequest(object):
+  def __init__(self, cookies):
+    self.COOKIES = {}
+    for name, morsel in cookies.items():
+      self.COOKIES[name] = morsel.value
+
+
+def alert_if_sensitive(sensitive_files, ip=None, scheme=None, host=None, nginx_path=None,
+                       nginx_query_str=None, referrer=None, code=None, size=None, user_agent=None,
+                       cookies=None, **kwargs):
+  if cookies is None:
+    cookies = {}
+  import utils
+  import myadmin.lib
+  if os.path.basename(nginx_path) in sensitive_files:
+    filename = os.path.basename(nginx_path)
+    # Don't alert if it's just me.
+    is_admin = myadmin.lib.get_admin_cookie(DummyRequest(cookies))
+    if is_admin:
+      logging.warning('Download of {} detected, but vistor seems to be me.'.format(filename))
+      return
+    subject = 'Visitor downloaded {}!'.format(filename)
+    url = '{}://{}{}'.format(scheme, host, nginx_path)
+    if nginx_query_str and nginx_query_str != '-':
+      url += '?'+nginx_query_str
+    cookies_list = ['{}:\t{}'.format(name, morsel.value) for name, morsel in cookies.items()]
+    if cookies_list:
+      cookies_str = '\n  '+'\n  '.join(cookies_list)
+    else:
+      cookies_str = 'None'
+    if referrer and referrer != '-':
+      referrer_value = referrer
+    else:
+      referrer_value = None
+    body = ('A visitor from IP address {0} accessed {1} (referrer: {2!r}).\n\n'
+            'User agent: {3}\n\n'
+            'Cookies received: {4}\n\n'
+            'Response code: {5}, bytes served: {6}\n'
+            .format(ip, url, referrer_value, user_agent, cookies_str, code, size))
+    logging.warning('Download of {} detected. Email alert sent.'.format(filename))
+    utils.email_admin(subject, body)
 
 
 def get_log_level(default):
