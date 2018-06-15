@@ -5,7 +5,6 @@ if [ "x$BASH" = x ] || [ ! "$BASH_VERSINFO" ] || [ "$BASH_VERSINFO" -lt 4 ]; the
 fi
 set -ue
 
-DefaultOutfile=/var/www/nstoler.com/static/img/du-postgres.png
 Usage="Usage: \$ $(basename "$0") [options] du-postgres.tsv [outfile.png]
 Plot the growth in disk usage over time of the (current) largest postgres table."
 
