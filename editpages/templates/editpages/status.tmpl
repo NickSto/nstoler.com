@@ -121,6 +121,7 @@
             </h3>
           </div>
           <div class="panel-body">
+            <p>{{ items.memory.mbody|safe }}</p>
             <div class="gallery center-hack">
               <div class="center-block">
                 <a href="/img/mem.png">
@@ -128,9 +129,6 @@
                 </a>
               </div>
             </div>
-            <p>
-              {{ items.memory.mbody|safe }}
-            </p>
           </div>
         </section>
 
@@ -149,6 +147,7 @@
                 <button class="btn btn-default btn-sm" name="key" value="uwsgi_mem">Edit</button>
               {% endif %}
             </h4>
+            <p>{{ items.uwsgi_mem.mbody|safe }}</p>
             <div class="gallery center-hack">
               <div class="center-block">
                 <a href="/img/mem-uwsgi.png">
@@ -156,12 +155,13 @@
                 </a>
               </div>
             </div>
-            <p>{{ items.uwsgi_mem.mbody|safe }}</p>
+
             <h4>{{ items.postgres_mem.mtitle|safe }}
               {% if editing %}
                 <button class="btn btn-default btn-sm" name="key" value="postgres_mem">Edit</button>
               {% endif %}
             </h4>
+            <p>{{ items.postgres_mem.mbody|safe }}</p>
             <div class="gallery center-hack">
               <div class="center-block">
                 <a href="/img/mem-postgres.png">
@@ -169,7 +169,6 @@
                 </a>
               </div>
             </div>
-            <p>{{ items.postgres_mem.mbody|safe }}</p>
           </div>
         </section>
 
@@ -188,6 +187,7 @@
                 <button class="btn btn-default btn-sm" name="key" value="postgres_disk">Edit</button>
               {% endif %}
             </h4>
+            <p>{{ items.postgres_disk.mbody|safe }}</p>
             <div class="gallery center-hack">
               <div class="center-block">
                 <a href="/img/du-postgres.png">
@@ -195,7 +195,6 @@
                 </a>
               </div>
             </div>
-            <p>{{ items.postgres_disk.mbody|safe }}</p>
         </section>
       </form>
 
