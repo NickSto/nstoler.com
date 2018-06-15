@@ -22,8 +22,8 @@ class Note(ModelMixin, models.Model):
                                       related_name='next_version')
   def content_html(self):
     urlized = urlize(escape(self.content))
-    # Kludge to add "noreferrer":
-    return urlized.replace('rel="nofollow">', 'rel="noreferrer nofollow">')
+    # Kludge to add some custom attributes to the <a> links.:
+    return urlized.replace('rel="nofollow">', 'rel="noreferrer nofollow" target="_blank">')
   def __str__(self):
     deleted = ''
     if self.deleted:
