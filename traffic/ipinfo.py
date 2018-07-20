@@ -3,6 +3,7 @@ from django.utils import timezone
 from .models import IpInfo
 from datetime import datetime
 import pytz
+import time
 import logging
 import urllib.parse
 from utils import http_request, HttpError
@@ -10,10 +11,11 @@ log = logging.getLogger(__name__)
 
 
 # http for lower latency (and we don't care that much about this kind of attack).
-#TODO: Replace with ipstack.com: https://github.com/apilayer/freegeoip#readme
-FREEGEOIP_URL = 'http://freegeoip.net/json/{}'
+IPSTACK_URL = 'http://api.ipstack.com/{}?access_key={key}'
 IPINFO_URL = 'http://ipinfo.io/{}'
 # requires https
+GOOGLE_TZ_URL = ('https://maps.googleapis.com/maps/api/timezone/json?key={key}'
+                 '&location={lat},{long}&timestamp={timestamp}')
 TZAPI_URL = 'https://timezoneapi.io/api/ip?ip={}'
 MAX_RESPONSE = 65536
 DEFAULT_TIMEOUT = 1
@@ -66,9 +68,11 @@ def make_ip_info(ip, data):
 
 def get_ip_data(ip, timeout=DEFAULT_TIMEOUT):
   data1 = get_ipinfo_data(ip, timeout=timeout)
-  data2 = get_freegeoip_data(ip, timeout=timeout)
+  data2 = get_tzapi_data(ip, timeout=timeout)
   if not (data1 or data2):
     return None
+  # Merge data from the two sources.
+  # - data from tzapi takes precedence
   data = {}
   if data1:
     data.update(data1)
@@ -77,15 +81,31 @@ def get_ip_data(ip, timeout=DEFAULT_TIMEOUT):
   return data
 
 
-def get_freegeoip_data(ip, timeout=DEFAULT_TIMEOUT):
-  """Get IP data from freegeoip.net.
-  They uniquely get us the timezone. And the country field isn't abbreviated.
-  All other data is also available from ipinfo.io.
-  Limit: 15,000 requests per hour (as of Oct 2017)"""
-  response = get_api_data(FREEGEOIP_URL.format(ip),
+def get_ipstack_data(ip, timeout=DEFAULT_TIMEOUT):
+  """Get IP data from ipstack.com.
+  Free limit: 10,000 requests per month (>=322 requests per day) (as of July 2018).
+  Fields provided:
+    timezone (with a paid plan)
+    latitude
+    longitude
+    country
+    region
+    town
+    zip"""
+  api_key = getattr(settings, 'IPSTACK_KEY', None)
+  if not api_key:
+    return None
+  response = get_api_data(IPSTACK_URL.format(ip, key=api_key),
                           timeout=timeout,
                           max_response=MAX_RESPONSE)
   if response is None:
+    return None
+  if response.get('success') == 'false':
+    error_msg = dget(response, 'error', 'info')
+    if error_msg:
+      logging.warning('Error getting ip data from ipstack.com: "{}"'.format(error_msg))
+    else:
+      logging.warning('Error getting ip data from ipstack.com')
     return None
   our_data = {}
   for our_name, their_name in (('timezone', 'time_zone'),
@@ -94,11 +114,11 @@ def get_freegeoip_data(ip, timeout=DEFAULT_TIMEOUT):
                                ('country', 'country_name'),
                                ('region', 'region_name'),
                                ('town', 'city'),
-                               ('zip', 'zip_code')):
-    # For bogon ips like 127.0.0.1, freegeoip.net gives blank values like "" and 0.
+                               ('zip', 'zip')):
     value = response.get(their_name)
+    # For bogon ips like 127.0.0.1, ipstack.com gives None values.
     if value:
-      our_data[our_name] = response[their_name]
+      our_data[our_name] = value
   try:
     our_data['zip'] = int(our_data['zip'])
   except (ValueError, KeyError):
@@ -106,11 +126,67 @@ def get_freegeoip_data(ip, timeout=DEFAULT_TIMEOUT):
   return our_data
 
 
+def get_tzapi_data(ip, timeout=DEFAULT_TIMEOUT):
+  """Get IP data from timezoneapi.io.
+  Fields provided:
+    country
+    region
+    town
+    zip
+    latitude
+    longitude
+    timezone (unique)
+  Limit: 50 requests per day (as of July 2018). Exceeding that returns HTTP 429."""
+  if ip == '127.0.0.1':
+    return None
+  response = get_api_data(TZAPI_URL.format(ip), timeout=timeout, max_response=MAX_RESPONSE)
+  if response is None:
+    return None
+  elif dget(response, 'meta', 'code') != '200' or 'data' not in response:
+    message = dget(response, 'meta', 'message')
+    if message:
+      logging.warning('Error getting ip data from timezoneapi.io: "{}"'.format(message))
+    else:
+      logging.warning('Error getting ip data from timezoneapi.io.'.format(message))
+    return None
+  our_data = {}
+  response_data = response['data']
+  for our_name, their_name in (('country', 'country'),
+                               ('region', 'state'),
+                               ('town', 'city'),
+                               ('zip', 'postal')):
+    value = response_data.get(their_name)
+    # For bogon ips like 10.1.2.3, timezoneapi.io gives "" values, and None for the objects
+    # 'timezone' and 'datetime'.
+    # Notably, though, for 127.0.0.1, it gives a valid response: North Pole, AK.
+    if value:
+      our_data[our_name] = value
+  tz = dget(response_data, 'timezone', 'id')
+  if tz:
+    our_data['timezone'] = tz
+  loc_str = response_data.get('location')
+  if loc_str:
+    fields = loc_str.split(',')
+    if len(fields) == 2:
+      try:
+        our_data['latitude'] = float(fields[0])
+        our_data['longitude'] = float(fields[1])
+      except ValueError:
+        pass
+  return our_data
+
+
 def get_ipinfo_data(ip, timeout=DEFAULT_TIMEOUT):
   """Get IP data from ipinfo.io.
-  They uniquely get us the ASN, ISP, and hostname
-  All other data is also available from freegeoip.net.
-  Limit: 1000 requests per day (as of Oct 2017)."""
+  Fields provided:
+    country (2-letter abbreviation)
+    region
+    town
+    zip
+    asn (unique)
+    isp (unique)
+    hostname (unique)
+  Limit: 1000 requests per day (as of June 2018)."""
   response = get_api_data(IPINFO_URL.format(ip),
                           timeout=timeout,
                           max_response=MAX_RESPONSE)
@@ -150,6 +226,25 @@ def get_ipinfo_data(ip, timeout=DEFAULT_TIMEOUT):
   except KeyError:
     pass
   return our_data
+
+
+def get_tz_google(latitude, longitude, timeout=DEFAULT_TIMEOUT):
+  """Get timezone data from Google.
+  As of July 2018, this requires an API key and a paid plan."""
+  now = time.time()
+  api_key = getattr(settings, 'GOOGLE_API_KEY', None)
+  if not api_key:
+    return None
+  url = GOOGLE_TZ_URL.format(key=api_key, timestamp=now, latitude=latitude, longitude=longitude)
+  response = get_api_data(url, timeout=timeout, max_response=MAX_RESPONSE)
+  if response is None:
+    return None
+  elif response.get('status') != 'OK' or 'timeZoneId' not in response:
+    logging.warning('Error getting ip timezone data for {}, {} from Google. '
+                    'Returned error "{status}".'.format(latitude, longitude, **response))
+    return None
+  else:
+    return response['timeZoneId']
 
 
 def get_api_data(url, timeout=DEFAULT_TIMEOUT, max_response=MAX_RESPONSE):
@@ -206,3 +301,18 @@ def get_tz_abbrv(timezone):
   except pytz.UnknownTimeZoneError:
     return None
   return tz.tzname(datetime.now())
+
+
+def dget(this_dict, *keys):
+  """Reference a value deep in a nested series of dicts.
+  `dget(d, 'a', 'b', 'c')` is equivalent to `d.get('a', {}).get('b', {}).get('c')`,
+  except it doesn't waste time creating all the intermediate default dicts.
+  It's like saying `d['a']['b']['c'], except that if any of the keys are missing,
+  it will return None."""
+  for key in keys:
+    value = this_dict.get(key)
+    if value is None:
+      return None
+    elif isinstance(value, dict):
+      this_dict = value
+  return value
