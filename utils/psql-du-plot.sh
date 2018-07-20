@@ -37,8 +37,8 @@ function main {
                            {print 1.05*max/1024/1024}' "$log")
 
   awk -F '\t' '$2 == "'"$max_table"'" {print $1, $3/1024/1024}' "$log" \
-    | ~/bin/scatterplot.py -u x -U days --y-range 0 "$max_value" -T "Disk Usage: $max_table" -Y MB \
-      $out_args
+    | ~/bin/scatterplot.py -u x -U months --y-range 0 "$max_value" \
+      -T "Disk Usage: $max_table" -Y MB $out_args
 }
 
 function fail {
