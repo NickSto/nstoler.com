@@ -138,6 +138,7 @@ def additem(request, page):
   params.add('title')
   params.add('body')
   params.add('content')
+  params.add('attributes')
   params.add('key')
   params.add('parent_key')
   params.add('parent_id', type=int)
@@ -148,9 +149,9 @@ def additem(request, page):
     return HttpResponseRedirect(get_view_url(page))
   content = compose_content(params['title'], params['body'], params['content'])
   parent_list = get_by_key_or_id(item_type, page, params['parent_key'], params['parent_id'])
-  create_item(item_type, page, content, request.visit, key=params['key'], parent_list=parent_list)
+  create_item(item_type, page, content, params['attributes'], request.visit, key=params['key'],
+              parent_list=parent_list)
   return HttpResponseRedirect(get_view_url(page))
-
 
 @require_admin_and_privacy
 def moveitem(request, page):
