@@ -13,3 +13,6 @@
 [submodule "horcrux"]
 	path = horcrux
 	url = https://github.com/NickSto/horcrux.git
+[submodule "worktime"]
+	path = worktime
+	url = https://github.com/NickSto/worktime.git

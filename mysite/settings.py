@@ -57,6 +57,7 @@ INSTALLED_APPS = [
   'traffic',
   'myadmin',
   'horcrux',
+  'worktime',
   'editpages',
   'wikihistory',
   'django.contrib.admin',
