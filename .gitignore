@@ -1,5 +1,7 @@
 *.pyc
 __pycache__
+*.lnk
+*.dir
 .venv
 protected_settings.py
 db.sqlite*
