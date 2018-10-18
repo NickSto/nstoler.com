@@ -9,7 +9,6 @@ import urllib.parse
 from utils import http_request, HttpError
 log = logging.getLogger(__name__)
 
-
 # http for lower latency (and we don't care that much about this kind of attack).
 IPSTACK_URL = 'http://api.ipstack.com/{}?access_key={key}'
 IPINFO_URL = 'http://ipinfo.io/{}'
@@ -68,6 +67,9 @@ def make_ip_info(ip, data):
 
 def get_ip_data(ip, timeout=DEFAULT_TIMEOUT):
   data1 = get_ipinfo_data(ip, timeout=timeout)
+  return data1
+  #TODO: timezoneapi.io free tier ended. Replace with a paid play for get_tz_google() or possibly
+  #      get_ipstack_data().
   data2 = get_tzapi_data(ip, timeout=timeout)
   if not (data1 or data2):
     return None
@@ -136,7 +138,7 @@ def get_tzapi_data(ip, timeout=DEFAULT_TIMEOUT):
     latitude
     longitude
     timezone (unique)
-  Limit: 50 requests per day (as of July 2018). Exceeding that returns HTTP 429."""
+  Limit: No more free tier (as of Oct 4, 2018)."""
   if ip == '127.0.0.1':
     return None
   response = get_api_data(TZAPI_URL.format(ip), timeout=timeout, max_response=MAX_RESPONSE)
@@ -183,6 +185,8 @@ def get_ipinfo_data(ip, timeout=DEFAULT_TIMEOUT):
     region
     town
     zip
+    latitude
+    longitude
     asn (unique)
     isp (unique)
     hostname (unique)
@@ -261,7 +265,7 @@ def get_api_data(url, timeout=DEFAULT_TIMEOUT, max_response=MAX_RESPONSE):
 def set_timezone(request):
   """Set the timezone to the user's one and return which one that is.
   Returns the abbreviation of the timezone, like "PST".
-  On failure, returns the abbrevation of settings.TIME_ZONE."""
+  On failure, returns the abbrevation of `settings.TIME_ZONE`."""
   ipinfo = IpInfo.objects.filter(ip=request.visit.visitor.ip).order_by('-timestamp')
   if ipinfo:
     try:
@@ -287,7 +291,7 @@ def set_timezone(request):
 
 def tz_convert(dt, timezone):
   """Convert a timezone-aware datetime object to a different timezone.
-  "timezone" should be a string like "America/Chicago" (as returned by get_ip_timezone())"""
+  `timezone` should be a string like "America/Chicago" (as returned by `get_ip_timezone()`)"""
   tz = pytz.timezone(timezone)
   return dt.astimezone(tz)
 
@@ -307,7 +311,7 @@ def dget(this_dict, *keys):
   """Reference a value deep in a nested series of dicts.
   `dget(d, 'a', 'b', 'c')` is equivalent to `d.get('a', {}).get('b', {}).get('c')`,
   except it doesn't waste time creating all the intermediate default dicts.
-  It's like saying `d['a']['b']['c'], except that if any of the keys are missing,
+  It's like saying `d['a']['b']['c']`, except that if any of the keys are missing,
   it will return None."""
   for key in keys:
     value = this_dict.get(key)
