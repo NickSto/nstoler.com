@@ -7,7 +7,7 @@ from django.template import TemplateDoesNotExist
 from django.db import transaction, DatabaseError
 import logging
 import os
-from utils import QueryParams
+from utils.queryparams import QueryParams
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
 from notepad.models import Note, Page
 from notepad.views import DISPLAY_ORDER_MARGIN

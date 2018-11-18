@@ -6,7 +6,8 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
 from myadmin.lib import require_admin_and_privacy
-from utils import QueryParams, recaptcha_verify
+from utils.queryparams import QueryParams
+from utils import recaptcha_verify
 log = logging.getLogger(__name__)
 
 

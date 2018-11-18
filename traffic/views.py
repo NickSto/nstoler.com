@@ -6,7 +6,7 @@ from django.utils.html import escape
 from django.db import DataError
 import django.core.paginator
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
-from utils import QueryParams, boolish
+from utils.queryparams import QueryParams, boolish
 from .models import Visit, IpInfo
 from . import categorize
 from .ipinfo import set_timezone

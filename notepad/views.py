@@ -6,7 +6,8 @@ from django.template.defaultfilters import escape, urlize
 from django.db.models import Max
 import django.db
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
-from utils import QueryParams, boolish, email_admin
+from utils.queryparams import QueryParams, boolish
+from utils import email_admin
 from .models import Note, Page, Move
 import collections
 import random as rand
