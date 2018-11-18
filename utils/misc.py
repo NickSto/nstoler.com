@@ -163,7 +163,7 @@ class QueryParam(object):
 
 
 def boolish(value):
-  if value in (False, None, 0, '', 'False', 'false', '0'):
+  if value in (False, None, 0, '', 'False', 'false', '0', 'None', 'none', 'null'):
     return False
   elif value in (True, 1, 'True', 'true', '1'):
     return True
