@@ -44,6 +44,14 @@ class ModelMixin(object):
         return name, value_str
     return None, None
 
+  @classmethod
+  def get_default(cls, field_name):
+    if hasattr(cls, '_meta') and hasattr(cls._meta, 'get_field'):
+      field = cls._meta.get_field(field_name)
+      if hasattr(field, 'get_default'):
+        return field.get_default()
+    raise AttributeError('Interface for accessing field defaults has changed.')
+
 
 def recaptcha_verify(response_token, ip=None):
   # https://developers.google.com/recaptcha/docs/verify
