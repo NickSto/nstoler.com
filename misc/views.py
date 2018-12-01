@@ -42,8 +42,15 @@ def userinfo(request):
   info['visitors_v1'] = request.COOKIES.get('visitors_v1')
   info['visitors_v2'] = request.COOKIES.get('visitors_v2')
   info['Cookie header'] = headers.get('HTTP_COOKIE')
-  text = '\n'.join(['{}:\t{!r}'.format(key, value) for key, value in info.items()])
-  return HttpResponse(text, content_type=settings.PLAINTEXT)
+  params = request.GET
+  if params.get('format') == 'plain':
+    text = '\n'.join(['{}:\t{!r}'.format(key, value) for key, value in info.items()])
+    return HttpResponse(text, content_type=settings.PLAINTEXT)
+  else:
+    data = []
+    for key, value in info.items():
+      data.append({'key':key, 'value':value})
+    return render(request, 'misc/userinfo.tmpl', {'data':data})
 
 
 @require_admin_and_privacy

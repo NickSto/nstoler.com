@@ -1,0 +1,37 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}Your browser{% endblock %}
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'misc/css/userinfo.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+    <section>
+      <noscript>
+        <h4>Notice: Javascript is required for some of the fields.</h4>
+      </noscript>
+    </section>
+    <section class="panel panel-shrink">
+      <div class="panel-heading">
+        <h4>Your user agent:</h4>
+      </div>
+      <table class="panel-body table table-bordered table-condensed table-hover">
+        <tbody id="data">
+          {% for row in data %}
+            <tr>
+              <td class="name">{{ row.key }}</td>
+              <td class="value">{{ row.value }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    </div>
+{% endblock content %}
+
+{% block javascript %}
+  <script src="{% static 'misc/js/userinfo.js' %}?via=html"></script>
+{% endblock %}
