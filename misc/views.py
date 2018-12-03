@@ -3,7 +3,7 @@ import logging
 import os
 import subprocess
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.conf import settings
 from myadmin.lib import require_admin_and_privacy
 from utils.queryparams import QueryParams
@@ -93,3 +93,23 @@ def captchasubmit(request, name):
   if not recaptcha_verify(response):
     context['body'] = 'Invalid CAPTCHA response or problem verifying it!'
   return render(request, 'misc/captcha.tmpl', context)
+
+
+def journalurl(request, url):
+  if url.startswith('http://'):
+    url_trimmed = url[7:]
+  elif url.startswith('https://'):
+    url_trimmed = url[8:]
+  elif url.startswith('http:/'):
+    url_trimmed = url[6:]
+  elif url.startswith('https:/'):
+    url_trimmed = url[7:]
+  else:
+    return HttpResponseNotFound('Invalid url: no http:/. Saw:\n'+url, content_type=settings.PLAINTEXT)
+  fields = url_trimmed.split('/')
+  if len(fields) < 2:
+    return HttpResponseNotFound('Invalid url: no path. Saw:\n'+url, content_type=settings.PLAINTEXT)
+  domain = fields[0].replace('.', '-')
+  path = '/'+'/'.join(fields[1:])
+  new_url = 'https://'+domain+'.ezaccess.libraries.psu.edu'+path
+  return HttpResponseRedirect(new_url)
