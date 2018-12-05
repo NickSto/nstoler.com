@@ -13,5 +13,5 @@ urlpatterns = [
   url(r'^export$', views.export, name='export'),
   url(r'^captcha/(?P<name>.+)$', views.captcha, name='captcha'),
   url(r'^captchasubmit/(?P<name>.+)$', views.captchasubmit, name='captchasubmit'),
-  url(r'^journalurl/(?P<url>.+)$', views.journalurl, name='journalurl')
+  url(r'^journalurl/(?P<proxy>[^/]+)/(?P<url>.+)$', views.journalurl, name='journalurl')
 ]

@@ -95,7 +95,8 @@ def captchasubmit(request, name):
   return render(request, 'misc/captcha.tmpl', context)
 
 
-def journalurl(request, url):
+def journalurl(request, proxy, url):
+  # `proxy` is the domain of the proxy server, e.g. libraries.psu.edu.
   if url.startswith('http://'):
     url_trimmed = url[7:]
   elif url.startswith('https://'):
@@ -111,5 +112,5 @@ def journalurl(request, url):
     return HttpResponseNotFound('Invalid url: no path. Saw:\n'+url, content_type=settings.PLAINTEXT)
   domain = fields[0].replace('.', '-')
   path = '/'+'/'.join(fields[1:])
-  new_url = 'https://'+domain+'.ezaccess.libraries.psu.edu'+path
+  new_url = 'https://'+domain+'.ezaccess.'+proxy+path
   return HttpResponseRedirect(new_url)
