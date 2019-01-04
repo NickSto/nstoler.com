@@ -11,6 +11,8 @@ Allow: /assemblo$
 Allow: /wikihistory$
 Allow: /yourgenome$
 Allow: /traffic$
+Allow: /worktime$
+Allow: /misc/sessionrecover$
 
 User-agent: ia_archiver
 Disallow:
