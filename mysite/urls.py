@@ -38,6 +38,7 @@ urlpatterns = [
   url(r'^horcrux/', include('horcrux.urls')),
   url(r'^worktime$', worktime.views.main, name='worktime_main'),
   url(r'^worktime/', include('worktime.urls')),
+  url(r'^uptest/', include('uptest.urls')),
   # If nothing else matches, send it to notepad.
   url(r'', include('notepad.urls')),
 ]

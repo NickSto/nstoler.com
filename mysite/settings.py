@@ -53,6 +53,7 @@ PERSONAL_PHONE = ''
 INSTALLED_APPS = [
   'ET',
   'misc',
+  'uptest',
   'notepad',
   'traffic',
   'myadmin',
