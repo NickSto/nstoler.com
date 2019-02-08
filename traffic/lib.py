@@ -163,6 +163,8 @@ def skip_visit(request):
   path = request.path_info
   if user_agent.startswith(PINGDOM_UA) and path == '/':
     return True
+  elif request.scheme == 'http' and request.get_host() == 'polo.nstoler.com' and path == '/uptest/polo':
+    return True
   return False
 
 
