@@ -16,3 +16,6 @@
 [submodule "worktime"]
 	path = worktime
 	url = https://github.com/NickSto/worktime.git
+[submodule "uptest"]
+	path = uptest
+	url = https://github.com/NickSto/uptest.git
