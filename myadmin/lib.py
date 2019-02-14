@@ -15,7 +15,7 @@ def require_admin_and_privacy(view):
       return view(request, *nargs, **kwargs)
     else:
       text = 'Error: This page is restricted to the admin over HTTPS.'
-      return HttpResponse(text, content_type='text/plain; charset=UTF-8')
+      return HttpResponse(text, status=401, content_type='text/plain; charset=UTF-8')
   return wrapped_view
 
 
