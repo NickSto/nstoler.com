@@ -158,13 +158,20 @@ def unpack_request(request):
   }
 
 
+#TODO: Turn into config file read on startup.
 def skip_visit(request):
   user_agent = request.META.get('HTTP_USER_AGENT', '')
   path = request.path_info
-  if user_agent.startswith(PINGDOM_UA) and path == '/':
+  if request.scheme == 'http' and request.get_host() == 'polo.nstoler.com' and path == '/uptest/polo':
     return True
-  elif request.scheme == 'http' and request.get_host() == 'polo.nstoler.com' and path == '/uptest/polo':
+  elif user_agent.startswith(PINGDOM_UA) and path == '/':
     return True
+  elif (user_agent.startswith('worktime/') and
+        request.COOKIES.get('visitors_v1') == 'EwI7BkgyN4DY+pH5' and path == '/worktime' and
+        request.META.get('QUERY_STRING') == 'format=json&numbers=values'):
+    return True
+  log.info('user agent: {}, cookie: {}, path: {}, query_str: {}'
+           .format(user_agent, request.COOKIES.get('visitors_v1'), path, request.META.get('QUERY_STRING')))
   return False
 
 
