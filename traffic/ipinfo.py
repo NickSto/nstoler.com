@@ -266,7 +266,11 @@ def set_timezone(request):
   """Set the timezone to the user's one and return which one that is.
   Returns the abbreviation of the timezone, like "PST".
   On failure, returns the abbrevation of `settings.TIME_ZONE`."""
-  ipinfo = IpInfo.objects.filter(ip=request.visit.visitor.ip).order_by('-timestamp')
+  try:
+    ip = request.visit.visitor.ip
+  except AttributeError:
+    ip = request.META.get('REMOTE_ADDR')
+  ipinfo = IpInfo.objects.filter(ip=ip).order_by('-timestamp')
   if ipinfo:
     try:
       zone = pytz.timezone(ipinfo[0].timezone)
@@ -274,10 +278,10 @@ def set_timezone(request):
       tz = get_tz_abbrv(ipinfo[0].timezone)
     except pytz.UnknownTimeZoneError:
       log.warning('set_timezone(): pytz.UnknownTimeZoneError on "{}" (ip {})'
-                  .format(ipinfo[0].timezone, request.visit.visitor.ip))
+                  .format(ipinfo[0].timezone, ip))
       tz = None
   else:
-    log.warning('set_timezone(): Could not find ip {} in database.'.format(request.visit.visitor.ip))
+    log.warning('set_timezone(): Could not find ip {} in database.'.format(ip))
     tz = None
   if tz:
     return tz
