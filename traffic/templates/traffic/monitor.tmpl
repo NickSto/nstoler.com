@@ -76,6 +76,9 @@
                     </th>
                     <td class="value">
                       <a href="{% url 'traffic_monitor' %}?user={{ visit.visitor.user.id }}">{{ visit.visitor.user.id }}</a>
+                      {% if visit.visitor.user.label %}
+                        ({{ visit.visitor.user.label }})
+                      {% endif %}
                     </td>
                   </tr>
                   <tr>
@@ -99,7 +102,7 @@
                   {% if visit.visitor.label %}
                     <tr>
                       <th class="name">
-                        Label
+                        Visitor label
                       </th>
                       <td class="value">
                         {{ visit.visitor.label }}
