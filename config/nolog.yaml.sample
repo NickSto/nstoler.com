@@ -1,0 +1,15 @@
+# Visits which should be ignored and not entered into the traffic database.
+# Usually these are from automated scripts which ping so often, the database would rapidly fill up.
+# The field names can be any key returned by unpack_request() in traffic/lib.py.
+# It also supports double-underscore syntax like Django model field lookups. Except that for now,
+# only __startswith is supported!
+
+# Pingdom
+- user_agent__startswith: Pingdom.com_bot_version_
+  path: /
+
+# Polo pings:
+- scheme: http
+  host: polo.nstoler.com
+  path: /uptest/polo
+

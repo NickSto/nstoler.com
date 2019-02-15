@@ -1,8 +1,10 @@
+from django.conf import settings
 from django.db import connection
 from .models import Visit, Visitor, User, Cookie
 from .categorize import classifier
 from .ipinfo import ip_to_ipinfo
 from utils import async
+import os
 import string
 import random
 import base64
@@ -10,10 +12,34 @@ import struct
 import socket
 import logging
 log = logging.getLogger(__name__)
+try:
+  import yaml
+except ImportError:
+  log.warning('ImportError for module "yaml".')
+  yaml = None
 
 ALPHABET1 = string.ascii_lowercase + string.ascii_uppercase + string.digits + '+-'
 COOKIE_MAX_AGE = 10*365*24*60*60  # 10 years
 PINGDOM_UA = 'Pingdom.com_bot_version_'
+DEFAULT_IGNORE_CONFIG_PATH = os.path.join(settings.CONFIG_DIR, 'nolog.yaml')
+
+def read_ignore_agents(ignore_config_path):
+  ignore_agents = []
+  if yaml is None:
+    return ignore_agents
+  try:
+    with open(ignore_config_path) as ignore_config_file:
+      ignore_agents = yaml.safe_load(ignore_config_file)
+    if ignore_agents is None:
+      log.error('Read {}, but it appears empty.'.format(ignore_config_path))
+      ignore_agents = []
+  except OSError as error:
+    log.error('OSError on trying to read {}: {}'.format(ignore_config_path, error))
+  log.debug('Found {} agents in {}.'.format(len(ignore_agents), ignore_config_path))
+  return ignore_agents
+
+IGNORE_AGENTS = read_ignore_agents(DEFAULT_IGNORE_CONFIG_PATH)
+
 
 
 def middleware(get_response):
@@ -21,11 +47,12 @@ def middleware(get_response):
   It also makes the Visit available as the visit property of the request."""
   def wrapper(request):
     params = request.GET
+    request_data = unpack_request(request)
     via = params.get('via')
-    if via in ('js', 'css', 'html') or skip_visit(request):
+    if via in ('js', 'css', 'html') or ignore_visit(request_data, IGNORE_AGENTS):
       request.visit = None
     else:
-      request.visit = get_or_create_visit_and_visitor(request)
+      request.visit = get_or_create_visit_and_visitor(request_data)
     # Send the request to the view and get the response.
     response = get_response(request)
     if request.visit is not None:
@@ -38,12 +65,11 @@ def middleware(get_response):
   return wrapper
 
 
-def get_or_create_visit_and_visitor(request):
+def get_or_create_visit_and_visitor(request_data):
   """Do the actual work of logging the visit. Return the Visit object."""
-  request_data = unpack_request(request)
   visitor = get_or_create_visitor(**request_data)
   log.debug('Got or created Visitor {}.'.format(visitor.id))
-  visit = create_visit(request_data, visitor, request.COOKIES)
+  visit = create_visit(request_data, visitor)
   log.debug('Created visit {}.'.format(visit.id))
   run_background_tasks(visitor, request_data)
   return visit
@@ -84,7 +110,7 @@ def set_cookies(visit, response):
   return response
 
 
-def create_visit(request_data, visitor, request_cookies):
+def create_visit(request_data, visitor):
   visit = Visit(
     method=request_data['method'],
     scheme=request_data['scheme'],
@@ -96,7 +122,7 @@ def create_visit(request_data, visitor, request_cookies):
   )
   visit.save()
   # Take care of the cookies received and sent.
-  cookies_got, cookies_set = create_cookies_got_set(request_cookies)
+  cookies_got, cookies_set = create_cookies_got_set(request_data['cookies'])
   visit.cookies_got.add(*cookies_got)
   visit.cookies_set.add(*cookies_set)
   visit.save()
@@ -149,6 +175,7 @@ def unpack_request(request):
     'user_agent': headers.get('HTTP_USER_AGENT'),
     'cookie1': cookie1,
     'cookie2': cookie2,
+    'cookies': request.COOKIES,
     'method': request.method,
     'scheme': request.scheme,
     'host': request.get_host(),
@@ -158,20 +185,23 @@ def unpack_request(request):
   }
 
 
-#TODO: Turn into config file read on startup.
-def skip_visit(request):
-  user_agent = request.META.get('HTTP_USER_AGENT', '')
-  path = request.path_info
-  if request.scheme == 'http' and request.get_host() == 'polo.nstoler.com' and path == '/uptest/polo':
-    return True
-  elif user_agent.startswith(PINGDOM_UA) and path == '/':
-    return True
-  elif (user_agent.startswith('worktime/') and
-        request.COOKIES.get('visitors_v1') == 'EwI7BkgyN4DY+pH5' and path == '/worktime' and
-        request.META.get('QUERY_STRING') == 'format=json&numbers=values'):
-    return True
-  log.info('user agent: {}, cookie: {}, path: {}, query_str: {}'
-           .format(user_agent, request.COOKIES.get('visitors_v1'), path, request.META.get('QUERY_STRING')))
+def ignore_visit(request_data, ignore_agents):
+  """Should we skip creating a database entry for this visit?"""
+  for agent in ignore_agents:
+    ignore = True
+    for key, value in agent.items():
+      match = False
+      if request_data.get(key) == value:
+        match = True
+      elif key.endswith('__startswith'):
+        request_value = request_data.get(key[:-12])
+        if request_value and request_value.startswith(value):
+          match = True
+      if not match:
+        ignore = False
+        break
+    if ignore:
+      return True
   return False
 
 
