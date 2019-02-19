@@ -178,11 +178,12 @@ LOGGING = {
       'level':'DEBUG',
       'class':'logging.NullHandler',
     },
+    # Handle django.log rotation externally with logrotate.
     'logfile': {
       'level':'DEBUG',
       'class':'logging.handlers.RotatingFileHandler',
       'filename': os.path.join(WEB_ROOT, 'logs/django.log'),
-      'maxBytes': 20000000,
+      'maxBytes': 0,
       'backupCount': 99999,
       'formatter': 'standard',
     },
