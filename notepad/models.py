@@ -14,6 +14,9 @@ class Note(ModelMixin, models.Model):
   content = models.TextField()
   visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True)
   protected = models.BooleanField(default=False)  # Only admin can delete.
+  archived = models.BooleanField(default=False)
+  archiving_visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True,
+                                      related_name='archived_note')
   deleted = models.BooleanField(default=False)
   deleting_visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True,
                                      related_name='deleted_note')

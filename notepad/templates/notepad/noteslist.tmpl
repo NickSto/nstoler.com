@@ -19,6 +19,7 @@
                     <tr class="names">
                       <th>id</th>
                       <th>display_order</th>
+                      <th>archived?</th>
                       <th>deleted?</th>
                       <th>edited?</th>
                       {% if note.visit %}
@@ -34,6 +35,7 @@
                     <tr class="values">
                       <td>{{ note.id }}</td>
                       <td>{{ note.display_order }}</td>
+                      <td>{{ note.archived }}</td>
                       <td>{{ note.deleted }}</td>
                       {% if note.last_version %}
                       <td>True</td>
@@ -84,7 +86,8 @@ Try adding something with the form below!</div>
             <label>Modify selected notes</label>
           </li>
           <li class="list-group-item action-buttons">
-            <button id="delete" class="btn btn-default" name="action" value="delete" formaction="{% url 'notepad:deleteform' page %}">✕ Delete</button>
+            <button id="delete" class="btn btn-default" name="action" value="delete" formaction="{% url 'notepad:hideform' page %}">✕ Delete</button>
+            <button id="archive" class="btn btn-default" name="action" value="archive" formaction="{% url 'notepad:hideform' page %}">☖ Archive</button>
             <button id="edit" class="btn btn-default" name="action" value="edit" formaction="{% url 'notepad:editform' page %}">✎ Edit</button>
             <button id="moveup" class="btn btn-default" name="action" value="moveup" formaction="{% url 'notepad:move' page %}">↑ Move up</button>
             <button id="movedown" class="btn btn-default" name="action" value="movedown" formaction="{% url 'notepad:move' page %}">↓ Move down</button>

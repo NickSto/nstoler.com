@@ -22,13 +22,13 @@ DISPLAY_ORDER_MARGIN = 1000
 def monitor(request):
   params = QueryParams()
   params.add('format', default='html', choices=('html', 'plain'))
-  params.add('showdeleted', type=boolish, default=False, choices=(True, False))
+  params.add('deleted', type=boolish, default=False, choices=(True, False))
   params.parse(request.GET)
   # If one of the parameters was invalid, redirect to a fixed url.
   # - QueryParams object will automatically set the parameter to a valid value.
   if params.invalid_value:
     return HttpResponseRedirect(reverse('notepad:monitor')+str(params))
-  if params['showdeleted']:
+  if params['deleted']:
     pages = Page.objects.order_by('name')
     pages = sorted(pages, key=lambda page: page.name.lower())
   else:
@@ -38,12 +38,12 @@ def monitor(request):
     text = '\n'.join([page.name for page in pages])
     return HttpResponse(text, content_type=settings.PLAINTEXT)
   else:
-    if params['showdeleted']:
-      showdeleted_query_str = str(params.but_with(showdeleted=False))
+    if params['deleted']:
+      deleted_query_str = str(params.but_with(deleted=False))
     else:
-      showdeleted_query_str = str(params.but_with(showdeleted=True))
-    context = {'pages':pages, 'showdeleted':params['showdeleted'],
-               'showdeleted_query_str':showdeleted_query_str}
+      deleted_query_str = str(params.but_with(deleted=True))
+    context = {'pages':pages, 'deleted':params['deleted'],
+               'deleted_query_str':deleted_query_str}
     return render(request, 'notepad/monitor.tmpl', context)
 
 
@@ -52,7 +52,8 @@ def view(request, page_name):
   params.add('note', type=int, default=None)
   params.add('format', default='html', choices=('html', 'plain'))
   params.add('admin', type=boolish, default=False, choices=(True, False))
-  params.add('showdeleted', type=boolish, default=False, choices=(True, False))
+  params.add('archived', type=boolish, default=False, choices=(True, False))
+  params.add('deleted', type=boolish, default=False, choices=(True, False))
   params.add('select', default='none', choices=('all', 'none'))
   params.parse(request.GET)
   # If one of the parameters was invalid, redirect to a fixed url.
@@ -62,24 +63,27 @@ def view(request, page_name):
   # Only allow showing deleted notes to the admin over HTTPS.
   #TODO: Display deleted notes differently.
   is_admin = is_admin_and_secure(request)
-  if not is_admin and (params['admin'] or params['showdeleted']):
-    query_str = str(params.but_with(admin=False, showdeleted=False))
+  if not is_admin and (params['admin'] or params['deleted']):
+    query_str = str(params.but_with(admin=False, deleted=False))
     return HttpResponseRedirect(reverse('notepad:view', args=(page_name,))+query_str)
   # Fetch the note(s).
   if params['note']:
     try:
       note = Note.objects.get(pk=params['note'], page__name=page_name)
-      if note.deleted and not params['showdeleted']:
-        # Don't show a deleted note w/o that option turned on.
+      if (note.archived and not params['archived']) or (note.deleted and not params['deleted']):
+        # Don't show an archived or deleted note w/o that option turned on.
         notes = []
       else:
         notes = [note]
     except Note.DoesNotExist:
       notes = []
-  elif params['showdeleted']:
-    notes = Note.objects.filter(page__name=page_name).order_by('display_order', 'id')
   else:
-    notes = Note.objects.filter(page__name=page_name, deleted=False).order_by('display_order', 'id')
+    kwargs = {}
+    if not params['archived']:
+      kwargs['archived'] = False
+    if not params['deleted']:
+      kwargs['deleted'] = False
+    notes = Note.objects.filter(page__name=page_name, **kwargs).order_by('display_order', 'id')
   # Bundle up the data and display the notes.
   if params['format'] == 'plain':
     contents = [note.content for note in notes]
@@ -94,10 +98,14 @@ def view(request, page_name):
         links['Admin off'] = str(params.but_with(admin=False))
       else:
         links['Admin on'] = str(params.but_with(admin=True))
-      if params['showdeleted']:
-        links['Hide deleted'] = str(params.but_with(showdeleted=False))
+      if params['archived']:
+        links['Hide archived'] = str(params.but_with(archived=False))
       else:
-        links['Show deleted'] = str(params.but_with(showdeleted=True))
+        links['Show archived'] = str(params.but_with(archived=True))
+      if params['deleted']:
+        links['Hide deleted'] = str(params.but_with(deleted=False))
+      else:
+        links['Show deleted'] = str(params.but_with(deleted=True))
     context = {'page':page_name, 'notes':notes, 'links':links,
                'admin_view':params['admin'], 'select':params['select']}
     return render(request, 'notepad/view.tmpl', context)
@@ -135,27 +143,29 @@ def add(request, page_name):
   return HttpResponseRedirect(view_url+'#bottom')
 
 
-def deleteform(request, page_name):
+def hideform(request, page_name):
   params = request.POST
+  action = params.get('action')
   notes = get_notes_from_params(params)
-  if params.get('site') == '':
-    context = {'page':page_name, 'notes':notes}
-    return render(request, 'notepad/deleteform.tmpl', context)
+  if params.get('site') == '' and action in ('archive', 'delete'):
+    context = {'page':page_name, 'notes':notes, 'action':action}
+    return render(request, 'notepad/hideform.tmpl', context)
   else:
     warn_and_redirect_spambot(request, page_name, 'deleting notes', notes)
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
 
-def delete(request, page_name):
+def hide(request, page_name):
   params = request.POST
+  action = params.get('action')
   notes = get_notes_from_params(params)
   admin = None
-  if params.get('site') == '':
+  if params.get('site') == '' and action in ('archive', 'delete'):
     for note in notes:
       if note.page.name != page_name:
-        log.warning('User attempted to delete note {} from page {!r}, but gave page name {!r}'
-                    .format(note.id, note.page.name, page_name))
+        log.warning('User attempted to {} note {} from page {!r}, but gave page name {!r}'
+                    .format(action, note.id, note.page.name, page_name))
         continue
       if note.protected:
         if admin is None:
@@ -163,11 +173,15 @@ def delete(request, page_name):
         if not admin:
           log.warning('Non-admin attempted to delete protected note {!r}.'.format(note.id))
           continue
-      note.deleted = True
-      note.deleting_visit = request.visit
+      if action == 'archive':
+        note.archived = True
+        note.archiving_visit = request.visit
+      elif action == 'delete':
+        note.deleted = True
+        note.deleting_visit = request.visit
       note.save()
   else:
-    warn_and_redirect_spambot(request, page_name, 'confirming note deletions', notes)
+    warn_and_redirect_spambot(request, page_name, 'confirming note {}-ings'.format(action), notes)
   #TODO: Check if the notes were deleted from the main "notepad" page.
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')

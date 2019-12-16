@@ -1,14 +1,14 @@
 {% extends 'bootstrap.tmpl' %}
 {% load staticfiles %}
 
-{% block title %}{{ page }} - Delete - Notepad{% endblock %}
+{% block title %}{{ page }} - {{ action | title }} - Notepad{% endblock %}
 
 {% block stylesheet %}
   <link rel="stylesheet" href="{% static 'notepad/css/notepad.css' %}?via=html">
 {% endblock %}
 
 {% block content %}
-    <div id="main" class="deleteform container-fluid">
+    <div id="main" class="hideform container-fluid">
       <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
@@ -21,21 +21,22 @@
         </div>
         <div class="panel-body">
           {% if notes|length == 1 %}
-            <p>Delete this note?</p>
+            <p>{{ action | title }} this note?</p>
           {% else %}
-            <p>Delete these notes?</p>
+            <p>{{ action | title }} these notes?</p>
           {% endif %}
         </div>
       </section>
 
-      <form id="notes_container" name="delete_notes" method="post" action="{% url 'notepad:delete' page %}" >
+      <form id="notes_container" name="hide_notes" method="post" action="{% url 'notepad:hide' page %}" >
         {% csrf_token %}
-        {% include 'notepad/noteslist.tmpl' with type='deleteform' %}
+        {% include 'notepad/noteslist.tmpl' with type='hideform' %}
         <div class="ruhuman">
           <label for="site">Site:</label>
           <input type="text" name="site">
         </div>
-        <input type="submit" class="btn btn-default" value="Delete">
+        <input type="hidden" name="action" value="{{ action }}">
+        <input type="submit" class="btn btn-default" value="{{ action | title }}">
       </form>
     </div>
 {% endblock content %}
