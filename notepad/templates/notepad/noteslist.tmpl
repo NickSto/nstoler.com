@@ -37,10 +37,12 @@
                       <td>{{ note.display_order }}</td>
                       <td>{{ note.archived }}</td>
                       <td>{{ note.deleted }}</td>
-                      {% if note.last_version %}
-                      <td>True</td>
+                      {% if note.next_version %}
+                        <td>
+                          <a href="{% url 'notepad:view' note.next_version.page.name %}?note={{ note.next_version.id }}&amp;archived=True&amp;deleted=True">{{ note.next_version.id }}</a>
+                        </td>
                       {% else %}
-                      <td>False</td>
+                        <td>False</td>
                       {% endif %}
                       {% if note.visit %}
                         <td>{{ note.visit.timestamp }} UTC</td>
@@ -65,7 +67,7 @@
               {% endif %}
 
               {% autoescape off %}
-                <pre class="content">{{ note.content_html }}</pre>
+                <pre class="content{% if note.archived %} archived{% endif %}{% if note.deleted %} deleted{% endif %}">{{ note.content_html }}</pre>
               {% endautoescape %}
               <div class="clearfix"></div>
             </li>

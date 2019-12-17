@@ -23,6 +23,14 @@ class Note(ModelMixin, models.Model):
   display_order = models.IntegerField()
   last_version = models.OneToOneField('self', models.SET_NULL, null=True, blank=True,
                                       related_name='next_version')
+  @property
+  def edited(self):
+    try:
+      if self.next_version:
+        return True
+    except Note.DoesNotExist:
+      return False
+    return False
   def content_html(self):
     urlized = urlize(escape(self.content))
     # Kludge to add some custom attributes to the <a> links.:

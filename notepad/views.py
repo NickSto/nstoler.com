@@ -205,10 +205,19 @@ def editform(request, page_name):
     note = notes[0]
   else:
     note = notes[0]
+  # Prevent appearance of being able to edit protected, archived, or deleted notes.
   if note and note.protected and not is_admin_and_secure(request):
-    # Prevent appearance of being able to edit protected notes.
     log.warning('Non-admin attempted to edit protected note {}.'.format(note.id))
     error = 'This note is protected.'
+  elif note.edited:
+    log.warning(f'User attempted to edit already edited note {note.id}.')
+    error = 'This note has already been edited.'
+  elif note.archived:
+    log.warning(f'User attempted to edit archived note {note.id}.')
+    error = 'This note has been archived.'
+  elif note.deleted:
+    log.warning(f'User attempted to edit deleted note {note.id}.')
+    error = 'This note has been deleted.'
   if error:
     context = {'page':page_name, 'error':error}
     return render(request, 'notepad/error.tmpl', context)
@@ -230,6 +239,7 @@ def edit(request, page_name):
   if params.get('site') != '':
     notes = [params.get('note')]
     return warn_and_redirect_spambot(request, page_name, 'editing note', notes, view_url+fragment)
+  # Get the Note requested.
   try:
     note_id = int(params.get('note'))
   except (TypeError, ValueError):
@@ -242,12 +252,24 @@ def edit(request, page_name):
                 .format(request.visit.visitor, note_id))
     return HttpResponseRedirect(view_url+fragment)
   fragment = '#note_{}'.format(note_id)
+  # Verify that everything looks valid.
   if note.page.name != page_name:
     log.warning('User tried to edit note {!r} from page {!r}, but gave page name {!r}.'
                 .format(note.id, note.page.name, page_name))
     return HttpResponseRedirect(view_url+fragment)
   if note.protected and not is_admin_and_secure(request):
     # Prevent editing protected notes.
+    log.warning(f'User tried to edit protected note {note.id} from page {note.page.name!r}.')
+    return HttpResponseRedirect(view_url+fragment)
+  if note.deleted:
+    log.warning(f'User tried to edit deleted note {note.id} from page {note.page.name!r}.')
+    return HttpResponseRedirect(view_url+fragment)
+  if note.archived:
+    log.warning(f'User tried to edit archived note {note.id} from page {note.page.name!r}.')
+    return HttpResponseRedirect(view_url+fragment)
+  # Double-check this note hasn't already been edited.
+  if note.edited:
+    log.warning(f'User tried to edit already-edited note {note.id} from page {note.page.name!r}.')
     return HttpResponseRedirect(view_url+fragment)
   if 'content' not in params:
     log.warning('No "content" key in query parameters.')
@@ -280,7 +302,7 @@ def edit(request, page_name):
 def moveform(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
-  notes = get_notes_from_params(params)
+  notes = get_notes_from_params(params, archived=False, deleted=False)
   if params.get('site') != '':
     return warn_and_redirect_spambot(request, page_name, 'moving notes', notes, view_url)
   if not is_admin_and_secure(request):
@@ -293,7 +315,7 @@ def moveform(request, page_name):
 def move(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
-  notes = get_notes_from_params(params)
+  notes = get_notes_from_params(params, deleted=False, archived=False)
   if params.get('site') != '':
     return warn_and_redirect_spambot(request, page_name, 'confirming move of notes', notes, view_url)
   action = params.get('action')
@@ -450,7 +472,7 @@ def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=N
     return HttpResponseRedirect(view_url)
 
 
-def get_notes_from_params(params):
+def get_notes_from_params(params, deleted=True, archived=True):
   note_id_strs = [key[5:] for key in params.keys() if key.startswith('note_')]
   notes = []
   for note_id_str in note_id_strs:
@@ -463,6 +485,12 @@ def get_notes_from_params(params):
       note = Note.objects.get(pk=note_id)
     except Note.DoesNotExist:
       log.warning('Non-existent note {!r}.'.format(note_id))
+      continue
+    if note.archived and not archived:
+      log.warning(f'Archived note {note_id} illegally requested.')
+      continue
+    if note.deleted and not deleted:
+      log.warning(f'Deleted note {note_id} illegally requested.')
       continue
     notes.append(note)
   notes.sort(key=lambda note: (note.display_order, note.id))

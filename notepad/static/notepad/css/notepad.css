@@ -41,6 +41,15 @@ pre.content {
   margin: 0;
 }
 
+.archived {
+  opacity: 75%;
+}
+
+.deleted {
+  opacity: 50%;
+  font-style: italic;
+}
+
 #main.view pre.content {
   width: calc(100% - 25px);
 }
