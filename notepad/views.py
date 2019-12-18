@@ -373,7 +373,7 @@ def _move_page(request, old_page_name, notes):
 
 
 def _move_order(request, page_name, notes, direction):
-  page_notes = Note.objects.filter(page__name=page_name, deleted=False).order_by('display_order', 'id')
+  page_notes = Note.objects.filter(page__name=page_name, archived=False, deleted=False).order_by('display_order', 'id')
   # Save old display_orders.
   old_orders = {}
   for note in page_notes:
