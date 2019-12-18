@@ -222,7 +222,7 @@ def editform(request, page_name):
     context = {'page':page_name, 'error':error}
     return render(request, 'notepad/error.tmpl', context)
   elif note:
-    notes = Note.objects.filter(page__name=page_name, deleted=False).order_by('display_order', 'id')
+    notes = Note.objects.filter(page__name=page_name, archived=False, deleted=False).order_by('display_order', 'id')
     lines = len(note.content.splitlines())
     context = {'page':page_name, 'note':note, 'notes':notes, 'rows':round(lines*1.1)+2,
                'warning':warning}
