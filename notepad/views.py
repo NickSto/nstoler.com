@@ -98,10 +98,11 @@ def view(request, page_name):
         links['Admin off'] = str(params.but_with(admin=False))
       else:
         links['Admin on'] = str(params.but_with(admin=True))
-      if params['archived']:
-        links['Hide archived'] = str(params.but_with(archived=False))
-      else:
-        links['Show archived'] = str(params.but_with(archived=True))
+    if params['archived']:
+      links['Hide archived'] = str(params.but_with(archived=False))
+    else:
+      links['Show archived'] = str(params.but_with(archived=True))
+    if is_admin:
       if params['deleted']:
         links['Hide deleted'] = str(params.but_with(deleted=False))
       else:
