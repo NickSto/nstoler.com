@@ -138,8 +138,13 @@ def add(request, page_name):
     # note into an existing page with other notes.
     note.display_order = note.id * DISPLAY_ORDER_MARGIN
     note.save()
+    if page_name == 'notepad':
+      # Notify that someone added a note to the Notepad landing page.
+      activity_notify(
+        request, page_name, 'adding a note', content=params.get('content', ''), blocked=False
+      )
   else:
-    warn_and_redirect_spambot(request, page_name, 'adding a note', content=params.get('content', ''))
+    activity_notify(request, page_name, 'adding a note', content=params.get('content', ''))
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
@@ -152,7 +157,7 @@ def hideform(request, page_name):
     context = {'page':page_name, 'notes':notes, 'action':action}
     return render(request, 'notepad/hideform.tmpl', context)
   else:
-    warn_and_redirect_spambot(request, page_name, 'deleting notes', notes)
+    activity_notify(request, page_name, 'deleting notes', notes)
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
@@ -182,7 +187,7 @@ def hide(request, page_name):
         note.deleting_visit = request.visit
       note.save()
   else:
-    warn_and_redirect_spambot(request, page_name, 'confirming note {}-ings'.format(action), notes)
+    activity_notify(request, page_name, 'confirming note {}-ings'.format(action), notes)
   #TODO: Check if the notes were deleted from the main "notepad" page.
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
@@ -193,7 +198,7 @@ def editform(request, page_name):
   params = request.POST
   notes = get_notes_from_params(params)
   if params.get('site') != '':
-    return warn_and_redirect_spambot(request, page_name, 'editing notes', notes, view_url)
+    return activity_notify(request, page_name, 'editing notes', notes, view_url)
   error = None
   warning = None
   if len(notes) == 0:
@@ -239,7 +244,7 @@ def edit(request, page_name):
   params = request.POST
   if params.get('site') != '':
     notes = [params.get('note')]
-    return warn_and_redirect_spambot(request, page_name, 'editing note', notes, view_url+fragment)
+    return activity_notify(request, page_name, 'editing note', notes, view_url+fragment)
   # Get the Note requested.
   try:
     note_id = int(params.get('note'))
@@ -305,7 +310,7 @@ def moveform(request, page_name):
   params = request.POST
   notes = get_notes_from_params(params, archived=False, deleted=False)
   if params.get('site') != '':
-    return warn_and_redirect_spambot(request, page_name, 'moving notes', notes, view_url)
+    return activity_notify(request, page_name, 'moving notes', notes, view_url)
   if not is_admin_and_secure(request):
     # Prevent appearance of being able to move protected notes.
     notes = [note for note in notes if not note.protected]
@@ -318,7 +323,7 @@ def move(request, page_name):
   params = request.POST
   notes = get_notes_from_params(params, deleted=False, archived=False)
   if params.get('site') != '':
-    return warn_and_redirect_spambot(request, page_name, 'confirming move of notes', notes, view_url)
+    return activity_notify(request, page_name, 'confirming move of notes', notes, view_url)
   action = params.get('action')
   if action == 'movepage':
     return _move_page(request, page_name, notes)
@@ -433,7 +438,8 @@ def _move_order(request, page_name, notes, direction):
   return HttpResponseRedirect(view_url+'#bottom')
 
 
-def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=None, content=None):
+def activity_notify(request, page_name, action, notes=None, view_url=None, content=None,
+    blocked=True):
   params = request.POST
   site = truncate(params.get('site'))
   if notes:
@@ -448,27 +454,24 @@ def warn_and_redirect_spambot(request, page_name, action, notes=None, view_url=N
   cookies = []
   for cookie in request.visit.cookies_got.all():
     cookies.append('{}:\t{}'.format(cookie.name, cookie.value))
-  msg_data = {
-    'visitor': request.visit.visitor,
-    'action': action,
-    'notes': notes_str,
-    'page': page_name,
-    'ruhuman': site,
-    'content': content_line,
-    'ip': request.visit.visitor.ip,
-    'cookies': '\n  '.join(cookies),
-    'user_agent': request.visit.visitor.user_agent,
-  }
-  log.warning('Spambot ({visitor}) blocked from {action}{notes} from page "{page}". '
-              'Ruhuman field: {ruhuman!r}'.format(**msg_data))
-  email_body = ('Spambot from {ip} blocked from {action}{notes} from page "{page}".\n'
-                'Ruhuman field: {ruhuman!r}\n'
-                'User agent: {user_agent}\n'
-                'Cookies sent:\n'
-                '  {cookies}\n'
-                '{content}\n'
-                .format(**msg_data))
-  email_admin('Spambot blocked', email_body)
+  if blocked:
+    result_str = 'blocked from'
+    subject = 'Spambot blocked'
+  else:
+    result_str = 'seen'
+    subject = 'Notepad alert'
+  cookies_str = '\n  '+'\n  '.join(cookies)
+  log.warning(
+    f'Visitor ({request.visit.visitor}) {result_str} {action}{notes_str} from page {page_name!r}. '
+    f'Ruhuman field: {site!r}'
+  )
+  email_body = f"""
+Visitor from {request.visit.visitor.ip} {result_str} {action}{notes_str} from page {page_name!r}.
+Ruhuman field: {site!r}
+User agent: {request.visit.visitor.user_agent}
+Cookies sent:{cookies_str}
+{content_line}"""
+  email_admin(subject, email_body)
   if view_url is not None:
     return HttpResponseRedirect(view_url)
 
