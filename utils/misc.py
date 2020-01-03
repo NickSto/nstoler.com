@@ -46,6 +46,8 @@ class ModelMixin(object):
 
   @classmethod
   def get_default(cls, field_name):
+    # Note: This is overly cautious because _meta is technically an internal API, but it turns out
+    # Django essentially made it a public one: https://docs.djangoproject.com/en/1.8/ref/models/meta/
     if hasattr(cls, '_meta') and hasattr(cls._meta, 'get_field'):
       field = cls._meta.get_field(field_name)
       if hasattr(field, 'get_default'):
@@ -141,13 +143,18 @@ def async(function):
 
 
 def email_admin(subject, body):
+  missing_keys = []
   for key in ('EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_HOST_USER', 'EMAIL_HOST_PASSWORD'):
     if not (hasattr(settings, key) and getattr(settings, key)):
-      log.error('Failed sending email. Missing settings.{}.'.format(key))
-      return False
+      missing_keys.append(key)
+  if missing_keys:
+    log.error(f'Failed sending email. Missing key(s) {", ".join(missing_keys)} in config file.')
+    return False
   mails = 0
   try:
     mails = send_mail(subject, body, settings.EMAIL_HOST_USER, [settings.PERSONAL_EMAIL])
   except smtplib.SMTPException as error:
-    log.error('Failed sending email to {}: {}'.format(settings.EMAIL_HOST_USER, error))
+    log.error(
+      f'Failed sending email from {settings.EMAIL_HOST_USER} to {settings.PERSONAL_EMAIL}: {error}'
+    )
   return mails > 0
