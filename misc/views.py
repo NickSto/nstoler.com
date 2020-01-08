@@ -67,6 +67,10 @@ def sessionrecover(request):
   return render(request, 'misc/sessionrecover.tmpl')
 
 
+def jsdata(request):
+  return render(request, 'misc/jsdata.tmpl')
+
+
 def captcha(request, name):
   context = {'name':name, 'show_captcha':True}
   if name == 'email':

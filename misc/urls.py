@@ -10,6 +10,7 @@ urlpatterns = [
   url(r'^setcookie$', views.setcookie, name='setcookie'),
   url(r'^dataurl$', views.dataurl, name='dataurl'),
   url(r'^sessionrecover$', views.sessionrecover, name='sessionrecover'),
+  url(r'^jsdata$', views.jsdata, name='jsdata'),
   url(r'^export$', views.export, name='export'),
   url(r'^captcha/(?P<name>.+)$', views.captcha, name='captcha'),
   url(r'^captchasubmit/(?P<name>.+)$', views.captchasubmit, name='captchasubmit'),

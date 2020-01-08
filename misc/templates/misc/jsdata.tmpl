@@ -1,0 +1,40 @@
+{% extends 'bootstrap.tmpl' %}
+{% load staticfiles %}
+
+{% block title %}What can JavaScript see?{% endblock %}
+
+{% block stylesheet %}
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+
+      <section>
+        <noscript>
+          <h4>Notice: Javascript is required for this page's functionality.</h4>
+        </noscript>
+      </section>
+
+      <section class="panel panel-shrink">
+        <div class="panel-heading">
+          What JavaScript sees
+        </div>
+        <table class="panel-body table table-bordered table-condensed table-hover">
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody id="dataList">
+          </tbody>
+        </table>
+      </section>
+
+    </div>
+{% endblock content %}
+
+{% block javascript %}
+  <script src="{% static 'misc/js/jsdata.js' %}?via=html"></script>
+{% endblock %}
+
