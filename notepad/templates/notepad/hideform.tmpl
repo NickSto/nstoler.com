@@ -32,8 +32,8 @@
         {% csrf_token %}
         {% include 'notepad/noteslist.tmpl' with type='hideform' %}
         <div class="ruhuman">
-          <label for="site">Site:</label>
-          <input type="text" name="site">
+          <label for="{{ HONEY_NAME }}">Site:</label>
+          <input type="text" name="{{ HONEY_NAME }}">
         </div>
         <input type="hidden" name="action" value="{{ action }}">
         <input type="submit" class="btn btn-default" value="{{ action | title }}">

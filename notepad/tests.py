@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 from .models import Note, Page
@@ -39,7 +40,7 @@ def test_view_note(tester, page, content):
 
 def test_add_note(tester, page, content):
   path = reverse('notepad:add', args=(page,))
-  post_data = {'page':page, 'site':'', 'content':content}
+  post_data = {'page':page, settings.HONEYPOT_NAME:'', 'content':content}
   response = tester.client.post(path, post_data)
   location = reverse('notepad:view', args=(page,))
   tester.assertEqual(response.get('Location'), location+'#bottom')
@@ -55,7 +56,7 @@ def test_delete_note(tester, page, content):
   note = add_note(page, content)
   tester.assertEqual(Note.objects.count(), 1)
   path = reverse('notepad:delete', args=(page,))
-  post_data = {'page':page, 'site':'', 'note_'+str(note.id):'on'}
+  post_data = {'page':page, settings.HONEYPOT_NAME:'', 'note_'+str(note.id):'on'}
   response = tester.client.post(path, post_data)
   location = reverse('notepad:view', args=(page,))
   tester.assertEqual(response.get('Location'), location+'#bottom')

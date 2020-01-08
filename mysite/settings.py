@@ -21,7 +21,7 @@ WEB_ROOT = '/var/www'
 CONFIG_DIR = os.path.join(BASE_DIR, 'config')
 
 # Requre HTTPS when transferring sensitive information?
-REQUIRE_HTTPS = False
+REQUIRE_HTTPS = True
 
 # Use a separate value instead of deriving from the SECRET_KEY, since this isn't really a secret.
 # It can even be obtained from the web interface by the admin.
@@ -31,9 +31,11 @@ ADMIN_SALT = '5586ae9e10fb6681f37332b26180358b1492dfc990646de79618d33ab3fba597'
 SECRET_KEY = 'h2!94u-kg77+5me^t!=nqwo8tnfb6syjexlk5(0d21xd@2p587'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
+
+HONEYPOT_NAME = 'website'
 
 # Must be overridden in protected_settings.py.
 CONTACT_EMAIL = ''
@@ -136,21 +138,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = False
-
 USE_L10N = True
-
 USE_TZ = True
-
 APPEND_SLASH = False
-
 DEFAULT_CHARSET = 'utf-8'
-
 FILE_CHARSET = 'utf-8'
-
 PLAINTEXT = 'text/plain; charset='+DEFAULT_CHARSET
 
 
@@ -158,7 +152,6 @@ PLAINTEXT = 'text/plain; charset='+DEFAULT_CHARSET
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 

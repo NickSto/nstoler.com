@@ -25,8 +25,8 @@
           <div class="buttons">
             <input type="hidden" name="page" value="{{ page }}">
             <div class="ruhuman">
-              <label for="site">Site:</label>
-              <input type="text" name="site">
+              <label for="{{ HONEY_NAME }}">Site:</label>
+              <input type="text" name="{{ HONEY_NAME }}">
             </div>
             <a class="btn btn-default" href="#top">▲ To top</a>
             {% for text, query in links.items %}
@@ -41,8 +41,8 @@
           {% csrf_token %}
           <input type="hidden" name="page" value="{{ page }}">
           <div class="ruhuman">
-            <label for="site">Site:</label>
-            <input type="text" name="site">
+            <label for="{{ HONEY_NAME }}">Site:</label>
+            <input type="text" name="{{ HONEY_NAME }}">
           </div>
           <div class="panel panel-default">
             <div class="panel-heading">

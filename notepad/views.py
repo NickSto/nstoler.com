@@ -15,6 +15,7 @@ import string
 import logging
 log = logging.getLogger(__name__)
 
+HONEY_NAME = settings.HONEYPOT_NAME
 DISPLAY_ORDER_MARGIN = 1000
 
 
@@ -42,8 +43,9 @@ def monitor(request):
       deleted_query_str = str(params.but_with(deleted=False))
     else:
       deleted_query_str = str(params.but_with(deleted=True))
-    context = {'pages':pages, 'deleted':params['deleted'],
-               'deleted_query_str':deleted_query_str}
+    context = {
+      'pages':pages, 'deleted':params['deleted'], 'deleted_query_str':deleted_query_str,
+    }
     return render(request, 'notepad/monitor.tmpl', context)
 
 
@@ -107,15 +109,17 @@ def view(request, page_name):
         links['Hide deleted'] = str(params.but_with(deleted=False))
       else:
         links['Show deleted'] = str(params.but_with(deleted=True))
-    context = {'page':page_name, 'notes':notes, 'links':links,
-               'admin_view':params['admin'], 'select':params['select']}
+    context = {
+      'page':page_name, 'notes':notes, 'links':links, 'admin_view':params['admin'],
+      'select':params['select'], 'HONEY_NAME':HONEY_NAME,
+    }
     return render(request, 'notepad/view.tmpl', context)
 
 
 def add(request, page_name):
   params = request.POST
   #TODO: Check if the notes were added to the main "notepad" page.
-  if params.get('site') == '' or page_name == '':
+  if params.get(HONEY_NAME) == '' or page_name == '':
     # Get or create the Page.
     try:
       page = Page.objects.get(name=page_name)
@@ -153,8 +157,8 @@ def hideform(request, page_name):
   params = request.POST
   action = params.get('action')
   notes = get_notes_from_params(params)
-  if params.get('site') == '' and action in ('archive', 'delete'):
-    context = {'page':page_name, 'notes':notes, 'action':action}
+  if params.get(HONEY_NAME) == '' and action in ('archive', 'delete'):
+    context = {'page':page_name, 'notes':notes, 'action':action, 'HONEY_NAME':HONEY_NAME}
     return render(request, 'notepad/hideform.tmpl', context)
   else:
     activity_notify(request, page_name, 'deleting notes', notes)
@@ -167,7 +171,7 @@ def hide(request, page_name):
   action = params.get('action')
   notes = get_notes_from_params(params)
   admin = None
-  if params.get('site') == '' and action in ('archive', 'delete'):
+  if params.get(HONEY_NAME) == '' and action in ('archive', 'delete'):
     for note in notes:
       if note.page.name != page_name:
         log.warning('User attempted to {} note {} from page {!r}, but gave page name {!r}'
@@ -197,7 +201,7 @@ def editform(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params)
-  if params.get('site') != '':
+  if params.get(HONEY_NAME) != '':
     return activity_notify(request, page_name, 'editing notes', notes, view_url)
   error = None
   warning = None
@@ -226,12 +230,15 @@ def editform(request, page_name):
     error = 'This note has been deleted.'
   if error:
     context = {'page':page_name, 'error':error}
+    #TODO: Return a non-200 HTTP status.
     return render(request, 'notepad/error.tmpl', context)
   elif note:
     notes = Note.objects.filter(page__name=page_name, archived=False, deleted=False).order_by('display_order', 'id')
     lines = len(note.content.splitlines())
-    context = {'page':page_name, 'note':note, 'notes':notes, 'rows':round(lines*1.1)+2,
-               'warning':warning}
+    context = {
+      'page':page_name, 'note':note, 'notes':notes, 'rows':round(lines*1.1)+2, 'warning':warning,
+      'HONEY_NAME':HONEY_NAME,
+    }
     return render(request, 'notepad/editform.tmpl', context)
   else:
     log.error('Ended up with neither a note ({!r}) nor an error ({!r}).'.format(note, error))
@@ -242,7 +249,7 @@ def edit(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   fragment = '#bottom'
   params = request.POST
-  if params.get('site') != '':
+  if params.get(HONEY_NAME) != '':
     notes = [params.get('note')]
     return activity_notify(request, page_name, 'editing note', notes, view_url+fragment)
   # Get the Note requested.
@@ -309,12 +316,12 @@ def moveform(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params, archived=False, deleted=False)
-  if params.get('site') != '':
+  if params.get(HONEY_NAME) != '':
     return activity_notify(request, page_name, 'moving notes', notes, view_url)
   if not is_admin_and_secure(request):
     # Prevent appearance of being able to move protected notes.
     notes = [note for note in notes if not note.protected]
-  context = {'page':page_name, 'notes':notes}
+  context = {'page':page_name, 'notes':notes, 'HONEY_NAME':HONEY_NAME}
   return render(request, 'notepad/moveform.tmpl', context)
 
 
@@ -322,7 +329,7 @@ def move(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params, deleted=False, archived=False)
-  if params.get('site') != '':
+  if params.get(HONEY_NAME) != '':
     return activity_notify(request, page_name, 'confirming move of notes', notes, view_url)
   action = params.get('action')
   if action == 'movepage':
@@ -441,7 +448,7 @@ def _move_order(request, page_name, notes, direction):
 def activity_notify(request, page_name, action, notes=None, view_url=None, content=None,
     blocked=True):
   params = request.POST
-  site = truncate(params.get('site'))
+  honey_value = truncate(params.get(HONEY_NAME))
   if notes:
     note_ids = [str(getattr(note, 'id', note)) for note in notes]
     notes_str = ' '+', '.join(note_ids)
@@ -463,11 +470,11 @@ def activity_notify(request, page_name, action, notes=None, view_url=None, conte
   cookies_str = '\n  '+'\n  '.join(cookies)
   log.warning(
     f'Visitor ({request.visit.visitor}) {result_str} {action}{notes_str} from page {page_name!r}. '
-    f'Ruhuman field: {site!r}'
+    f'Ruhuman field: {honey_value!r}'
   )
   email_body = f"""
 Visitor from {request.visit.visitor.ip} {result_str} {action}{notes_str} from page {page_name!r}.
-Ruhuman field: {site!r}
+Ruhuman field: {honey_value!r}
 User agent: {request.visit.visitor.user_agent}
 Cookies sent:{cookies_str}
 {content_line}"""
