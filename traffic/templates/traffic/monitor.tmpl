@@ -41,7 +41,7 @@
               <li><span>And, most importantly, I wanted to learn how they work. What's more fun than messing around with cookies, after all?</span></li>
             </ul>
             <h4>What does it show?</h4>
-            <p>This is the list of all the visits to my site from your browser. If you were an admin, you'd see all visits from all users (or a specific user you pick).</p>
+            <p>This is the list of all the visits to my site from your browser. If you were an admin, you'd see all visits from all users.</p>
           </div>
         </aside>
 
@@ -181,14 +181,14 @@
                       <td class="value">
                         <a href="{{ visit.referrer }}" target="_blank" rel="nofollow noreferrer">
                           {{ visit.referrer | truncatechars:150 }}
-                          {% if admin and visit.visitor.bot_score < referrer_exact_thres %}
-                            <form class="inline markbot" name="markbot_ref_{{ visit.id }}" method="post" action="{% url 'traffic:markbot' %}">
-                              {% csrf_token %}
-                              <input type="hidden" name="referrer" value="{{ visit.referrer }}">
-                              <input type="submit" class="btn btn-default btn-xs" value="mark bot">
-                            </form>
-                          {% endif %}
                         </a>
+                        {% if admin and visit.visitor.bot_score < referrer_exact_thres %}
+                          <form class="inline markbot" name="markbot_ref_{{ visit.id }}" method="post" action="{% url 'traffic:markbot' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="referrer" value="{{ visit.referrer }}">
+                            <input type="submit" class="btn btn-default btn-xs" value="mark bot">
+                          </form>
+                        {% endif %}
                       </td>
                     </tr>
                   {% endif %}
