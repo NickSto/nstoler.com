@@ -6,6 +6,7 @@ from django.template.defaultfilters import escape, urlize
 from django.db.models import Max
 import django.db
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
+from traffic.categorize import is_bot_request
 from utils.queryparams import QueryParams, boolish
 from utils import email_admin
 from .models import Note, Page, Move
@@ -16,6 +17,7 @@ import logging
 log = logging.getLogger(__name__)
 
 HONEY_NAME = settings.HONEYPOT_NAME
+PROTECTED_PAGES = ('notepad',)
 DISPLAY_ORDER_MARGIN = 1000
 
 
@@ -118,8 +120,9 @@ def view(request, page_name):
 
 def add(request, page_name):
   params = request.POST
-  #TODO: Check if the notes were added to the main "notepad" page.
-  if params.get(HONEY_NAME) == '' or page_name == '':
+  if is_bot_request(request):
+    activity_notify(request, page_name, 'adding a note', content=params.get('content', ''))
+  else:
     # Get or create the Page.
     try:
       page = Page.objects.get(name=page_name)
@@ -142,13 +145,11 @@ def add(request, page_name):
     # note into an existing page with other notes.
     note.display_order = note.id * DISPLAY_ORDER_MARGIN
     note.save()
-    if page_name == 'notepad':
-      # Notify that someone added a note to the Notepad landing page.
+    if page_name in PROTECTED_PAGES:
+      # Notify that someone added a note to a protected page.
       activity_notify(
         request, page_name, 'adding a note', content=params.get('content', ''), blocked=False
       )
-  else:
-    activity_notify(request, page_name, 'adding a note', content=params.get('content', ''))
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
@@ -157,11 +158,11 @@ def hideform(request, page_name):
   params = request.POST
   action = params.get('action')
   notes = get_notes_from_params(params)
-  if params.get(HONEY_NAME) == '' and action in ('archive', 'delete'):
+  if is_bot_request(request):
+    activity_notify(request, page_name, f'{action}-ing notes', notes)
+  elif action in ('archive', 'delete'):
     context = {'page':page_name, 'notes':notes, 'action':action, 'HONEY_NAME':HONEY_NAME}
     return render(request, 'notepad/hideform.tmpl', context)
-  else:
-    activity_notify(request, page_name, 'deleting notes', notes)
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
@@ -171,7 +172,9 @@ def hide(request, page_name):
   action = params.get('action')
   notes = get_notes_from_params(params)
   admin = None
-  if params.get(HONEY_NAME) == '' and action in ('archive', 'delete'):
+  if is_bot_request(request):
+    activity_notify(request, page_name, f'confirming note {action}-ings', notes)
+  elif action in ('archive', 'delete'):
     for note in notes:
       if note.page.name != page_name:
         log.warning('User attempted to {} note {} from page {!r}, but gave page name {!r}'
@@ -190,9 +193,9 @@ def hide(request, page_name):
         note.deleted = True
         note.deleting_visit = request.visit
       note.save()
-  else:
-    activity_notify(request, page_name, 'confirming note {}-ings'.format(action), notes)
-  #TODO: Check if the notes were deleted from the main "notepad" page.
+    if page_name in PROTECTED_PAGES:
+      # Notify that someone archived/deleted notes from a protected page.
+      activity_notify(request, page_name, f'{action}-ing note(s)', notes, blocked=False)
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
@@ -201,7 +204,7 @@ def editform(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params)
-  if params.get(HONEY_NAME) != '':
+  if is_bot_request(request):
     return activity_notify(request, page_name, 'editing notes', notes, view_url)
   error = None
   warning = None
@@ -249,7 +252,7 @@ def edit(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   fragment = '#bottom'
   params = request.POST
-  if params.get(HONEY_NAME) != '':
+  if is_bot_request(request):
     notes = [params.get('note')]
     return activity_notify(request, page_name, 'editing note', notes, view_url+fragment)
   # Get the Note requested.
@@ -308,6 +311,9 @@ def edit(request, page_name):
     note.save()
   except django.db.Error as dbe:
     log.error('Error on saving edited note: {}'.format(dbe))
+  if page_name in PROTECTED_PAGES:
+    # Notify that someone edited a note from a protected page.
+    activity_notify(request, page_name, f'editing a note', [note], blocked=False)
   fragment = '#note_{}'.format(edited_note.id)
   return HttpResponseRedirect(view_url+fragment)
 
@@ -316,7 +322,7 @@ def moveform(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params, archived=False, deleted=False)
-  if params.get(HONEY_NAME) != '':
+  if is_bot_request(request):
     return activity_notify(request, page_name, 'moving notes', notes, view_url)
   if not is_admin_and_secure(request):
     # Prevent appearance of being able to move protected notes.
@@ -329,9 +335,12 @@ def move(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params, deleted=False, archived=False)
-  if params.get(HONEY_NAME) != '':
+  if is_bot_request(request):
     return activity_notify(request, page_name, 'confirming move of notes', notes, view_url)
   action = params.get('action')
+  if page_name in PROTECTED_PAGES:
+    # Notify that someone moved a note on a protected page.
+    activity_notify(request, page_name, f'moving a note', notes, blocked=False)
   if action == 'movepage':
     return _move_page(request, page_name, notes)
   elif action in ('moveup', 'movedown'):
@@ -445,8 +454,9 @@ def _move_order(request, page_name, notes, direction):
   return HttpResponseRedirect(view_url+'#bottom')
 
 
-def activity_notify(request, page_name, action, notes=None, view_url=None, content=None,
-    blocked=True):
+def activity_notify(
+    request, page_name, action, notes=None, view_url=None, content=None, blocked=True
+  ):
   params = request.POST
   honey_value = truncate(params.get(HONEY_NAME))
   if notes:
@@ -469,11 +479,11 @@ def activity_notify(request, page_name, action, notes=None, view_url=None, conte
     subject = 'Notepad alert'
   cookies_str = '\n  '+'\n  '.join(cookies)
   log.warning(
-    f'Visitor ({request.visit.visitor}) {result_str} {action}{notes_str} from page {page_name!r}. '
+    f'Visitor ({request.visit.visitor}) {result_str} {action}{notes_str} on page {page_name!r}. '
     f'Ruhuman field: {honey_value!r}'
   )
   email_body = f"""
-Visitor from {request.visit.visitor.ip} {result_str} {action}{notes_str} from page {page_name!r}.
+Visitor from {request.visit.visitor.ip} {result_str} {action}{notes_str} on page {page_name!r}.
 Ruhuman field: {honey_value!r}
 User agent: {request.visit.visitor.user_agent}
 Cookies sent:{cookies_str}

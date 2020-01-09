@@ -25,6 +25,15 @@ SCORES = {
 }
 
 
+def is_bot_request(request):
+  params = request.POST
+  honey_value = params.get(settings.HONEYPOT_NAME)
+  if honey_value == '':
+    return False
+  else:
+    return True
+
+
 def read_bot_strings(robots_config_path):
   empty_strings = {'user_agent': collections.defaultdict(list)}
   if yaml is None:
