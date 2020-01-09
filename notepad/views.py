@@ -121,7 +121,10 @@ def view(request, page_name):
 def add(request, page_name):
   params = request.POST
   if is_bot_request(request):
-    activity_notify(request, page_name, 'adding a note', content=params.get('content', ''))
+    activity_notify(
+      request, page_name, 'adding a note', content=params.get('content', ''),
+      meta={'jsEnabled':params.get('jsEnabled')}
+    )
   else:
     # Get or create the Page.
     try:
@@ -148,7 +151,8 @@ def add(request, page_name):
     if page_name in PROTECTED_PAGES:
       # Notify that someone added a note to a protected page.
       activity_notify(
-        request, page_name, 'adding a note', content=params.get('content', ''), blocked=False
+        request, page_name, 'adding a note', content=params.get('content', ''), blocked=False,
+        meta={'jsEnabled':params.get('jsEnabled')}
       )
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
@@ -455,7 +459,7 @@ def _move_order(request, page_name, notes, direction):
 
 
 def activity_notify(
-    request, page_name, action, notes=None, view_url=None, content=None, blocked=True
+    request, page_name, action, notes=None, view_url=None, content=None, blocked=True, meta=None,
   ):
   params = request.POST
   honey_value = truncate(params.get(HONEY_NAME))
@@ -478,6 +482,10 @@ def activity_notify(
     result_str = 'seen'
     subject = 'Notepad alert'
   cookies_str = '\n  '+'\n  '.join(cookies)
+  if meta:
+    meta_str = '\n  '+'\n  '.join([f'{key}:\t{value!r}' for key, value in meta.items()])
+  else:
+    meta_str = ''
   log.warning(
     f'Visitor ({request.visit.visitor}) {result_str} {action}{notes_str} on page {page_name!r}. '
     f'Ruhuman field: {honey_value!r}'
@@ -486,6 +494,7 @@ def activity_notify(
 Visitor from {request.visit.visitor.ip} {result_str} {action}{notes_str} on page {page_name!r}.
 Ruhuman field: {honey_value!r}
 User agent: {request.visit.visitor.user_agent}
+Metadata seen:{meta_str}
 Cookies sent:{cookies_str}
 {content_line}"""
   email_admin(subject, email_body)

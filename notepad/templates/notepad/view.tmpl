@@ -40,6 +40,7 @@
         <form name="submit_note" method="post" action="{% url 'notepad:add' page %}" >
           {% csrf_token %}
           <input type="hidden" name="page" value="{{ page }}">
+          <input type="hidden" name="jsEnabled" value="False">
           <div class="ruhuman">
             <label for="{{ HONEY_NAME }}">Site:</label>
             <input type="text" name="{{ HONEY_NAME }}">
@@ -55,3 +56,7 @@
       </section>
     </div>
 {% endblock content %}
+
+{% block javascript %}
+  <script src="{% static 'notepad/js/notepad.js' %}?via=html"></script>
+{% endblock %}
