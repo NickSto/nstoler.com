@@ -27,11 +27,18 @@ SCORES = {
 
 def is_bot_request(request):
   params = request.POST
-  honey_value = params.get(settings.HONEYPOT_NAME)
-  if honey_value == '':
-    return False
+  if settings.HONEYPOT_NAME in params:
+    honey_value = params.get(settings.HONEYPOT_NAME)
+    if honey_value is None:
+      log.warning(f'Honeypot field {settings.HONEYPOT_NAME!r} is None!')
+      return None
+    elif honey_value == '':
+      return False
+    else:
+      return True
   else:
-    return True
+    log.warning(f'Honeypot field {settings.HONEYPOT_NAME!r} not included in POST!')
+    return None
 
 
 def read_bot_strings(robots_config_path):
