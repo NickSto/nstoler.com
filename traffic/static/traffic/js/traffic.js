@@ -11,7 +11,7 @@ function trafficMain() {
 
 function solveGrid(brunnerElem) {
   const solution = [3, 5, 7];
-  for (const i in solution) {
+  for (let i in solution) {
     let boxNum = solution[i];
     let boxElem = document.createElement('input');
     boxElem.style.display = 'none';
