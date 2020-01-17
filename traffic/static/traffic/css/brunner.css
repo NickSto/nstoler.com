@@ -1,0 +1,20 @@
+
+.ruhuman {
+  display: none;
+}
+
+#brunnerGridParent {
+  margin-left: 5px;
+}
+
+#brunnerGridParent .caption p {
+  margin-bottom: 0;
+}
+
+#brunnerGrid {
+  margin-bottom: 10px;
+}
+
+.brunnerRow {
+  height: 14px;
+}

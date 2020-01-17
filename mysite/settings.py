@@ -35,8 +35,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = []
 
-HONEYPOT_NAME = 'website'
-
 # Must be overridden in protected_settings.py.
 CONTACT_EMAIL = ''
 RECAPTCHA_SECRET = ''

@@ -24,21 +24,49 @@ SCORES = {
   'sent_cookies':-100,
 }
 
+#TODO: Use process_template_response to inject the HONEYPOT_NAME into response contexts, instead
+#      of hardcoding it in brunner.tmpl:
+#      https://stackoverflow.com/questions/5334176/help-with-process-template-response-django-middleware
+HONEYPOT_NAME = 'website'
+WINNING_GRIDS = (
+  {1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {1, 4, 7}, {2, 5, 8}, {3, 6, 9}, {1, 5, 9}, {3, 5, 7}
+)
 
 def is_bot_request(request):
   params = request.POST
-  if settings.HONEYPOT_NAME in params:
-    honey_value = params.get(settings.HONEYPOT_NAME)
+  if filled_honeypot(params):
+    return True
+  else:
+    return not solved_grid(params)
+
+
+def filled_honeypot(params):
+  if HONEYPOT_NAME in params:
+    honey_value = params.get(HONEYPOT_NAME)
     if honey_value is None:
-      log.warning(f'Honeypot field {settings.HONEYPOT_NAME!r} is None!')
+      log.warning(f'Honeypot field {HONEYPOT_NAME!r} is None!')
       return None
     elif honey_value == '':
       return False
     else:
       return True
   else:
-    log.warning(f'Honeypot field {settings.HONEYPOT_NAME!r} not included in POST!')
+    log.warning(f'Honeypot field {HONEYPOT_NAME!r} not included in POST!')
     return None
+
+
+def solved_grid(params):
+  checked_boxes = get_checked_boxes(params)
+  return checked_boxes in WINNING_GRIDS
+
+
+def get_checked_boxes(params):
+  checked_boxes = set()
+  for i in range(1, 9+1):
+    checkbox = params.get(f'brunner:check{i}')
+    if checkbox == 'on':
+      checked_boxes.add(i)
+  return checked_boxes
 
 
 def read_bot_strings(robots_config_path):

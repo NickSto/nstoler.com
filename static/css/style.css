@@ -6,10 +6,6 @@
 @-o-viewport      { width: device-width; }
 @viewport         { width: device-width; }
 
-.ruhuman {
-  display: none;
-}
-
 .inline {
   display: inline;
 }

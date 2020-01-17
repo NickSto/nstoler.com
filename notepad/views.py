@@ -6,7 +6,7 @@ from django.template.defaultfilters import escape, urlize
 from django.db.models import Max
 import django.db
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
-from traffic.categorize import is_bot_request
+from traffic.categorize import is_bot_request, HONEYPOT_NAME, get_checked_boxes
 from utils.queryparams import QueryParams, boolish
 from utils import email_admin
 from .models import Note, Page, Move
@@ -16,7 +16,6 @@ import string
 import logging
 log = logging.getLogger(__name__)
 
-HONEY_NAME = settings.HONEYPOT_NAME
 PROTECTED_PAGES = ('notepad',)
 DISPLAY_ORDER_MARGIN = 1000
 
@@ -49,6 +48,7 @@ def monitor(request):
       'pages':pages, 'deleted':params['deleted'], 'deleted_query_str':deleted_query_str,
     }
     return render(request, 'notepad/monitor.tmpl', context)
+#TODO: Return TemplateResponses instead of doing the rendering directly.
 
 
 def view(request, page_name):
@@ -113,7 +113,7 @@ def view(request, page_name):
         links['Show deleted'] = str(params.but_with(deleted=True))
     context = {
       'page':page_name, 'notes':notes, 'links':links, 'admin_view':params['admin'],
-      'select':params['select'], 'HONEY_NAME':HONEY_NAME,
+      'select':params['select'],
     }
     return render(request, 'notepad/view.tmpl', context)
 
@@ -121,10 +121,7 @@ def view(request, page_name):
 def add(request, page_name):
   params = request.POST
   if is_bot_request(request):
-    activity_notify(
-      request, page_name, 'adding a note', content=params.get('content', ''),
-      meta={'jsEnabled':params.get('jsEnabled')}
-    )
+    activity_notify(request, page_name, 'adding a note')
   else:
     # Get or create the Page.
     try:
@@ -150,10 +147,7 @@ def add(request, page_name):
     note.save()
     if page_name in PROTECTED_PAGES:
       # Notify that someone added a note to a protected page.
-      activity_notify(
-        request, page_name, 'adding a note', content=params.get('content', ''), blocked=False,
-        meta={'jsEnabled':params.get('jsEnabled')}
-      )
+      activity_notify(request, page_name, 'adding a note', blocked=False)
   view_url = reverse('notepad:view', args=(page_name,))
   return HttpResponseRedirect(view_url+'#bottom')
 
@@ -162,13 +156,13 @@ def hideform(request, page_name):
   params = request.POST
   action = params.get('action')
   notes = get_notes_from_params(params)
-  if is_bot_request(request):
-    activity_notify(request, page_name, f'{action}-ing notes', notes)
-  elif action in ('archive', 'delete'):
-    context = {'page':page_name, 'notes':notes, 'action':action, 'HONEY_NAME':HONEY_NAME}
+  if action in ('archive', 'delete'):
+    context = {'page':page_name, 'notes':notes, 'action':action}
     return render(request, 'notepad/hideform.tmpl', context)
-  view_url = reverse('notepad:view', args=(page_name,))
-  return HttpResponseRedirect(view_url+'#bottom')
+  else:
+    log.warning(f'Invalid hide action {action!r}.')
+    view_url = reverse('notepad:view', args=(page_name,))
+    return HttpResponseRedirect(view_url+'#bottom')
 
 
 def hide(request, page_name):
@@ -177,7 +171,7 @@ def hide(request, page_name):
   notes = get_notes_from_params(params)
   admin = None
   if is_bot_request(request):
-    activity_notify(request, page_name, f'confirming note {action}-ings', notes)
+    activity_notify(request, page_name, f'{action}-ing', notes)
   elif action in ('archive', 'delete'):
     for note in notes:
       if note.page.name != page_name:
@@ -208,8 +202,6 @@ def editform(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params)
-  if is_bot_request(request):
-    return activity_notify(request, page_name, 'editing notes', notes, view_url)
   error = None
   warning = None
   if len(notes) == 0:
@@ -244,7 +236,6 @@ def editform(request, page_name):
     lines = len(note.content.splitlines())
     context = {
       'page':page_name, 'note':note, 'notes':notes, 'rows':round(lines*1.1)+2, 'warning':warning,
-      'HONEY_NAME':HONEY_NAME,
     }
     return render(request, 'notepad/editform.tmpl', context)
   else:
@@ -326,12 +317,10 @@ def moveform(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params, archived=False, deleted=False)
-  if is_bot_request(request):
-    return activity_notify(request, page_name, 'moving notes', notes, view_url)
   if not is_admin_and_secure(request):
     # Prevent appearance of being able to move protected notes.
     notes = [note for note in notes if not note.protected]
-  context = {'page':page_name, 'notes':notes, 'HONEY_NAME':HONEY_NAME}
+  context = {'page':page_name, 'notes':notes}
   return render(request, 'notepad/moveform.tmpl', context)
 
 
@@ -340,7 +329,7 @@ def move(request, page_name):
   params = request.POST
   notes = get_notes_from_params(params, deleted=False, archived=False)
   if is_bot_request(request):
-    return activity_notify(request, page_name, 'confirming move of notes', notes, view_url)
+    return activity_notify(request, page_name, 'moving notes', notes, view_url)
   action = params.get('action')
   if page_name in PROTECTED_PAGES:
     # Notify that someone moved a note on a protected page.
@@ -458,16 +447,15 @@ def _move_order(request, page_name, notes, direction):
   return HttpResponseRedirect(view_url+'#bottom')
 
 
-def activity_notify(
-    request, page_name, action, notes=None, view_url=None, content=None, blocked=True, meta=None,
-  ):
+def activity_notify(request, page_name, action, notes=None, view_url=None, blocked=True):
   params = request.POST
-  honey_value = truncate(params.get(HONEY_NAME))
+  honey_value = truncate(params.get(HONEYPOT_NAME))
   if notes:
     note_ids = [str(getattr(note, 'id', note)) for note in notes]
     notes_str = ' '+', '.join(note_ids)
   else:
     notes_str = ''
+  content = params.get('content')
   if content is None:
     content_line = ''
   else:
@@ -482,17 +470,20 @@ def activity_notify(
     result_str = 'seen'
     subject = 'Notepad alert'
   cookies_str = '\n  '+'\n  '.join(cookies)
-  if meta:
-    meta_str = '\n  '+'\n  '.join([f'{key}:\t{value!r}' for key, value in meta.items()])
-  else:
-    meta_str = ''
+  meta_str = ''
+  for key in ('jsEnabled',):
+    value = params.get(key)
+    meta_str += f'\n  {key}:\t{value!r}'
+  checked_boxes = get_checked_boxes(params)
+  boxes_str = ', '.join([str(box) for box in checked_boxes])
   log.warning(
     f'Visitor ({request.visit.visitor}) {result_str} {action}{notes_str} on page {page_name!r}. '
-    f'Ruhuman field: {honey_value!r}'
+    f'Ruhuman field: {honey_value!r}, Checked boxes: {boxes_str}'
   )
   email_body = f"""
 Visitor from {request.visit.visitor.ip} {result_str} {action}{notes_str} on page {page_name!r}.
 Ruhuman field: {honey_value!r}
+Checked boxes: {boxes_str}
 User agent: {request.visit.visitor.user_agent}
 Metadata seen:{meta_str}
 Cookies sent:{cookies_str}
