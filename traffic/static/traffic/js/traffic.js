@@ -10,11 +10,13 @@ function trafficMain() {
 }
 
 function solveGrid(brunnerElem) {
-  for (const i of [3, 5, 7]) {
+  const solution = [3, 5, 7];
+  for (const i in solution) {
+    let boxNum = solution[i];
     let boxElem = document.createElement('input');
     boxElem.style.display = 'none';
     boxElem.type = 'checkbox';
-    boxElem.name = `brunner:check${i}`;
+    boxElem.name = 'brunner:check'+boxNum;
     boxElem.checked = true;
     brunnerElem.appendChild(boxElem);
   }
