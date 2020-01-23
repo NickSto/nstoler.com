@@ -89,7 +89,7 @@ def log_spammer(request, content):
   else:
     js_enabled = None
   honey_value, honey_len = truncate_field(honey_value, 1023)
-  content_value, content_len = truncate_field(honey_value, 2047)
+  content, content_len = truncate_field(content, 2047)
   spam = Spam(
     captcha_version=CAPTCHA_VERSION,
     captcha_failed=True,
