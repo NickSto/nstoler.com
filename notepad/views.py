@@ -120,8 +120,11 @@ def view(request, page_name):
 
 def add(request, page_name):
   params = request.POST
-  if is_bot_request(request):
-    activity_notify(request, page_name, 'adding a note')
+  spam = is_bot_request(request)
+  if spam:
+    if not spam.is_boring:
+      # Don't even email about run-of-the-mill spammers.
+      activity_notify(request, page_name, 'adding a note')
   else:
     # Get or create the Page.
     try:

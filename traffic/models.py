@@ -149,7 +149,10 @@ class Spam(ModelMixin, models.Model):
   @property
   def checkboxes(self):
     checkbox_strs = self.checkboxes_str.split(',')
-    checkbox_ints = [int(box) for box in checkbox_strs]
+    if checkbox_strs == ['']:
+      checkbox_ints = []
+    else:
+      checkbox_ints = [int(box) for box in checkbox_strs]
     return set(checkbox_ints)
   @checkboxes.setter
   def checkboxes(self, value):
@@ -157,3 +160,10 @@ class Spam(ModelMixin, models.Model):
     if len(checkbox_strs) > self.NUM_CHECKBOXES:
       raise ValueError(f'Too many checkboxes in {value!r}')
     self.checkboxes_str = ','.join(checkbox_strs)
+  @property
+  def is_boring(self):
+    """Is this a super-common type of spam, or an unusual one?"""
+    if not self.honeypot_value or self.js_enabled or self.checkboxes:
+      return False
+    else:
+      return True

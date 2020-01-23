@@ -44,8 +44,9 @@ def is_bot_request(request, content_key='content'):
   elif not solved_grid(params):
     is_bot = True
   if is_bot:
-    log_spammer(request, params.get(content_key))
-  return is_bot
+    return log_spammer(request, params.get(content_key))
+  else:
+    return False
 
 
 def filled_honeypot(params):
@@ -115,6 +116,7 @@ def log_spammer(request, content):
   )
   spam.checkboxes = get_checked_boxes(params)
   spam.save()
+  return spam
 
 
 ########## BOT DETECTION ##########
