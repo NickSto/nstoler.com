@@ -140,11 +140,14 @@ class Spam(ModelMixin, models.Model):
   captcha_failed = models.NullBooleanField()
   visit = models.ForeignKey(Visit, models.SET_NULL, null=True)
   honeypot_name = models.CharField(max_length=31)
+  # `honeypot_value` and `content` will store a truncated string if the original was too long.
+  # You can tell if it's the full string by checking `honeypot_len` and `content_len`, which record
+  # the length of the original string.
   honeypot_value = models.TextField(null=True)
-  honeypot_overflow = models.BooleanField()
+  honeypot_len = models.IntegerField(null=True)
   checkboxes_str = models.CharField(max_length=18)
   content = models.TextField(null=True, blank=True)
-  content_overflow = models.BooleanField()
+  content_len = models.IntegerField(null=True)
   js_enabled = models.NullBooleanField()
   @property
   def checkboxes(self):

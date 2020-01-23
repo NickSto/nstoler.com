@@ -88,35 +88,31 @@ def log_spammer(request, content):
     js_enabled = False
   else:
     js_enabled = None
-  if honey_value is None or honey_value == False:
-    honey_value = None
-    honey_overflow = False
-  elif len(honey_value) > 1023:
-    honey_value = honey_value[:1023]
-    honey_overflow = True
-  else:
-    honey_overflow = False
-  if content is None:
-    content_overflow = False
-  elif len(content) > 2047:
-    content = content[:2047]
-    content_overflow = True
-  else:
-    content_overflow = False
+  honey_value, honey_len = truncate_field(honey_value)
+  content_value, content_len = truncate_field(honey_value)
   spam = Spam(
     captcha_version=CAPTCHA_VERSION,
     captcha_failed=True,
     visit=request.visit,
     honeypot_name=HONEYPOT_NAME,
     honeypot_value=honey_value,
-    honeypot_overflow=honey_overflow,
+    honeypot_len=honey_len,
     content=content,
-    content_overflow=content_overflow,
+    content_len=content_len,
     js_enabled=js_enabled,
   )
   spam.checkboxes = get_checked_boxes(params)
   spam.save()
   return spam
+
+
+def truncate_field(raw_value, max_len):
+  if raw_value is None or raw_value == False:
+    return None, None
+  value_len = len(raw_value)
+  if value_len > max_len:
+    value = raw_value[:max_len]
+  return value, value_len
 
 
 ########## BOT DETECTION ##########
