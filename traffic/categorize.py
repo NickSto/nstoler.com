@@ -1,5 +1,5 @@
 from django.conf import settings
-from .models import Robot, Visitor, Visit
+from .models import Robot, Visitor, Visit, Spam
 import os
 import logging
 import collections
@@ -24,20 +24,28 @@ SCORES = {
   'sent_cookies':-100,
 }
 
+
+########## CAPTCHA ##########
+
 #TODO: Use process_template_response to inject the HONEYPOT_NAME into response contexts, instead
 #      of hardcoding it in brunner.tmpl:
 #      https://stackoverflow.com/questions/5334176/help-with-process-template-response-django-middleware
+CAPTCHA_VERSION = 3
 HONEYPOT_NAME = 'website'
 WINNING_GRIDS = (
   {1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {1, 4, 7}, {2, 5, 8}, {3, 6, 9}, {1, 5, 9}, {3, 5, 7}
 )
 
-def is_bot_request(request):
+def is_bot_request(request, content_key='content'):
   params = request.POST
+  is_bot = False
   if filled_honeypot(params):
-    return True
-  else:
-    return not solved_grid(params)
+    is_bot = True
+  elif not solved_grid(params):
+    is_bot = True
+  if is_bot:
+    log_spammer(request, params.get(content_key))
+  return is_bot
 
 
 def filled_honeypot(params):
@@ -49,7 +57,7 @@ def filled_honeypot(params):
     elif honey_value == '':
       return False
     else:
-      return True
+      return honey_value
   else:
     log.warning(f'Honeypot field {HONEYPOT_NAME!r} not included in POST!')
     return None
@@ -62,12 +70,54 @@ def solved_grid(params):
 
 def get_checked_boxes(params):
   checked_boxes = set()
-  for i in range(1, 9+1):
+  for i in range(1, Spam.NUM_CHECKBOXES+1):
     checkbox = params.get(f'brunner:check{i}')
     if checkbox == 'on':
       checked_boxes.add(i)
   return checked_boxes
 
+
+def log_spammer(request, content):
+  params = request.POST
+  honey_value = filled_honeypot(params)
+  js_enabled_str = params.get('jsEnabled')
+  if js_enabled_str == 'True':
+    js_enabled = True
+  elif js_enabled_str == 'False':
+    js_enabled = False
+  else:
+    js_enabled = None
+  if honey_value is None or honey_value == False:
+    honey_value = None
+    honey_overflow = False
+  elif len(honey_value) > 1023:
+    honey_value = honey_value[:1023]
+    honey_overflow = True
+  else:
+    honey_overflow = False
+  if content is None:
+    content_overflow = False
+  elif len(content) > 2047:
+    content = content[:2047]
+    content_overflow = True
+  else:
+    content_overflow = False
+  spam = Spam(
+    captcha_version=CAPTCHA_VERSION,
+    captcha_failed=True,
+    visit=request.visit,
+    honeypot_name=HONEYPOT_NAME,
+    honeypot_value=honey_value,
+    honeypot_overflow=honey_overflow,
+    content=content,
+    content_overflow=content_overflow,
+    js_enabled=js_enabled,
+  )
+  spam.checkboxes = get_checked_boxes(params)
+  spam.save()
+
+
+########## BOT DETECTION ##########
 
 def read_bot_strings(robots_config_path):
   empty_strings = {'user_agent': collections.defaultdict(list)}

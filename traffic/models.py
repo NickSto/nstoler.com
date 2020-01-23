@@ -131,3 +131,29 @@ class Robot(ModelMixin, models.Model):
         if value:
           return value
     return ' '.join(fields)
+
+
+class Spam(ModelMixin, models.Model):
+  NUM_CHECKBOXES = 9
+  # The version of captcha it failed.
+  captcha_version = models.PositiveSmallIntegerField(null=True)
+  captcha_failed = models.NullBooleanField()
+  visit = models.ForeignKey(Visit, models.SET_NULL, null=True)
+  honeypot_name = models.CharField(max_length=31)
+  honeypot_value = models.TextField(null=True)
+  honeypot_overflow = models.BooleanField()
+  checkboxes_str = models.CharField(max_length=18)
+  content = models.TextField(null=True, blank=True)
+  content_overflow = models.BooleanField()
+  js_enabled = models.NullBooleanField()
+  @property
+  def checkboxes(self):
+    checkbox_strs = self.checkboxes_str.split(',')
+    checkbox_ints = [int(box) for box in checkbox_strs]
+    return set(checkbox_ints)
+  @checkboxes.setter
+  def checkboxes(self, value):
+    checkbox_strs = [str(box) for box in value]
+    if len(checkbox_strs) > self.NUM_CHECKBOXES:
+      raise ValueError(f'Too many checkboxes in {value!r}')
+    self.checkboxes_str = ','.join(checkbox_strs)
