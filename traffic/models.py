@@ -136,6 +136,10 @@ class Robot(ModelMixin, models.Model):
 class Spam(ModelMixin, models.Model):
   NUM_CHECKBOXES = 9
   # The version of captcha it failed.
+  # Version 1?: .ruhuman honeypot
+  # Version 2?: Change name of honeypot from "site" to "website"
+  # Version 3: Add tic tac toe captcha, jsEnabled field.
+  # Version 4: Add gridAutofilled field.
   captcha_version = models.PositiveSmallIntegerField(null=True)
   captcha_failed = models.NullBooleanField()
   visit = models.OneToOneField(Visit, models.SET_NULL, null=True)
@@ -145,6 +149,8 @@ class Spam(ModelMixin, models.Model):
   # the length of the original string.
   honeypot_value = models.TextField(null=True)
   honeypot_len = models.IntegerField(null=True)
+  # Did JavaScript solve the captcha grid automatically?
+  grid_autofilled = models.NullBooleanField()
   checkboxes_str = models.CharField(max_length=18)
   content = models.TextField(null=True, blank=True)
   content_len = models.IntegerField(null=True)

@@ -6,7 +6,9 @@ function trafficMain() {
   }
   var jsEnabledElem = document.querySelector('input[name="jsEnabled"]');
   jsEnabledElem.value = 'True';
+  var gridAutofilledElem = document.querySelector('input[name="gridAutofilled"]');
   solveGrid(brunnerElem);
+  gridAutofilledElem.value = 'True';
 }
 
 function solveGrid(brunnerElem) {

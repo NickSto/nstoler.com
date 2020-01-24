@@ -30,7 +30,7 @@ SCORES = {
 #TODO: Use process_template_response to inject the HONEYPOT_NAME into response contexts, instead
 #      of hardcoding it in brunner.tmpl:
 #      https://stackoverflow.com/questions/5334176/help-with-process-template-response-django-middleware
-CAPTCHA_VERSION = 3
+CAPTCHA_VERSION = 4
 HONEYPOT_NAME = 'website'
 WINNING_GRIDS = (
   {1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {1, 4, 7}, {2, 5, 8}, {3, 6, 9}, {1, 5, 9}, {3, 5, 7}
@@ -81,13 +81,8 @@ def get_checked_boxes(params):
 def log_spammer(request, content):
   params = request.POST
   honey_value = filled_honeypot(params)
-  js_enabled_str = params.get('jsEnabled')
-  if js_enabled_str == 'True':
-    js_enabled = True
-  elif js_enabled_str == 'False':
-    js_enabled = False
-  else:
-    js_enabled = None
+  js_enabled = parse_bool(params.get('jsEnabled'))
+  grid_autofilled = parse_bool(params.get('gridAutofilled'))
   honey_value, honey_len = truncate_field(honey_value, 1023)
   content, content_len = truncate_field(content, 2047)
   spam = Spam(
@@ -100,10 +95,20 @@ def log_spammer(request, content):
     content=content,
     content_len=content_len,
     js_enabled=js_enabled,
+    grid_autofilled=grid_autofilled,
   )
   spam.checkboxes = get_checked_boxes(params)
   spam.save()
   return spam
+
+
+def parse_bool(bool_str):
+  if bool_str == 'True':
+    return True
+  elif bool_str == 'False':
+    return False
+  else:
+    return None
 
 
 def truncate_field(raw_value, max_len):
