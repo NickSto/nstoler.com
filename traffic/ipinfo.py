@@ -19,8 +19,9 @@ TZAPI_URL = 'https://timezoneapi.io/api/ip?ip={}'
 MAX_RESPONSE = 65536
 DEFAULT_TIMEOUT = 1
 TTL_DEFAULT = 24*60*60  # Cache IpInfo data for 1 day.
-# Possible other data source:
+# Possible other data sources:
 # https://stat.ripe.net/docs/data_api (semi-official, but ASN only)
+# https://geo.ipify.org/pricing (1000 free requests per month, includes timezone)
 
 
 def ip_to_ipinfo(ip, ttl=TTL_DEFAULT, timeout=DEFAULT_TIMEOUT):
@@ -68,7 +69,7 @@ def make_ip_info(ip, data):
 def get_ip_data(ip, timeout=DEFAULT_TIMEOUT):
   data1 = get_ipinfo_data(ip, timeout=timeout)
   return data1
-  #TODO: timezoneapi.io free tier ended. Replace with a paid play for get_tz_google() or possibly
+  #TODO: timezoneapi.io free tier ended. Replace with a paid plan for get_tz_google() or possibly
   #      get_ipstack_data().
   data2 = get_tzapi_data(ip, timeout=timeout)
   if not (data1 or data2):
@@ -262,35 +263,52 @@ def get_api_data(url, timeout=DEFAULT_TIMEOUT, max_response=MAX_RESPONSE):
     return None
 
 
-def set_timezone(request):
+def set_timezone(request, default=settings.DISPLAY_TIME_ZONE):
   """Set the timezone to the user's one and return which one that is.
   Returns the abbreviation of the timezone, like "PST".
-  On failure, returns the abbrevation of `settings.TIME_ZONE`."""
+  If it fails to determine the user's timezone, it will use the `default`.
+  That argument should be the long-form, like "America/New_York".
+  If the `default` isn't a valid timezone, it will use the value of `settings.TIME_ZONE`, then
+  return `default` as-is."""
   try:
     ip = request.visit.visitor.ip
   except AttributeError:
     ip = request.META.get('REMOTE_ADDR')
-  ipinfo = IpInfo.objects.filter(ip=ip).order_by('-timestamp')
-  if ipinfo:
+  try:
+    zone = get_ip_timezone(ip)
+  except RuntimeError:
     try:
-      zone = pytz.timezone(ipinfo[0].timezone)
-      timezone.activate(zone)
-      tz = get_tz_abbrv(ipinfo[0].timezone)
+      zone = pytz.timezone(default)
     except pytz.UnknownTimeZoneError:
-      log.warning('set_timezone(): pytz.UnknownTimeZoneError on "{}" (ip {})'
-                  .format(ipinfo[0].timezone, ip))
-      tz = None
-  else:
-    log.warning('set_timezone(): Could not find ip {} in database.'.format(ip))
-    tz = None
-  if tz:
-    return tz
-  else:
-    try:
-      return pytz.timezone(settings.TIME_ZONE)
-    except pytz.UnknownTimeZoneError:
-      log.warning('set_timezone(): Failed. Returning UTC.')
-      return 'UTC'
+      log.warning(f'set_timezone(): pytz.UnknownTimeZoneError on default {default!r}.')
+      try:
+        zone = pytz.timezone(settings.TIME_ZONE)
+      except pytz.UnknownTimeZoneError:
+        log.warning(
+          f'set_timezone(): pytz.UnknownTimeZoneError on settings.TIME_ZONE {settings.TIME_ZONE!r}.'
+        )
+        return default
+  # Set our current timezone context to the one we found.
+  timezone.activate(zone)
+  tz_abbrev = zone.tzname(datetime.now())
+  return tz_abbrev
+
+
+def get_ip_timezone(ip):
+  ipinfos = IpInfo.objects.filter(ip=ip).order_by('-timestamp')
+  try:
+    ipinfo = ipinfos[0]
+  except IndexError:
+    message = f'set_timezone(): No IpInfo found for {ip!r}.'
+    log.warning(message)
+    raise RuntimeError(message)
+  try:
+    zone = pytz.timezone(ipinfo.timezone)
+  except pytz.UnknownTimeZoneError:
+    message = f'set_timezone(): pytz.UnknownTimeZoneError on {ipinfo.timezone!r} (ip {ip!r})'
+    log.warning(message)
+    raise RuntimeError(message)
+  return zone
 
 
 def tz_convert(dt, timezone):
