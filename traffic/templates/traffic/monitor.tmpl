@@ -202,11 +202,20 @@
                       </td>
                     </tr>
                   {% endif %}
+                  {% if visit.spam %}
+                    <tr>
+                      <th class="name">
+                        Spam
+                      </th>
+                      <td class="value {% if visit.spam.is_boring %}bg-warning">Boring{% else %}bg-danger">Unusual{% endif %}
+                      </td>
+                    </tr>
+                  {% endif %}
                   <tr>
                     <th class="name">
                       Response
                     </th>
-                    <td class="value {% if visit.response is None or 400 <= visit.response and visit.response < 600 %}text-danger{% elif visit.response != 200 and visit != this_visit %}text-warning{% endif %}">
+                    <td class="value{% if visit != this_visit %} {% if visit.response is None or 400 <= visit.response and visit.response < 600 %}text-danger{% elif visit.response != 200 %}text-warning{% endif %}{% endif %}">
                       {% if visit == this_visit %}
                         200
                       {% else %}
