@@ -135,11 +135,15 @@ class Robot(ModelMixin, models.Model):
 
 class Spam(ModelMixin, models.Model):
   NUM_CHECKBOXES = 9
-  # The version of captcha it failed.
+  WINNING_GRIDS = (
+    {1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {1, 4, 7}, {2, 5, 8}, {3, 6, 9}, {1, 5, 9}, {3, 5, 7}
+  )
+  # The version of the captcha system.
   # Version 1?: .ruhuman honeypot
   # Version 2?: Change name of honeypot from "site" to "website"
   # Version 3: Add tic tac toe captcha, jsEnabled field.
   # Version 4: Add gridAutofilled field.
+  # Version 5: Store '' in honeypot_value instead of None when '' was actually provided.
   captcha_version = models.PositiveSmallIntegerField(null=True)
   captcha_failed = models.NullBooleanField()
   visit = models.OneToOneField(Visit, models.SET_NULL, null=True)
@@ -169,6 +173,14 @@ class Spam(ModelMixin, models.Model):
     if len(checkbox_strs) > self.NUM_CHECKBOXES:
       raise ValueError(f'Too many checkboxes in {value!r}')
     self.checkboxes_str = ','.join(checkbox_strs)
+  @property
+  def solved_grid(self):
+    if not hasattr(self, '_solved_grid') or getattr(self, '_solved_grid') is None:
+      self._solved_grid = self.is_grid_solved(self.checkboxes)
+    return self._solved_grid
+  @classmethod
+  def is_grid_solved(cls, checkboxes):
+    return checkboxes in cls.WINNING_GRIDS
   @property
   def is_boring(self):
     """Is this a super-common type of spam, or an unusual one?"""

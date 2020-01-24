@@ -30,11 +30,9 @@ SCORES = {
 #TODO: Use process_template_response to inject the HONEYPOT_NAME into response contexts, instead
 #      of hardcoding it in brunner.tmpl:
 #      https://stackoverflow.com/questions/5334176/help-with-process-template-response-django-middleware
-CAPTCHA_VERSION = 4
+CAPTCHA_VERSION = 5
 HONEYPOT_NAME = 'website'
-WINNING_GRIDS = (
-  {1, 2, 3}, {4, 5, 6}, {7, 8, 9}, {1, 4, 7}, {2, 5, 8}, {3, 6, 9}, {1, 5, 9}, {3, 5, 7}
-)
+
 
 def is_bot_request(request, content_key='content'):
   params = request.POST
@@ -66,7 +64,7 @@ def filled_honeypot(params):
 
 def solved_grid(params):
   checked_boxes = get_checked_boxes(params)
-  return checked_boxes in WINNING_GRIDS
+  return Spam.is_grid_solved(checked_boxes)
 
 
 def get_checked_boxes(params):
@@ -80,7 +78,7 @@ def get_checked_boxes(params):
 
 def log_spammer(request, content):
   params = request.POST
-  honey_value = filled_honeypot(params)
+  honey_value = params.get(HONEYPOT_NAME)
   js_enabled = parse_bool(params.get('jsEnabled'))
   grid_autofilled = parse_bool(params.get('gridAutofilled'))
   honey_value, honey_len = truncate_field(honey_value, 1023)
