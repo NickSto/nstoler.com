@@ -1,19 +1,19 @@
 
 function trafficMain() {
-  const brunnerElem = document.getElementById('brunner');
+  var brunnerElem = document.getElementById('brunner');
   if (brunnerElem === null) {
     return;
   }
-  const jsEnabledElem = document.querySelector('input[name="jsEnabled"]');
+  var jsEnabledElem = document.querySelector('input[name="jsEnabled"]');
   jsEnabledElem.value = 'True';
   solveGrid(brunnerElem);
 }
 
 function solveGrid(brunnerElem) {
-  const solution = [3, 5, 7];
-  for (let i in solution) {
-    let boxNum = solution[i];
-    let boxElem = document.createElement('input');
+  var solution = [3, 5, 7];
+  for (var i = 0; i < solution.length; i++) {
+    var boxNum = solution[i];
+    var boxElem = document.createElement('input');
     boxElem.style.display = 'none';
     boxElem.type = 'checkbox';
     boxElem.name = 'brunner:check'+boxNum;
