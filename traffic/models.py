@@ -138,7 +138,7 @@ class Spam(ModelMixin, models.Model):
   # The version of captcha it failed.
   captcha_version = models.PositiveSmallIntegerField(null=True)
   captcha_failed = models.NullBooleanField()
-  visit = models.ForeignKey(Visit, models.SET_NULL, null=True)
+  visit = models.OneToOneField(Visit, models.SET_NULL, null=True)
   honeypot_name = models.CharField(max_length=31)
   # `honeypot_value` and `content` will store a truncated string if the original was too long.
   # You can tell if it's the full string by checking `honeypot_len` and `content_len`, which record
