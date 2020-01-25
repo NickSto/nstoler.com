@@ -196,6 +196,31 @@
               </div>
             </div>
         </section>
+
+        <section id="spam" class="panel">
+          <div class="panel-heading">
+            <h3>{{ items.spam.mtitle|safe }}
+              {% if editing %}
+                <button class="btn btn-default btn-sm" name="key" value="spam">Edit</button>
+              {% endif %}
+            </h3>
+          </div>
+          <div class="panel-body">
+            <p>{{ items.spam.mbody|safe }}</p>
+            <h4>{{ items.spam_rate.mtitle|safe }}
+              {% if editing %}
+                <button class="btn btn-default btn-sm" name="key" value="spam_rate">Edit</button>
+              {% endif %}
+            </h4>
+            <p>{{ items.spam_rate.mbody|safe }}</p>
+            <div class="gallery center-hack">
+              <div class="center-block">
+                <a href="/img/spam.png">
+                  <img class="img-responsive img-thumbnail" src="/img/spam.png?via=html"/>
+                </a>
+              </div>
+            </div>
+        </section>
       </form>
 
     </div> <!-- .container -->
