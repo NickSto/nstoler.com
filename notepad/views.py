@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.template.defaultfilters import escape, urlize
+from django.db import transaction
 from django.db.models import Max
 import django.db
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
@@ -54,6 +55,7 @@ def monitor(request):
 def view(request, page_name):
   params = QueryParams()
   params.add('note', type=int, default=None)
+  params.add('version', type=int, default=None)
   params.add('format', default='html', choices=('html', 'plain'))
   params.add('admin', type=boolish, default=False, choices=(True, False))
   params.add('archived', type=boolish, default=False, choices=(True, False))
@@ -65,29 +67,18 @@ def view(request, page_name):
   if params.invalid_value:
     return HttpResponseRedirect(reverse('notepad:view', args=(page_name,))+str(params))
   # Only allow showing deleted notes to the admin over HTTPS.
-  #TODO: Display deleted notes differently.
   is_admin = is_admin_and_secure(request)
   if not is_admin and (params['admin'] or params['deleted']):
     query_str = str(params.but_with(admin=False, deleted=False))
     return HttpResponseRedirect(reverse('notepad:view', args=(page_name,))+query_str)
   # Fetch the note(s).
-  if params['note']:
-    try:
-      note = Note.objects.get(pk=params['note'], page__name=page_name)
-      if (note.archived and not params['archived']) or (note.deleted and not params['deleted']):
-        # Don't show an archived or deleted note w/o that option turned on.
-        notes = []
-      else:
-        notes = [note]
-    except Note.DoesNotExist:
-      notes = []
+  if params['version']:
+    notes = get_notes_from_ids([params['version']], page_name, params['archived'], params['deleted'])
+  elif params['note']:
+    note = get_latest_version(params['note'], page_name, params['archived'], params['deleted'])
+    notes = [note]
   else:
-    kwargs = {}
-    if not params['archived']:
-      kwargs['archived'] = False
-    if not params['deleted']:
-      kwargs['deleted'] = False
-    notes = Note.objects.filter(page__name=page_name, **kwargs).order_by('display_order', 'id')
+    notes = get_notes(page_name, params['archived'], params['deleted'])
   # Bundle up the data and display the notes.
   if params['format'] == 'plain':
     contents = [note.content for note in notes]
@@ -147,6 +138,7 @@ def add(request, page_name):
     # across all pages increasing chronologically by default, giving a nicer order when moving a
     # note into an existing page with other notes.
     note.display_order = note.id * DISPLAY_ORDER_MARGIN
+    note.history = note.id
     note.save()
     if page_name in PROTECTED_PAGES:
       # Notify that someone added a note to a protected page.
@@ -208,7 +200,9 @@ def editform(request, page_name):
   error = None
   warning = None
   if len(notes) == 0:
-    log.warning('No valid note selected for editing.')
+    note_ids = get_note_ids_from_params(params)
+    notes_str = ', '.join([str(note_id) for note_id in note_ids])
+    log.warning(f'No valid note selected for editing. User selected {notes_str}')
     error = 'No valid note selected.'
     note = None
   elif len(notes) > 1:
@@ -218,7 +212,9 @@ def editform(request, page_name):
   else:
     note = notes[0]
   # Prevent appearance of being able to edit protected, archived, or deleted notes.
-  if note and note.protected and not is_admin_and_secure(request):
+  if not note:
+    pass
+  elif note.protected and not is_admin_and_secure(request):
     log.warning('Non-admin attempted to edit protected note {}.'.format(note.id))
     error = 'This note is protected.'
   elif note.edited:
@@ -235,85 +231,90 @@ def editform(request, page_name):
     #TODO: Return a non-200 HTTP status.
     return render(request, 'notepad/error.tmpl', context)
   elif note:
-    notes = Note.objects.filter(page__name=page_name, archived=False, deleted=False).order_by('display_order', 'id')
+    notes = get_notes(page_name, archived=False, deleted=False)
     lines = len(note.content.splitlines())
     context = {
       'page':page_name, 'note':note, 'notes':notes, 'rows':round(lines*1.1)+2, 'warning':warning,
     }
     return render(request, 'notepad/editform.tmpl', context)
   else:
-    log.error('Ended up with neither a note ({!r}) nor an error ({!r}).'.format(note, error))
+    log.error(f'Ended up with neither a note ({note!r}) nor an error ({error!r}).')
     return HttpResponseRedirect(view_url)
 
 
 def edit(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
-  fragment = '#bottom'
+  redirect_url = view_url+'#bottom'
   params = request.POST
   if is_bot_request(request):
     notes = [params.get('note')]
-    return activity_notify(request, page_name, 'editing note', notes, view_url+fragment)
+    return activity_notify(request, page_name, 'editing note', notes, redirect_url)
   # Get the Note requested.
   try:
     note_id = int(params.get('note'))
   except (TypeError, ValueError):
     log.warning('Invalid note id for editing: {!r}'.format(params.get('note')))
-    return HttpResponseRedirect(view_url+fragment)
+    return HttpResponseRedirect(redirect_url)
   try:
     note = Note.objects.get(pk=note_id)
   except Note.DoesNotExist:
-    log.warning('Visitor "{}" tried to submit an edit to non-existent note #{}.'
-                .format(request.visit.visitor, note_id))
-    return HttpResponseRedirect(view_url+fragment)
-  fragment = '#note_{}'.format(note_id)
+    log.warning(
+      f'Visitor "{request.visit.visitor}" tried to submit an edit to non-existent note #{note_id}.'
+    )
+    return HttpResponseRedirect(redirect_url)
+  redirect_url = f'{view_url}#note_{note_id}'
   # Verify that everything looks valid.
   if note.page.name != page_name:
-    log.warning('User tried to edit note {!r} from page {!r}, but gave page name {!r}.'
-                .format(note.id, note.page.name, page_name))
-    return HttpResponseRedirect(view_url+fragment)
+    log.warning(
+        f'User tried to edit note {note.id!r} from page {note.page.name!r}, but gave page name '
+        f'{page_name!r}.'
+    )
+    return HttpResponseRedirect(redirect_url)
   if note.protected and not is_admin_and_secure(request):
     # Prevent editing protected notes.
     log.warning(f'User tried to edit protected note {note.id} from page {note.page.name!r}.')
-    return HttpResponseRedirect(view_url+fragment)
+    return HttpResponseRedirect(redirect_url)
   if note.deleted:
     log.warning(f'User tried to edit deleted note {note.id} from page {note.page.name!r}.')
-    return HttpResponseRedirect(view_url+fragment)
+    return HttpResponseRedirect(redirect_url)
   if note.archived:
     log.warning(f'User tried to edit archived note {note.id} from page {note.page.name!r}.')
-    return HttpResponseRedirect(view_url+fragment)
+    return HttpResponseRedirect(redirect_url)
   # Double-check this note hasn't already been edited.
   if note.edited:
     log.warning(f'User tried to edit already-edited note {note.id} from page {note.page.name!r}.')
-    return HttpResponseRedirect(view_url+fragment)
+    return HttpResponseRedirect(redirect_url)
   if 'content' not in params:
     log.warning('No "content" key in query parameters.')
-    return HttpResponseRedirect(view_url+fragment)
+    return HttpResponseRedirect(redirect_url)
   try:
     page = Page.objects.get(name=page_name)
   except Page.DoesNotExist:
     log.warning('Page {!r} does not exist.'.format(page_name))
-    return HttpResponseRedirect(view_url+fragment)
+    return HttpResponseRedirect(redirect_url)
   edited_note = Note(
     page=page,
     content=params.get('content', ''),
     visit=request.visit,
     display_order=note.display_order,
     protected=note.protected,
-    last_version=note
+    history=note.history,
+    last_version=note,
   )
   note.deleted = True
   note.deleting_visit = request.visit
   # Save both or, if something goes wrong, neither.
   try:
-    edited_note.save()
-    note.save()
+    with transaction.atomic():
+      edited_note.save()
+      note.save()
   except django.db.Error as dbe:
     log.error('Error on saving edited note: {}'.format(dbe))
   if page_name in PROTECTED_PAGES:
     # Notify that someone edited a note from a protected page.
     activity_notify(request, page_name, f'editing a note', [note], blocked=False)
-  fragment = '#note_{}'.format(edited_note.id)
-  return HttpResponseRedirect(view_url+fragment)
+  redirect_url = f'{view_url}#note_{edited_note.id}'
+  return HttpResponseRedirect(redirect_url)
 
 
 def moveform(request, page_name):
@@ -330,7 +331,7 @@ def moveform(request, page_name):
 def move(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
-  notes = get_notes_from_params(params, deleted=False, archived=False)
+  notes = get_notes_from_params(params, archived=False, deleted=False)
   if is_bot_request(request):
     return activity_notify(request, page_name, 'moving notes', notes, view_url)
   action = params.get('action')
@@ -383,15 +384,16 @@ def _move_page(request, old_page_name, notes):
     note.page = new_page
     # Save both or, if something goes wrong, neither.
     try:
-      move.save()
-      note.save()
+      with transaction.atomic():
+        move.save()
+        note.save()
     except django.db.Error as dbe:
       log.error('Error on saving Move or Note: {}'.format(dbe))
   return HttpResponseRedirect(view_url)
 
 
 def _move_order(request, page_name, notes, direction):
-  page_notes = Note.objects.filter(page__name=page_name, archived=False, deleted=False).order_by('display_order', 'id')
+  page_notes = get_notes(page_name, archived=False, deleted=False)
   # Save old display_orders.
   old_orders = {}
   for note in page_notes:
@@ -442,8 +444,9 @@ def _move_order(request, page_name, notes, direction):
              .format(note.id, move.old_display_order, move.new_display_order))
     # Save both or, if something goes wrong, neither.
     try:
-      move.save()
-      note.save()
+      with transaction.atomic():
+        move.save()
+        note.save()
     except django.db.Error as dbe:
       log.error('Error on saving Move or Note: {}'.format(dbe))
   view_url = reverse('notepad:view', args=(page_name,))
@@ -496,29 +499,70 @@ Cookies sent:{cookies_str}
     return HttpResponseRedirect(view_url)
 
 
-def get_notes_from_params(params, deleted=True, archived=True):
-  note_id_strs = [key[5:] for key in params.keys() if key.startswith('note_')]
-  notes = []
-  for note_id_str in note_id_strs:
-    try:
-      note_id = int(note_id_str)
-    except ValueError:
-      log.warning('Non-integer note number in {!r}'.format(note_id_str))
-      continue
-    try:
-      note = Note.objects.get(pk=note_id)
-    except Note.DoesNotExist:
-      log.warning('Non-existent note {!r}.'.format(note_id))
-      continue
-    if note.archived and not archived:
-      log.warning(f'Archived note {note_id} illegally requested.')
-      continue
-    if note.deleted and not deleted:
-      log.warning(f'Deleted note {note_id} illegally requested.')
-      continue
-    notes.append(note)
+########## NOTE RETRIEVAL ##########
+
+def get_notes(*args, **kwargs):
+  filters = make_filters(*args, **kwargs)
+  return Note.objects.filter(**filters).order_by('display_order', 'id')
+
+
+def get_notes_from_params(params, *args, **kwargs):
+  note_ids = get_note_ids_from_params(params)
+  return get_notes_from_ids(note_ids, *args, **kwargs)
+
+
+def get_note_ids_from_params(params):
+  note_ids = []
+  for key, value in params.items():
+    if key.startswith('note_') and value == 'on':
+      try:
+        note_id = int(key[5:])
+      except ValueError:
+        log.warning(f'Non-integer note number in {key!r}')
+      else:
+        note_ids.append(note_id)
+  return note_ids
+
+
+def get_notes_from_ids(note_ids, *args, **kwargs):
+  filters = make_filters(*args, **kwargs)
+  notes_dict = Note.objects.filter(**filters).in_bulk(note_ids)
+  notes = list(notes_dict.values())
   notes.sort(key=lambda note: (note.display_order, note.id))
   return notes
+
+
+def get_latest_version(history_id, *args, **kwargs):
+  user_filters = make_filters(*args, **kwargs)
+  version_filters = {
+    'history': history_id,
+    'next_version__isnull': True,
+  }
+  filters = user_filters.copy()
+  filters.update(version_filters)
+  try:
+    note = Note.objects.get(**filters)
+  except Note.DoesNotExist:
+    criteria_str = ', '.join([f'{key}={value!r}' for key, value in user_filters.items()])
+    log.error(f'The most recent note of history {history_id} does not fit criteria {criteria_str}.')
+  except Note.MultipleObjectsReturned:
+    criteria_str = ', '.join([f'{key}={value!r}' for key, value in user_filters.items()])
+    log.error(
+      f'Multiple notes appear to be the latest in history {history_id} (criteria {criteria_str}.'
+    )
+  else:
+    return note
+
+
+def make_filters(page_name=None, archived=True, deleted=True):
+  filters = {}
+  if page_name is not None:
+    filters['page__name'] = page_name
+  if not archived:
+    filters['archived'] = False
+  if not deleted:
+    filters['deleted'] = False
+  return filters
 
 
 def truncate(s, max_len=100):

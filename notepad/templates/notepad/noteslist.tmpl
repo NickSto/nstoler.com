@@ -9,7 +9,7 @@
             <li id="note_{{ note.id }}" class="note list-group-item">
               {% if type == 'view' %}
                 <span class="left-controls">
-                  <a class="note-anchor" href="#note_{{ note.id }}">¶</a>
+                  <a class="note-anchor" href="#note_{{ note.history }}">¶</a>
                   <input type="checkbox" class="checkbox" {% if select == 'all' %}checked{% endif %} name="note_{{ note.id }}">
                 </span>
               {% else %}
@@ -21,6 +21,7 @@
                   <table class="table table-bordered table-condensed">
                     <tr class="names">
                       <th>id</th>
+                      <th>history</th>
                       <th>display_order</th>
                       <th>archived?</th>
                       <th>deleted?</th>
@@ -37,12 +38,23 @@
                     </tr>
                     <tr class="values">
                       <td>{{ note.id }}</td>
+                      <td>
+                        {% if note.edited %}
+                          <a href="{% url 'notepad:view' note.latest.page.name %}?note={{ note.history }}&amp;archived=True&amp;deleted=True">
+                            {{ note.history }}
+                          </a>
+                        {% else %}
+                          {{ note.history }}
+                        {% endif %}
+                      </td>
                       <td>{{ note.display_order }}</td>
                       <td>{{ note.archived }}</td>
                       <td>{{ note.deleted }}</td>
                       {% if note.next_version %}
                         <td>
-                          <a href="{% url 'notepad:view' note.next_version.page.name %}?note={{ note.next_version.id }}&amp;archived=True&amp;deleted=True">{{ note.next_version.id }}</a>
+                          <a href="{% url 'notepad:view' note.next_version.page.name %}?version={{ note.next_version.id }}&amp;archived=True&amp;deleted=True">
+                            {{ note.next_version.id }}
+                          </a>
                         </td>
                       {% else %}
                         <td>False</td>
@@ -50,12 +62,18 @@
                       {% if note.visit %}
                         <td>{{ note.visit.timestamp }} UTC</td>
                         <td>
-                          <a href="{% url 'traffic:view_ip' note.visit.visitor.ip %}">{{ note.visit.visitor.ip }}</a>
+                          <a href="{% url 'traffic:view_ip' note.visit.visitor.ip %}">
+                            {{ note.visit.visitor.ip }}
+                          </a>
                         </td>
                         {% if note.visit.visitor.label %}
                           <td>{{ note.visit.visitor.label }}</td>
                         {% endif %}
-                        <td><a href="{% url 'traffic_monitor' %}?user={{ note.visit.visitor.user.id }}">{{ note.visit.visitor.user.id }}</a></td>
+                        <td>
+                          <a href="{% url 'traffic_monitor' %}?user={{ note.visit.visitor.user.id }}">
+                            {{ note.visit.visitor.user.id }}
+                          </a>
+                        </td>
                         <td>{{ note.visit.visitor.cookie1 }}</td>
                       {% endif %}
                     </tr>

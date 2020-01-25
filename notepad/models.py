@@ -3,14 +3,25 @@ from django.template.defaultfilters import escape, urlize
 from traffic.models import Visit
 from utils import ModelMixin
 
+
 class Page(ModelMixin, models.Model):
   name = models.CharField(max_length=200)
   def __str__(self):
     return self.name
 
 
+# For historical reasons, the terminology is now a little odd.
+# Ideally, I'd have a `Note` class that represents a single note and all its versions.
+# It would be associated with one or more `Version`s, which hold the actual text.
+# But for now, the current `Note` class corresponds to the `Version` I just described.
+# And there is no `Note` class like I described, just a `history` field in each `Note
+# (to minimize database query complexity).
+# But the ideal terminology is now the public one, exposed in the url query strings.
+
 class Note(ModelMixin, models.Model):
   page = models.ForeignKey(Page, models.SET_NULL, null=True, blank=True)
+  # An edit history of Notes.
+  history = models.IntegerField(null=True)
   content = models.TextField()
   visit = models.ForeignKey(Visit, models.SET_NULL, null=True, blank=True)
   protected = models.BooleanField(default=False)  # Only admin can modify.
@@ -34,6 +45,12 @@ class Note(ModelMixin, models.Model):
     except Note.DoesNotExist:
       return False
     return False
+  @property
+  def latest(self):
+    latest = self
+    while latest.edited:
+      latest = latest.next_version
+    return latest
   def content_html(self):
     urlized = urlize(escape(self.content))
     # Kludge to add some custom attributes to the <a> links.:
