@@ -1,4 +1,4 @@
-        <ul id="notes" class="list-group">
+        <ul id="notes" class="list-group {% if type == 'view' %}view-mode{% else %}modify-mode{% endif %}">
           <li class="list-group-item header">
             <h3 class="page-name">{{ page }}</h3>
           </li>
@@ -8,7 +8,10 @@
             {% endif %}
             <li id="note_{{ note.id }}" class="note list-group-item">
               {% if type == 'view' %}
-                <input type="checkbox" class="checkbox" {% if select == 'all' %}checked{% endif %} name="note_{{ note.id }}">
+                <span class="left-controls">
+                  <a class="note-anchor" href="#note_{{ note.id }}">¶</a>
+                  <input type="checkbox" class="checkbox" {% if select == 'all' %}checked{% endif %} name="note_{{ note.id }}">
+                </span>
               {% else %}
                 <input type="hidden" name="note_{{ note.id }}" value="on">
               {% endif %}
@@ -72,7 +75,7 @@
               <div class="clearfix"></div>
             </li>
           {% empty %}
-            <li class="note list-group-item">
+            <li class="note list-group-item message">
               {% if type == 'view' %}
                 <div class="content">Nothing here yet!
 Try adding something with the form below!</div>

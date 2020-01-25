@@ -3,14 +3,36 @@
   margin-bottom: 10px;
 }
 
-.note .checkbox {
+.view-mode .note {
+  padding-left: 5px;
+}
+
+.modify-mode .note, .note.message {
+  padding-left: 15px;
+}
+
+.note .left-controls {
   float: left;
+}
+
+.note-anchor {
+  font-size: 75%;
+  vertical-align: super;
+  visibility: hidden;
+}
+
+.note:hover .note-anchor {
+  visibility: visible;
+}
+
+.note .checkbox {
+  display: inline-block;
   width: 10px;
 }
 
 .admin {
   float: right;
-  width: calc(100% - 25px);
+  width: calc(100% - 30px);
 }
 
 .admin table {
@@ -51,7 +73,7 @@ pre.content {
 }
 
 #main.view pre.content {
-  width: calc(100% - 25px);
+  width: calc(100% - 30px);
 }
 
 #notice {
