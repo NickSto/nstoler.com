@@ -1,7 +1,7 @@
 from django.db import models
 from django.template.defaultfilters import escape, urlize
+from traffic.models import Visit
 from utils import ModelMixin
-
 
 class Page(ModelMixin, models.Model):
   name = models.CharField(max_length=200)
@@ -12,17 +12,20 @@ class Page(ModelMixin, models.Model):
 class Note(ModelMixin, models.Model):
   page = models.ForeignKey(Page, models.SET_NULL, null=True, blank=True)
   content = models.TextField()
-  visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True)
-  protected = models.BooleanField(default=False)  # Only admin can delete.
+  visit = models.ForeignKey(Visit, models.SET_NULL, null=True, blank=True)
+  protected = models.BooleanField(default=False)  # Only admin can modify.
   archived = models.BooleanField(default=False)
-  archiving_visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True,
-                                      related_name='archived_note')
+  archiving_visit = models.ForeignKey(
+    Visit, models.SET_NULL, null=True, blank=True, related_name='archived_note'
+  )
   deleted = models.BooleanField(default=False)
-  deleting_visit = models.ForeignKey('traffic.Visit', models.SET_NULL, null=True, blank=True,
-                                     related_name='deleted_note')
+  deleting_visit = models.ForeignKey(
+    Visit, models.SET_NULL, null=True, blank=True, related_name='deleted_note'
+  )
   display_order = models.IntegerField()
-  last_version = models.OneToOneField('self', models.SET_NULL, null=True, blank=True,
-                                      related_name='next_version')
+  last_version = models.OneToOneField(
+    'self', models.SET_NULL, null=True, blank=True, related_name='next_version'
+  )
   @property
   def edited(self):
     try:
@@ -52,4 +55,4 @@ class Move(ModelMixin, models.Model):
   new_page = models.ForeignKey(Page, models.PROTECT, null=True, blank=True, related_name='moves_to')
   old_display_order = models.IntegerField(null=True)
   new_display_order = models.IntegerField(null=True)
-  visit = models.ForeignKey('traffic.Visit', models.PROTECT)
+  visit = models.ForeignKey(Visit, models.PROTECT)
