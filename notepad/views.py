@@ -333,9 +333,9 @@ def move(request, page_name):
   view_url = reverse('notepad:view', args=(page_name,))
   params = request.POST
   notes = get_notes_from_params(params, archived=False, deleted=False)
-  if is_bot_request(request):
-    return activity_notify(request, page_name, 'moving notes', notes, view_url)
   action = params.get('action')
+  if action not in ('moveup', 'movedown') and is_bot_request(request):
+    return activity_notify(request, page_name, 'moving notes', notes, view_url)
   if page_name in PROTECTED_PAGES:
     # Notify that someone moved a note on a protected page.
     activity_notify(request, page_name, f'moving a note', notes, blocked=False)
