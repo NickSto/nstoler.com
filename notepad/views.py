@@ -130,6 +130,7 @@ def add(request, page_name):
       page=page,
       content=params.get('content', ''),
       visit=request.visit,
+      history=-1,
       display_order=1
     )
     note.save()

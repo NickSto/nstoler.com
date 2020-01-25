@@ -21,7 +21,7 @@ class Page(ModelMixin, models.Model):
 class Note(ModelMixin, models.Model):
   page = models.ForeignKey(Page, models.SET_NULL, null=True, blank=True)
   # An edit history of Notes.
-  history = models.IntegerField(null=True)
+  history = models.IntegerField(null=False)
   content = models.TextField()
   visit = models.ForeignKey(Visit, models.SET_NULL, null=True, blank=True)
   protected = models.BooleanField(default=False)  # Only admin can modify.
