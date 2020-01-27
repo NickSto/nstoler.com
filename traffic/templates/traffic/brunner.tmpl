@@ -13,21 +13,23 @@
         <p>Please check three boxes in the tic tac toe grid below to make a completed game:</p>
       </div>
       <div id="brunnerGrid">
-        <div class="brunnerRow">
-          <input type="checkbox" name="brunner:check1"><!--
-       --><input type="checkbox" name="brunner:check2"><!--
-       --><input type="checkbox" name="brunner:check3">
-        </div>
-        <div class="brunnerRow">
-          <input type="checkbox" name="brunner:check4"><!--
-       --><input type="checkbox" name="brunner:check5"><!--
-       --><input type="checkbox" name="brunner:check6">
-        </div>
-        <div class="brunnerRow">
-          <input type="checkbox" name="brunner:check7"><!--
-       --><input type="checkbox" name="brunner:check8"><!--
-       --><input type="checkbox" name="brunner:check9">
-        </div>
+        {% spaceless %}
+          <div class="brunnerRow">
+            <input type="checkbox" name="brunner:check1">
+            <input type="checkbox" name="brunner:check2">
+            <input type="checkbox" name="brunner:check3">
+          </div>
+          <div class="brunnerRow">
+            <input type="checkbox" name="brunner:check4">
+            <input type="checkbox" name="brunner:check5">
+            <input type="checkbox" name="brunner:check6">
+          </div>
+          <div class="brunnerRow">
+            <input type="checkbox" name="brunner:check7">
+            <input type="checkbox" name="brunner:check8">
+            <input type="checkbox" name="brunner:check9">
+          </div>
+        {% endspaceless %}
       </div>
     </div>
   </noscript>
