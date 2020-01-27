@@ -11,6 +11,7 @@ from traffic.categorize import is_bot_request, HONEYPOT_NAME, get_checked_boxes
 from utils.queryparams import QueryParams, boolish
 from utils import email_admin
 from .models import Note, Page, Move
+from . import lib
 import collections
 import random as rand
 import string
@@ -18,7 +19,6 @@ import logging
 log = logging.getLogger(__name__)
 
 PROTECTED_PAGES = ('notepad',)
-DISPLAY_ORDER_MARGIN = 1000
 
 
 @require_admin_and_privacy
@@ -73,12 +73,14 @@ def view(request, page_name):
     return HttpResponseRedirect(reverse('notepad:view', args=(page_name,))+query_str)
   # Fetch the note(s).
   if params['version']:
-    notes = get_notes_from_ids([params['version']], page_name, params['archived'], params['deleted'])
+    notes = lib.get_notes_from_ids(
+      [params['version']], page_name, params['archived'], params['deleted']
+    )
   elif params['note']:
-    note = get_latest_version(params['note'], page_name, params['archived'], params['deleted'])
+    note = lib.get_latest_version(params['note'], page_name, params['archived'], params['deleted'])
     notes = [note]
   else:
-    notes = get_notes(page_name, params['archived'], params['deleted'])
+    notes = lib.get_notes(page_name, params['archived'], params['deleted'])
   # Bundle up the data and display the notes.
   if params['format'] == 'plain':
     contents = [note.content for note in notes]
@@ -111,6 +113,10 @@ def view(request, page_name):
 
 def add(request, page_name):
   params = request.POST
+  view_url = reverse('notepad:view', args=(page_name,))
+  redirect_url = view_url+'#bottom'
+  if 'content' not in params:
+    return HttpResponseRedirect(redirect_url)
   spam = is_bot_request(request)
   if spam:
     if not spam.is_boring:
@@ -125,27 +131,11 @@ def add(request, page_name):
         name=page_name
       )
       page.save()
-    # Create the Note.
-    note = Note(
-      page=page,
-      content=params.get('content', ''),
-      visit=request.visit,
-      history=-1,
-      display_order=1
-    )
-    note.save()
-    # Set the display order to a multiple of its id. This should be greater than any other
-    # display_order, putting it last on the page. It should also keep the display_orders of notes
-    # across all pages increasing chronologically by default, giving a nicer order when moving a
-    # note into an existing page with other notes.
-    note.display_order = note.id * DISPLAY_ORDER_MARGIN
-    note.history = note.id
-    note.save()
+    lib.create_note(page, params['content'], request.visit)
     if page_name in PROTECTED_PAGES:
       # Notify that someone added a note to a protected page.
       activity_notify(request, page_name, 'adding a note', blocked=False)
-  view_url = reverse('notepad:view', args=(page_name,))
-  return HttpResponseRedirect(view_url+'#bottom')
+  return HttpResponseRedirect(redirect_url)
 
 
 def hideform(request, page_name):
@@ -232,7 +222,7 @@ def editform(request, page_name):
     #TODO: Return a non-200 HTTP status.
     return render(request, 'notepad/error.tmpl', context)
   elif note:
-    notes = get_notes(page_name, archived=False, deleted=False)
+    notes = lib.get_notes(page_name, archived=False, deleted=False)
     lines = len(note.content.splitlines())
     context = {
       'page':page_name, 'note':note, 'notes':notes, 'rows':round(lines*1.1)+2, 'warning':warning,
@@ -244,9 +234,11 @@ def editform(request, page_name):
 
 
 def edit(request, page_name):
+  params = request.POST
   view_url = reverse('notepad:view', args=(page_name,))
   redirect_url = view_url+'#bottom'
-  params = request.POST
+  if 'content' not in params:
+    return HttpResponseRedirect(redirect_url)
   if is_bot_request(request):
     notes = [params.get('note')]
     return activity_notify(request, page_name, 'editing note', notes, redirect_url)
@@ -257,20 +249,15 @@ def edit(request, page_name):
     log.warning('Invalid note id for editing: {!r}'.format(params.get('note')))
     return HttpResponseRedirect(redirect_url)
   try:
-    note = Note.objects.get(pk=note_id)
+    note = Note.objects.get(pk=note_id, page__name=page_name)
   except Note.DoesNotExist:
     log.warning(
-      f'Visitor "{request.visit.visitor}" tried to submit an edit to non-existent note #{note_id}.'
+      f'Visitor "{request.visit.visitor}" tried to submit an edit to non-existent note {note_id} '
+      f'or gave the wrong page {page_name!r}.'
     )
     return HttpResponseRedirect(redirect_url)
   redirect_url = f'{view_url}#note_{note_id}'
   # Verify that everything looks valid.
-  if note.page.name != page_name:
-    log.warning(
-        f'User tried to edit note {note.id!r} from page {note.page.name!r}, but gave page name '
-        f'{page_name!r}.'
-    )
-    return HttpResponseRedirect(redirect_url)
   if note.protected and not is_admin_and_secure(request):
     # Prevent editing protected notes.
     log.warning(f'User tried to edit protected note {note.id} from page {note.page.name!r}.')
@@ -288,33 +275,11 @@ def edit(request, page_name):
   if 'content' not in params:
     log.warning('No "content" key in query parameters.')
     return HttpResponseRedirect(redirect_url)
-  try:
-    page = Page.objects.get(name=page_name)
-  except Page.DoesNotExist:
-    log.warning('Page {!r} does not exist.'.format(page_name))
-    return HttpResponseRedirect(redirect_url)
-  edited_note = Note(
-    page=page,
-    content=params.get('content', ''),
-    visit=request.visit,
-    display_order=note.display_order,
-    protected=note.protected,
-    history=note.history,
-    last_version=note,
-  )
-  note.deleted = True
-  note.deleting_visit = request.visit
-  # Save both or, if something goes wrong, neither.
-  try:
-    with transaction.atomic():
-      edited_note.save()
-      note.save()
-  except django.db.Error as dbe:
-    log.error('Error on saving edited note: {}'.format(dbe))
+  new_note = lib.edit_note(note, params['content'], request.visit)
   if page_name in PROTECTED_PAGES:
     # Notify that someone edited a note from a protected page.
     activity_notify(request, page_name, f'editing a note', [note], blocked=False)
-  redirect_url = f'{view_url}#note_{edited_note.id}'
+  redirect_url = f'{view_url}#note_{new_note.id}'
   return HttpResponseRedirect(redirect_url)
 
 
@@ -394,7 +359,7 @@ def _move_page(request, old_page_name, notes):
 
 
 def _move_order(request, page_name, notes, direction):
-  page_notes = get_notes(page_name, archived=False, deleted=False)
+  page_notes = lib.get_notes(page_name, archived=False, deleted=False)
   # Save old display_orders.
   old_orders = {}
   for note in page_notes:
@@ -454,6 +419,30 @@ def _move_order(request, page_name, notes, direction):
   return HttpResponseRedirect(view_url+'#bottom')
 
 
+def get_notes_from_params(params, *args, **kwargs):
+  note_ids = get_note_ids_from_params(params)
+  return lib.get_notes_from_ids(note_ids, *args, **kwargs)
+
+
+def get_note_ids_from_params(params):
+  note_ids = []
+  for key, value in params.items():
+    if key.startswith('note_') and value == 'on':
+      try:
+        note_id = int(key[5:])
+      except ValueError:
+        log.warning(f'Non-integer note number in {key!r}')
+      else:
+        note_ids.append(note_id)
+  return note_ids
+
+
+def random(request):
+  alphabet = string.ascii_lowercase
+  page_name = ''.join([rand.choice(alphabet) for i in range(5)])
+  return redirect('notepad:view', page_name)
+
+
 def activity_notify(request, page_name, action, notes=None, view_url=None, blocked=True):
   params = request.POST
   honey_value = truncate(params.get(HONEYPOT_NAME))
@@ -500,80 +489,8 @@ Cookies sent:{cookies_str}
     return HttpResponseRedirect(view_url)
 
 
-########## NOTE RETRIEVAL ##########
-
-def get_notes(*args, **kwargs):
-  filters = make_filters(*args, **kwargs)
-  return Note.objects.filter(**filters).order_by('display_order', 'id')
-
-
-def get_notes_from_params(params, *args, **kwargs):
-  note_ids = get_note_ids_from_params(params)
-  return get_notes_from_ids(note_ids, *args, **kwargs)
-
-
-def get_note_ids_from_params(params):
-  note_ids = []
-  for key, value in params.items():
-    if key.startswith('note_') and value == 'on':
-      try:
-        note_id = int(key[5:])
-      except ValueError:
-        log.warning(f'Non-integer note number in {key!r}')
-      else:
-        note_ids.append(note_id)
-  return note_ids
-
-
-def get_notes_from_ids(note_ids, *args, **kwargs):
-  filters = make_filters(*args, **kwargs)
-  notes_dict = Note.objects.filter(**filters).in_bulk(note_ids)
-  notes = list(notes_dict.values())
-  notes.sort(key=lambda note: (note.display_order, note.id))
-  return notes
-
-
-def get_latest_version(history_id, *args, **kwargs):
-  user_filters = make_filters(*args, **kwargs)
-  version_filters = {
-    'history': history_id,
-    'next_version__isnull': True,
-  }
-  filters = user_filters.copy()
-  filters.update(version_filters)
-  try:
-    note = Note.objects.get(**filters)
-  except Note.DoesNotExist:
-    criteria_str = ', '.join([f'{key}={value!r}' for key, value in user_filters.items()])
-    log.error(f'The most recent note of history {history_id} does not fit criteria {criteria_str}.')
-  except Note.MultipleObjectsReturned:
-    criteria_str = ', '.join([f'{key}={value!r}' for key, value in user_filters.items()])
-    log.error(
-      f'Multiple notes appear to be the latest in history {history_id} (criteria {criteria_str}.'
-    )
-  else:
-    return note
-
-
-def make_filters(page_name=None, archived=True, deleted=True):
-  filters = {}
-  if page_name is not None:
-    filters['page__name'] = page_name
-  if not archived:
-    filters['archived'] = False
-  if not deleted:
-    filters['deleted'] = False
-  return filters
-
-
 def truncate(s, max_len=100):
   if s is not None and len(s) > max_len:
     return s[:max_len]+'...'
   else:
     return s
-
-
-def random(request):
-  alphabet = string.ascii_lowercase
-  page_name = ''.join([rand.choice(alphabet) for i in range(5)])
-  return redirect('notepad:view', page_name)
