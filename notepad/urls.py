@@ -5,6 +5,7 @@ from . import views
 app_name = 'notepad'
 urlpatterns = [
   url(r'^notepad/random$', views.random, name='random'),
+  url(r'^notepad/topage$', views.topage, name='topage'),
   url(r'^notepad/add/(?P<page_name>.+)$', views.add, name='add'),
   url(r'^notepad/hideform/(?P<page_name>.+)$', views.hideform, name='hideform'),
   url(r'^notepad/hide/(?P<page_name>.+)$', views.hide, name='hide'),

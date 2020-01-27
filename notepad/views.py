@@ -21,6 +21,9 @@ log = logging.getLogger(__name__)
 PROTECTED_PAGES = ('notepad',)
 
 
+########## VIEWS ##########
+
+
 @require_admin_and_privacy
 def monitor(request):
   params = QueryParams()
@@ -419,6 +422,26 @@ def _move_order(request, page_name, notes, direction):
   return HttpResponseRedirect(view_url+'#bottom')
 
 
+def topage(request):
+  params = request.POST
+  page = params.get('page')
+  if page:
+    return redirect('notepad:view', page)
+  else:
+    log.error(f'No page given ({params.get("page")!r}.')
+    return redirect('notepad:view', 'notepad')
+
+
+def random(request):
+  alphabet = string.ascii_lowercase
+  page_name = ''.join([rand.choice(alphabet) for i in range(5)])
+  return redirect('notepad:view', page_name)
+
+
+
+########## HELPERS ##########
+
+
 def get_notes_from_params(params, *args, **kwargs):
   note_ids = get_note_ids_from_params(params)
   return lib.get_notes_from_ids(note_ids, *args, **kwargs)
@@ -435,12 +458,6 @@ def get_note_ids_from_params(params):
       else:
         note_ids.append(note_id)
   return note_ids
-
-
-def random(request):
-  alphabet = string.ascii_lowercase
-  page_name = ''.join([rand.choice(alphabet) for i in range(5)])
-  return redirect('notepad:view', page_name)
 
 
 def activity_notify(request, page_name, action, notes=None, view_url=None, blocked=True):

@@ -12,6 +12,12 @@
       <a id="top"></a>
       <h2 id="title">Notepad</h2>
 
+      <form id="to-page" class="button-border" method="post" action="{% url 'notepad:topage' %}">
+        {% csrf_token %}
+        Go to page
+        <input type="text" name="page">
+        <button class="btn btn-default">⮕</button>
+      </form>
       <form id="notes_container" name='note_actions' method='post'>
         <div class="buttons">
           <a class="btn btn-default" href="#bottom">▼ To bottom</a>
