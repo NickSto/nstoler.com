@@ -10,8 +10,7 @@ import os
 from utils.queryparams import QueryParams
 from myadmin.lib import is_admin_and_secure, require_admin_and_privacy
 from notepad.models import Note, Page
-from notepad.views import DISPLAY_ORDER_MARGIN
-from .templatetags.markdown import parse_markdown
+from notepad import lib
 from .models import Item, ListItem, Move
 log = logging.getLogger(__name__)
 
@@ -153,6 +152,7 @@ def additem(request, page):
               parent_list=parent_list)
   return HttpResponseRedirect(get_view_url(page))
 
+
 @require_admin_and_privacy
 def moveitem(request, page):
   params = QueryParams()
@@ -167,7 +167,7 @@ def moveitem(request, page):
   item_type = ITEM_TYPES.get(params['type'])
   item = get_by_key_or_id(item_type, page, params['key'], params['id'])
   if not item:
-    log.error('No item found by key {!r} or id {}.'.format(params['key'], params['id']))
+    log.error(f'No item found by key {params["key"]!r} or id {params["id"]}.')
     return HttpResponseRedirect(get_view_url(page))
   if item.parent:
     siblings = item.parent.sorted_items()
@@ -179,6 +179,10 @@ def moveitem(request, page):
   last_item = None
   for this_item in siblings:
     if this_item == item and last_item is not None:
+      log.debug(
+        f'Swapping order of Items {this_item.id} ({this_item.display_order}) and {last_item.id} '
+        f'({last_item.display_order}).'
+      )
       this_move = Move(
         type='position',
         item=this_item,
@@ -202,7 +206,7 @@ def moveitem(request, page):
           last_item.save()
           last_move.save()
       except DatabaseError as dbe:
-        log.error('Error on saving moves: {}'.format(dbe))
+        log.error(f'Error on saving moves: {dbe}')
       break
     last_item = this_item
   return HttpResponseRedirect(get_view_url(page))
@@ -219,9 +223,9 @@ def show_page(request, page, context):
       context[key] = value
   #TODO: Sanitize `page`?
   try:
-    return render(request, 'editpages/{}.tmpl'.format(page), context)
+    return render(request, f'editpages/{page}.tmpl', context)
   except TemplateDoesNotExist:
-    return HttpResponseNotFound('Invalid page name {!r}.'.format(page), content_type=settings.PLAINTEXT)
+    return HttpResponseNotFound(f'Invalid page name {page!r}.', content_type=settings.PLAINTEXT)
 
 
 def get_by_key_or_id(obj_type, page, key, id):
@@ -291,42 +295,21 @@ def get_or_create_page(editpages_page):
 
 def edit_item(item, content, attributes, visit):
   if content != item.note.content:
-    item.note = edit_note(item.note, content, visit)
+    item.note = lib.edit_note(item.note, content, visit)
   if attributes:
     if item.attributes:
       if attributes != item.attributes.content:
-        item.attributes = edit_note(item.attributes, attributes, visit)
+        item.attributes = lib.edit_note(item.attributes, attributes, visit)
     else:
-      item.attributes = create_note(item.note.page, attributes, visit)
+      item.attributes = lib.create_note(item.note.page, attributes, visit, protected=True)
   item.save()
-
-
-def edit_note(note, new_content, visit):
-  last_version = note
-  last_version.deleted = True
-  last_version.deleting_visit = visit
-  note = Note(
-    page=last_version.page,
-    content=new_content,
-    display_order=last_version.display_order,
-    protected=last_version.protected,
-    visit=visit
-  )
-  try:
-    with transaction.atomic():
-      last_version.save()
-      note.save()
-  except DatabaseError as dbe:
-    log.error('Error on saving edited note: {}'.format(dbe))
-    raise
-  return note
 
 
 def create_item(item_type, page_name, content, attributes, visit, key=None, parent_list=None):
   page = get_or_create_page(page_name)
-  note = create_note(page, content, visit)
+  note = lib.create_note(page, content, visit, protected=True)
   if attributes:
-    attr_note = create_note(page, attributes, visit)
+    attr_note = lib.create_note(page, attributes, visit, protected=True)
   else:
     attr_note = None
   item = item_type(
@@ -344,19 +327,5 @@ def create_item(item_type, page_name, content, attributes, visit, key=None, pare
            .format(item_type.__name__, item.key, note.content[:30]))
   item.save()
   if item_type is ListItem:
-    item.display_order = item.id * DISPLAY_ORDER_MARGIN
+    item.display_order = item.id * lib.DISPLAY_ORDER_MARGIN
     item.save()
-
-
-def create_note(page, content, visit):
-  note = Note(
-    page=page,
-    content=content,
-    visit=visit,
-    protected=True,
-    display_order=1
-  )
-  note.save()
-  note.display_order = note.id * DISPLAY_ORDER_MARGIN
-  note.save()
-  return note
