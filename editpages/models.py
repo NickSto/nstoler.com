@@ -78,8 +78,8 @@ class ListItem(Item):
   deleted = models.BooleanField(default=False)
   deleting_visit = models.ForeignKey(Visit, models.SET_NULL, null=True, blank=True,
                                      related_name='deleted_listitem')
-  def sorted_items(self):
-    return self.items.order_by('display_order', 'id')
+  def sorted_items(self, deleted=False):
+    return self.items.filter(deleted=deleted).order_by('display_order', 'id')
 
 
 class Move(ModelMixin, models.Model):
