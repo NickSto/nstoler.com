@@ -111,117 +111,100 @@
             {% endif %}
           </h1>
         </header>
-
-        <section id="memory-free" class="panel">
-          <div class="panel-heading">
-            <h3>{{ items.memory.mtitle|safe }}
-              {% if editing %}
-                <button class="btn btn-default btn-sm" name="key" value="memory">Edit</button>
-              {% endif %}
-            </h3>
-          </div>
-          <div class="panel-body">
-            <p>{{ items.memory.mbody|safe }}</p>
-            <div class="gallery center-hack">
-              <div class="center-block">
-                <a href="/img/mem.png">
-                  <img class="img-responsive img-thumbnail" src="/img/mem.png?via=html"/>
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="memory-used" class="panel">
-          <div class="panel-heading">
-            <h3>{{ items.memory_used.mtitle|safe }}
-              {% if editing %}
-                <button class="btn btn-default btn-sm" name="key" value="memory_used">Edit</button>
-              {% endif %}
-            </h3>
-          </div>
-          <div class="panel-body">
-            <p>{{ items.memory_used.mbody|safe }}</p>
-            <h4>{{ items.uwsgi_mem.mtitle|safe }}
-              {% if editing %}
-                <button class="btn btn-default btn-sm" name="key" value="uwsgi_mem">Edit</button>
-              {% endif %}
-            </h4>
-            <p>{{ items.uwsgi_mem.mbody|safe }}</p>
-            <div class="gallery center-hack">
-              <div class="center-block">
-                <a href="/img/mem-uwsgi.png">
-                  <img class="img-responsive img-thumbnail" src="/img/mem-uwsgi.png?via=html"/>
-                </a>
-              </div>
-            </div>
-
-            <h4>{{ items.postgres_mem.mtitle|safe }}
-              {% if editing %}
-                <button class="btn btn-default btn-sm" name="key" value="postgres_mem">Edit</button>
-              {% endif %}
-            </h4>
-            <p>{{ items.postgres_mem.mbody|safe }}</p>
-            <div class="gallery center-hack">
-              <div class="center-block">
-                <a href="/img/mem-postgres.png">
-                  <img class="img-responsive img-thumbnail" src="/img/mem-postgres.png?via=html"/>
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="disk-space" class="panel">
-          <div class="panel-heading">
-            <h3>{{ items.disk_space.mtitle|safe }}
-              {% if editing %}
-                <button class="btn btn-default btn-sm" name="key" value="disk_space">Edit</button>
-              {% endif %}
-            </h3>
-          </div>
-          <div class="panel-body">
-            <p>{{ items.disk_space.mbody|safe }}</p>
-            <h4>{{ items.postgres_disk.mtitle|safe }}
-              {% if editing %}
-                <button class="btn btn-default btn-sm" name="key" value="postgres_disk">Edit</button>
-              {% endif %}
-            </h4>
-            <p>{{ items.postgres_disk.mbody|safe }}</p>
-            <div class="gallery center-hack">
-              <div class="center-block">
-                <a href="/img/du-postgres.png">
-                  <img class="img-responsive img-thumbnail" src="/img/du-postgres.png?via=html"/>
-                </a>
-              </div>
-            </div>
-        </section>
-
-        <section id="spam" class="panel">
-          <div class="panel-heading">
-            <h3>{{ items.spam.mtitle|safe }}
-              {% if editing %}
-                <button class="btn btn-default btn-sm" name="key" value="spam">Edit</button>
-              {% endif %}
-            </h3>
-          </div>
-          <div class="panel-body">
-            <p>{{ items.spam.mbody|safe }}</p>
-            <h4>{{ items.spam_rate.mtitle|safe }}
-              {% if editing %}
-                <button class="btn btn-default btn-sm" name="key" value="spam_rate">Edit</button>
-              {% endif %}
-            </h4>
-            <p>{{ items.spam_rate.mbody|safe }}</p>
-            <div class="gallery center-hack">
-              <div class="center-block">
-                <a href="/img/spam.png">
-                  <img class="img-responsive img-thumbnail" src="/img/spam.png?via=html"/>
-                </a>
-              </div>
-            </div>
-        </section>
       </form>
+
+        {% for list in root_lists %}
+
+          <section class="panel">
+            <div class="panel-heading">
+              <h3>{{ list.mtitle|safe }}
+                {% if editing %}
+                  <form class="edit-list pull-right" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="type" value="listitem">
+                    <input type="hidden" name="id" value="{{ list.id }}">
+                    <input type="hidden" name="display-type" value="title">
+                    <button class="btn btn-default btn-sm" name="action" value="edit" formaction="{% url 'editpages:edititemform' 'status' %}">Edit</button>
+                    <button class="btn btn-default btn-sm" name="action" value="delete" formaction="{% url 'editpages:deleteitemform' 'status' %}">Delete</button>
+                    <button class="btn btn-default btn-sm" name="action" value="moveup" formaction="{% url 'editpages:moveitem' 'status' %}">↑</button>
+                    <button class="btn btn-default btn-sm" name="action" value="movedown" formaction="{% url 'editpages:moveitem' 'status' %}">↓</button>
+                  </form>
+                {% endif %}
+              </h3>
+            </div>
+            <div class="panel-body">
+              <p>{{ list.mbody|safe }}</p>
+
+              {% for item in list.sorted_items %}
+              <div>
+                <h4>{{ item.mtitle|safe }}
+                  {% if editing %}
+                    <form class="edit-list-item pull-right" method="post">
+                      {% csrf_token %}
+                      <input type="hidden" name="type" value="listitem">
+                      <input type="hidden" name="display-type" value="title-body">
+                      <input type="hidden" name="id" value="{{ item.id }}">
+                      <button class="btn btn-default btn-sm" name="action" value="edit" formaction="{% url 'editpages:edititemform' 'status' %}">Edit</button>
+                      <button class="btn btn-default btn-sm" name="action" value="delete" formaction="{% url 'editpages:deleteitemform' 'status' %}">Delete</button>
+                      <button class="btn btn-default btn-sm" name="action" value="moveup" formaction="{% url 'editpages:moveitem' 'status' %}">↑</button>
+                      <button class="btn btn-default btn-sm" name="action" value="movedown" formaction="{% url 'editpages:moveitem' 'status' %}">↓</button>
+                    </form>
+                  {% endif %}
+                </h4>
+                <p>{{ item.mbody|safe}}</p>
+                {% if item.jattrs.img %}
+                  <div class="gallery center-hack">
+                    <div class="center-block">
+                      <a href="{{ item.jattrs.img }}">
+                        <img class="img-responsive img-thumbnail" src="{{ item.jattrs.img }}?via=html"/>
+                      </a>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+              {% if editing %}
+                <li class="list-group-item header">
+                  <label>Add an item</label>
+                </li>
+                <li class="list-group-item">
+                  <form id="add-list-item" method="post" action="{% url 'editpages:additem' 'status' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="type" value="listitem">
+                    <input type="hidden" name="parent_id" value="{{ list.id }}">
+                    <label class="editpages-title">Title:</label>
+                    <input type="text" class="editpages-input list-group-item-heading" name="title">
+                    <div>
+                      <textarea class="editpages-input list-group-item-text" name="body" rows="3"></textarea>
+                    </div>
+                    <label class="editpages-attributes">Attributes:</label>
+                    <input type="text" class="editpages-input list-group-item-heading" name="attributes">
+                    <input type="submit" class="btn btn-default" value="Submit">
+                  </form>
+                </li>
+              {% endif %}
+
+            </div>
+          </section>
+
+        {% endfor %}
+
+        {% if editing %}
+          <form id="add-list" class="list-group" method="post" action="{% url 'editpages:additem' 'status' %}">
+            {% csrf_token %}
+            <input type="hidden" name="type" value="listitem">
+            <ul>
+              <li class="list-group-item header">
+                <label>Add a list</label>
+              </li>
+              <li class="list-group-item">
+                <label class="editpages-title">Title:</label>
+                <input type="text" class="editpages-input" name="title">
+                <input type="submit" class="btn btn-default" value="Submit">
+              </li>
+            </ul>
+          </form>
+        {% endif %}
 
     </div> <!-- .container -->
 {% endblock %}

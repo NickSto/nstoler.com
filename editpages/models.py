@@ -55,10 +55,12 @@ class Item(ModelMixin, models.Model):
       try:
         data = json.loads(self.attributes.content)
       except json.JSONDecodeError:
+        log.warning(f'Attributes is invalid JSON string: {self.attributes.content!r}')
         return {}
       if isinstance(data, dict):
         return data
       else:
+        log.warning(f'Issue decoding attributes. Parsed data not a dict: {data!r}')
         return {}
     else:
       return {}
