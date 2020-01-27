@@ -1,6 +1,6 @@
         <ul id="notes" class="list-group {% if type == 'view' %}view-mode{% else %}modify-mode{% endif %}">
           <li class="list-group-item header">
-            <h3 class="page-name">{{ page }}</h3>
+            <h3>Notes</h3>
           </li>
           {% for note in notes %}
             {% if forloop.last %}

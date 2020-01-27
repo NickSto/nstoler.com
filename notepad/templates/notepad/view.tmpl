@@ -10,7 +10,9 @@
 {% block content %}
     <div id="main" class="view container-fluid">
       <a id="top"></a>
-      <h2 id="title">Notepad</h2>
+      <div id="title">
+        <h2>{{ page }} <a id="page-link" href="{% url 'notepad:view' page %}">🔗</a></h2>
+      </div>
 
       <form id="to-page" class="button-border" method="post" action="{% url 'notepad:topage' %}">
         {% csrf_token %}

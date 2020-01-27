@@ -1,4 +1,14 @@
 
+#page-link {
+  visibility: hidden;
+  font-size: 40%;
+  vertical-align: middle;
+}
+
+#title:hover #page-link {
+  visibility: visible;
+}
+
 #notes {
   margin-bottom: 10px;
 }
