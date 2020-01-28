@@ -1,8 +1,11 @@
+import collections
+import logging
+import os
+import time
 from django.conf import settings
 from .models import Robot, Visitor, Visit, Spam
-import os
-import logging
-import collections
+from utils.misc import async
+from utils.get_spam_log import output_spam_log
 log = logging.getLogger(__name__)
 try:
   import yaml
@@ -77,6 +80,12 @@ def get_checked_boxes(params):
 
 
 def log_spammer(request, content):
+  spam = save_spam(request, content)
+  export_spam_log(settings.SPAM_LOG)
+  return spam
+
+
+def save_spam(request, content):
   params = request.POST
   honey_value = params.get(HONEYPOT_NAME)
   js_enabled = parse_bool(params.get('jsEnabled'))
@@ -118,6 +127,24 @@ def truncate_field(raw_value, max_len):
   else:
     value = raw_value
   return value, value_len
+
+
+@async
+def export_spam_log(log_path):
+  log.debug(f'Exporting spam log..')
+  lock_path = log_path.with_name(log_path.name+'.lock')
+  if lock_path.exists():
+    log.info(f'Lock file {str(lock_path)!r} exists. Aborting spam plot render.')
+    return
+  with lock_path.open('w') as lock_file:
+    lock_file.write(f'{os.getpid()}\n')
+  try:
+    with log_path.open('w') as log_file:
+      output_spam_log(log_file)
+  except OSError as error:
+    log.error(f'Error writing spam log: {error}')
+  finally:
+    os.remove(lock_path)
 
 
 ########## BOT DETECTION ##########

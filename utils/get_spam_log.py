@@ -4,6 +4,7 @@ import collections
 import logging
 import os
 import pathlib
+import subprocess
 import sys
 import django
 import django.conf
@@ -19,8 +20,6 @@ django.setup()
 # Do imports from our Django site.
 from traffic.models import Spam, User
 
-DESCRIPTION = """Export data from the Spam table to tsv format."""
-
 ROW_FIELDS = (
   'timestamp', 'is_me', 'is_boring', 'captcha_version', 'captcha_failed',
   'js_enabled', 'solved_grid', 'grid_autofilled', 'honeypot_len', 'content_len',
@@ -28,10 +27,20 @@ ROW_FIELDS = (
 
 Row = collections.namedtuple('Row', ROW_FIELDS)
 
+PLOT_EXE = pathlib.Path('~/bin/scatterplot.py').expanduser()
+PLOT_CMD = [
+  PLOT_EXE, '--tag-field', '3', '--unix-time', 'x', '--date', '--y-range', '0', '1',
+  '--y-label', '', '--width', '640', '--height', '200', '--feature-scale', '2.25', '--out-file',
+]
+
+DESCRIPTION = """Export data from the Spam table to tsv format."""
+
 
 def make_argparser():
   parser = argparse.ArgumentParser(add_help=False, description=DESCRIPTION)
   options = parser.add_argument_group('Options')
+  options.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout,
+    help='Output file. Default: stdout.')
   options.add_argument('-h', '--help', action='help',
     help='Print this argument help text and exit.')
   options.add_argument('-H', '--no-header', dest='header', default=True, action='store_false',
@@ -55,17 +64,46 @@ def main(argv):
 
   logging.basicConfig(stream=args.log, level=args.volume, format='%(message)s')
 
+  output_spam_log(sys.stdout, args.header)
+
+
+def output_spam_log(out_file, header=False):
   me = User.objects.get(pk=1, label='me')
 
-  if args.header:
-    print('#', end='')
-    print(*ROW_FIELDS, sep='\t')
+  if header:
+    print('#', end='', file=out_file)
+    print(*ROW_FIELDS, sep='\t', file=out_file)
+
   for spam in Spam.objects.all():
     row_dict = {field:getattr(spam,field) for field in ROW_FIELDS if hasattr(spam,field)}
     row_dict['timestamp'] = int(spam.visit.timestamp.timestamp())
     row_dict['is_me'] = spam.visit.visitor.user == me
     row = Row(**row_dict)
-    print(*row, sep='\t')
+    print(*row, sep='\t', file=out_file)
+
+
+def plot_spam_log(out_path):
+  cmd = PLOT_CMD + [out_path]
+  print('+ $ '+' '.join([str(arg) for arg in cmd]), file=sys.stderr)
+  process = subprocess.Popen(cmd, stdin=subprocess.PIPE, encoding='utf8')
+  for timestamp, y, spam_type in get_plot_data():
+    line = f'{timestamp}\t{y}\t{spam_type}\n'
+    process.stdin.write(line)
+  process.stdin.close()
+
+
+def get_plot_data():
+  me = User.objects.get(pk=1, label='me')
+  for spam in Spam.objects.all():
+    if spam.visit.visitor.user == me:
+      continue
+    if spam.is_boring:
+      spam_type = 'Basic'
+      y = 0.4
+    else:
+      spam_type = 'Unusual'
+      y = 0.6
+    yield spam.visit.timestamp.timestamp(), y, spam_type
 
 
 def fail(message):
