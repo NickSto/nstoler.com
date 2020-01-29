@@ -4,7 +4,7 @@ import os
 import time
 from django.conf import settings
 from .models import Robot, Visitor, Visit, Spam
-from utils.misc import async
+from utils import run_async
 from utils.get_spam_log import output_spam_log
 log = logging.getLogger(__name__)
 try:
@@ -129,7 +129,7 @@ def truncate_field(raw_value, max_len):
   return value, value_len
 
 
-@async
+@run_async
 def export_spam_log(log_path):
   log.debug(f'Exporting spam log..')
   lock_path = log_path.with_name(log_path.name+'.lock')

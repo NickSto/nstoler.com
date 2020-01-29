@@ -3,7 +3,7 @@ from django.db import connection
 from .models import Visit, Visitor, User, Cookie
 from .categorize import classifier
 from .ipinfo import ip_to_ipinfo
-from utils import async
+from utils import run_async
 import os
 import string
 import random
@@ -75,7 +75,7 @@ def get_or_create_visit_and_visitor(request_data):
   return visit
 
 
-@async
+@run_async
 def run_background_tasks(visitor, request_data):
   """Execute tasks which aren't necessary to finish before the request is returned.
   Currently: Get IpInfo and the Visitor.bot_score."""

@@ -132,7 +132,7 @@ def http_request(url, post_params=None, timeout=None, max_response=None, json=Fa
 
 
 # From https://stackoverflow.com/questions/18420699/multithreading-for-python-django/28913218#28913218
-def async(function):
+def run_async(function):
   """Decorator to make a function execute in a background thread."""
   @functools.wraps(function)
   def wrapped_fxn(*args, **kwargs):
@@ -142,6 +142,7 @@ def async(function):
   return wrapped_fxn
 
 
+@run_async
 def email_admin(subject, body):
   missing_keys = []
   for key in ('EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_HOST_USER', 'EMAIL_HOST_PASSWORD'):
