@@ -3,6 +3,7 @@ import logging
 import os
 import time
 from django.conf import settings
+from django.db import connection
 from .models import Robot, Visitor, Visit, Spam
 from utils import run_async
 from utils.get_spam_log import output_spam_log
@@ -145,6 +146,7 @@ def export_spam_log(log_path):
     log.error(f'Error writing spam log: {error}')
   finally:
     os.remove(lock_path)
+    connection.close()
 
 
 ########## BOT DETECTION ##########

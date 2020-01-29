@@ -133,7 +133,15 @@ def http_request(url, post_params=None, timeout=None, max_response=None, json=Fa
 
 # From https://stackoverflow.com/questions/18420699/multithreading-for-python-django/28913218#28913218
 def run_async(function):
-  """Decorator to make a function execute in a background thread."""
+  """Decorator to make a function execute in a background thread.
+  NOTE: If your decorated function interacts with the databse, you must close the connection at the
+  end of the function:
+    from django.db import connection
+    @run_async
+    def foo():
+      #do work
+      connection.close()
+  """
   @functools.wraps(function)
   def wrapped_fxn(*args, **kwargs):
     t = threading.Thread(target=function, args=args, kwargs=kwargs)
