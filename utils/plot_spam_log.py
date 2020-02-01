@@ -166,12 +166,12 @@ def make_bar_data(spam_by_day):
 def do_bar_plotting(timestamps, basic_counts, unusual_counts):
   figure = pyplot.figure(figsize=(8,6))
   axes = figure.add_subplot(1,1,1)
-  basic_plot = axes.bar(timestamps, basic_counts, BAR_WIDTH, color='#1f77b4')
-  unusual_plot = axes.bar(timestamps, unusual_counts, BAR_WIDTH, color='#ff7f0e', bottom=basic_counts)
+  unusual_plot = axes.bar(timestamps, unusual_counts, BAR_WIDTH, color='#ff7f0e')
+  basic_plot = axes.bar(timestamps, basic_counts, BAR_WIDTH, color='#1f77b4', bottom=unusual_counts)
   xticks, xlabels = get_time_ticks(timestamps[0], timestamps[-1], max_ticks=5)
   axes.set_xticks(xticks)
   axes.set_xticklabels(xlabels)
-  axes.legend((unusual_plot, basic_plot), ('Unusual', 'Basic'))
+  axes.legend((basic_plot, unusual_plot), ('Basic', 'Unusual'))
 
 
 def timestamp_to_day(timestamp):
