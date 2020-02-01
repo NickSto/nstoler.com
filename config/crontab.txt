@@ -9,4 +9,4 @@ LOG_DIR=/var/www/logs
 0 */6 * * * bash "$BASE_DIR/utils/psql-du.sh" -t >> "$LOG_DIR/du-postgres.tsv" 2>> "$ERR_LOG"
 9 1,7,13,19 * * * "$BASE_DIR/utils/filter-top-groups.py" "$LOG_DIR/du-postgres.tsv" -g 2 -n 8 | awk -F '\t' '{print $1, $3/1024/1024, $2}' | "$HOME/bin/scatterplot.py" -g 3 -u x --date -Y MB -T 'Disk usage' -o "$BASE_DIR/static/img/du-postgres.png" 2>> "$ERR_LOG"
 # Log and plot spam trend.
-@reboot run-one-constantly "$BASE_DIR/utils/plot_spam_log.py" --watch "$LOG_DIR/spam.tsv "$BASE_DIR/static/img/spam.png" 2>> "$ERR_LOG"
+@reboot run-one-constantly "$BASE_DIR/utils/plot_spam_log.py" --watch "$LOG_DIR/spam.tsv" timeline "$BASE_DIR/static/img/spam-time.png" bar "$BASE_DIR/static/img/spam-bar.png" 2>> "$ERR_LOG"
