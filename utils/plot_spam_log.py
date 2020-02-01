@@ -24,7 +24,7 @@ BAR_WIDTH = 20*60*60
 PLOT_EXE = pathlib.Path('~/bin/scatterplot.py').expanduser()
 PLOT_CMD = [
   PLOT_EXE, '--tag-field', '3', '--unix-time', 'x', '--date', '--y-range', '0', '1',
-  '--y-label', '', '--width', '640', '--height', '200', '--feature-scale', '2.25', '--out-file',
+  '--y-label', '', '--width', '800', '--height', '225', '--feature-scale', '2.5', '--out-file',
 ]
 
 
