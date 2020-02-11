@@ -24,3 +24,11 @@
     margin: 10px auto;
   }
 }
+
+#the-net {
+  text-align: right;
+}
+
+#the-net .haxxorz {
+  color: #ddd;
+}

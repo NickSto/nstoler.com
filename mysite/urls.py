@@ -24,6 +24,7 @@ urlpatterns = [
   url(r'^worktime$', worktime.views.main, name='worktime_main'),
   url(r'^worktime/', include('worktime.urls')),
   url(r'^uptest/', include('uptest.urls')),
+  url(r'^hax', editpages.views.view, kwargs={'page':'hax'}),
   # If nothing else matches, send it to notepad.
   url(r'', include('notepad.urls')),
 ]
