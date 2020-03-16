@@ -14,6 +14,7 @@ urlpatterns = [
   url(r'^editpages/', include('editpages.urls')),
   url(r'^$', editpages.views.view, kwargs={'page':'home'}, name='editpages_home'),
   url(r'^yourgenome$', editpages.views.view, kwargs={'page':'yourgenome'}, name='editpages_yourgenome'),
+  url(r'^covid$', editpages.views.view, kwargs={'page':'covid'}, name='editpages_covid'),
   url(r'^status$', editpages.views.view, kwargs={'page':'status'}, name='editpages_status'),
   url(r'^admin/', include('myadmin.urls')),
   url(r'^wikihistory/', include('wikihistory.urls')),

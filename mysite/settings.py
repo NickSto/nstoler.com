@@ -54,6 +54,7 @@ PERSONAL_PHONE = ''
 INSTALLED_APPS = [
   'ET',
   'misc',
+  'covid',
   'uptest',
   'notepad',
   'traffic',

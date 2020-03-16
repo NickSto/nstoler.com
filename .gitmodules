@@ -19,3 +19,6 @@
 [submodule "uptest"]
 	path = uptest
 	url = https://github.com/NickSto/uptest.git
+[submodule "covid"]
+	path = covid
+	url = https://github.com/NickSto/covid19.git
