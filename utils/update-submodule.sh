@@ -20,6 +20,10 @@ function main {
 
   module="$1"
 
+  if ! ([[ -e "$module" ]] || [[ -e "$module.lnk" ]] || [[ -e "$module.dir" ]]); then
+    fail "Error: unrecognized submodule '$module'."
+  fi
+
   trap cleanup ERR
 
   if [[ -h "$module" ]] && ! [[ -e "$module.lnk" ]] && [[ -d "$module.dir" ]]; then
