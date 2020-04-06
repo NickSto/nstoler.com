@@ -1,5 +1,5 @@
 {% extends 'bootstrap.tmpl' %}
-{% load staticfiles %}
+{% load static %}
 
 {% block title %}What can JavaScript see?{% endblock %}
 
@@ -35,6 +35,6 @@
 {% endblock content %}
 
 {% block javascript %}
-  <script src="{% static 'misc/js/jsdata.js' %}?via=html"></script>
+  <script src="{% static 'editpages/js/jsdata.js' %}?via=html"></script>
 {% endblock %}
 

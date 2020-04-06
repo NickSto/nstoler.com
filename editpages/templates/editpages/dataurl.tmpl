@@ -1,10 +1,10 @@
 {% extends 'bootstrap.tmpl' %}
-{% load staticfiles %}
+{% load static %}
 
 {% block title %}Convert files to data: urls{% endblock %}
 
 {% block stylesheet %}
-  <link rel="stylesheet" href="{% static 'misc/css/dataurl.css' %}?via=html">
+  <link rel="stylesheet" href="{% static 'editpages/css/dataurl.css' %}?via=html">
 {% endblock %}
 
 {% block content %}
@@ -33,5 +33,5 @@
 {% endblock content %}
 
 {% block javascript %}
-  <script src="{% static 'misc/js/dataurl.js' %}?via=html"></script>
+  <script src="{% static 'editpages/js/dataurl.js' %}?via=html"></script>
 {% endblock %}
