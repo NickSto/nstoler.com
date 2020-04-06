@@ -1,5 +1,4 @@
 from django.conf.urls import include, url
-from django.contrib import admin
 from django.views.generic.base import RedirectView
 import traffic.views
 import editpages.views
@@ -7,11 +6,11 @@ import horcrux.views
 import worktime.views
 
 urlpatterns = [
-  # url(r'^admin/', include(admin.site.urls)),
   url(r'^misc/', include('misc.urls')),
   url(r'^traffic$', traffic.views.monitor, name='traffic_monitor'),
   url(r'^traffic/', include('traffic.urls')),
   url(r'^editpages/', include('editpages.urls')),
+  url(r'^page/', include('editpages.urls_view')),
   url(r'^$', editpages.views.view, kwargs={'page':'home'}, name='editpages_home'),
   url(r'^yourgenome$', editpages.views.view, kwargs={'page':'yourgenome'}, name='editpages_yourgenome'),
   url(r'^covid$', editpages.views.view, kwargs={'page':'covid'}, name='editpages_covid'),
