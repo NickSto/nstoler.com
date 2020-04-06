@@ -145,7 +145,6 @@ USE_L10N = True
 USE_TZ = True
 APPEND_SLASH = False
 DEFAULT_CHARSET = 'utf-8'
-FILE_CHARSET = 'utf-8'
 PLAINTEXT = 'text/plain; charset='+DEFAULT_CHARSET
 
 
