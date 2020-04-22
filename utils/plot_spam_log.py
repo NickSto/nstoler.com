@@ -73,6 +73,9 @@ def main(argv):
     if not args.watch:
       break
     wait_on_file(args.log)
+    # wait_on_file() returns once the date modified has changed, but that might happen once a
+    # process has *begun* writing to it. Let's pause to wait for it to finish.
+    time.sleep(15)
 
 
 def wait_on_file(path):
