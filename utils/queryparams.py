@@ -1,5 +1,9 @@
 import collections
 import urllib.parse
+import logging
+log = logging.getLogger(__name__)
+
+ParamInput = collections.namedtuple('ParamInput', ('param', 'value', 'error'))
 
 class QueryParams(collections.OrderedDict):
   """A class to simplify handling query parameters and enable simpler query strings.
@@ -18,6 +22,7 @@ class QueryParams(collections.OrderedDict):
   def __init__(self):
     self.params = collections.OrderedDict()
     self.invalid_value = False
+    self.invalid_values = []
 
   def parse(self, params_dict):
     """Convenience function to set all the parameters at once.
@@ -26,11 +31,17 @@ class QueryParams(collections.OrderedDict):
     for param_name, value in params_dict.items():
       self.set(param_name, value)
 
-  def add(self, param_name, default=None, type=lambda x: x, min=None, max=None, choices=None):
+  def add(
+      self, param_name, default=None, type=lambda x: x, min=None, max=None, choices=None,
+      allow_empty=False,
+    ):
     """Add a canonical parameter, set its default value and type.
     The type should be a callable. Incoming values will be passed through the callable before
     storing. If it throws a TypeError or ValueError, the default will be stored instead."""
-    param = QueryParam(name=param_name, default=default, type=type, min=min, max=max, choices=choices)
+    param = QueryParam(
+      name=param_name, default=default, type=type, min=min, max=max, choices=choices,
+      allow_empty=allow_empty
+    )
     self.params[param_name] = param
     self[param_name] = default
 
@@ -42,21 +53,30 @@ class QueryParams(collections.OrderedDict):
     param = self.params.get(param_name, QueryParam(param_name))
     if param_name not in self.params:
       self.params[param_name] = param
+    error = None
     try:
       parsed_value = param.type(value)
-    except (TypeError, ValueError):
-      # If it's an invalid value, set it to be the default.
-      parsed_value = param.default
-      self.invalid_value = True
-    if param.min is not None and parsed_value < param.min:
+    except (TypeError, ValueError) as exception:
+      if value == '' and param.allow_empty:
+        parsed_value = None
+      else:
+        # If it's an invalid value, set it to be the default.
+        parsed_value = param.default
+        error = 'wrong type'
+    if error or (param.allow_empty and parsed_value is None):
+      pass  # Don't need to check validity further.
+    elif param.min is not None and parsed_value < param.min:
       parsed_value = param.min
-      self.invalid_value = True
+      error = 'less than min'
     if param.max is not None and parsed_value > param.max:
       parsed_value = param.max
-      self.invalid_value = True
+      error = 'greater than max'
     if param.choices is not None and parsed_value not in param.choices:
       parsed_value = param.default
+      error = 'invalid choice'
+    if error:
       self.invalid_value = True
+      self.invalid_values.append(ParamInput(param=param_name, value=value, error=error))
     self[param_name] = parsed_value
 
   def but_with(self, *args, **kwargs):
@@ -84,6 +104,12 @@ class QueryParams(collections.OrderedDict):
       copy.params[param_name] = param.copy()
     return copy
 
+  def format_invalids(self):
+    invalid_strs = []
+    for invalid in self.invalid_values:
+      invalid_strs.append(f'{invalid.param!r}: {invalid.value!r} ({invalid.error})')
+    return ', '.join(invalid_strs)
+
   def __str__(self):
     """Return a query string with the parameters set to their current values.
     Preserves the canonical order of the parameters, and omits any whose current value is the default.
@@ -104,13 +130,16 @@ class QueryParams(collections.OrderedDict):
 
 class QueryParam(object):
 
-  def __init__(self, name, default=None, type=lambda x: x, min=None, max=None, choices=None):
+  def __init__(
+      self, name, default=None, type=lambda x: x, min=None, max=None, choices=None, allow_empty=False,
+    ):
     self.name = name
     self.default = default
     self.type = type
     self.min = min
     self.max = max
     self.choices = choices
+    self.allow_empty = allow_empty
 
   def copy(self):
     return QueryParam(self.name, default=self.default, type=self.type, min=self.min, max=self.max)
