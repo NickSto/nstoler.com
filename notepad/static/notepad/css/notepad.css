@@ -119,6 +119,16 @@ textarea[name="content"] {
   height: 150px;
 }
 
+#floating-toolbar {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+}
+
+#floating-toolbar button:last-child {
+  margin-right: 0;
+}
+
 #submit_note {
   padding-bottom: 40px;
 }

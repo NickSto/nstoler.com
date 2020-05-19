@@ -116,5 +116,13 @@ Try adding something with the form below!</div>
             <button id="movedown" class="btn btn-default" name="action" value="movedown" formaction="{% url 'notepad:move' page %}">↓ Move down</button>
             <button id="movepage" class="btn btn-default" name="action" value="movepage" formaction="{% url 'notepad:moveform' page %}">→ Move to another page</button>
           </li>
+          <li id="floating-toolbar" class="list-group-item action-buttons">
+            <button id="delete-float" class="btn btn-default" name="action" value="delete" formaction="{% url 'notepad:hideform' page %}">✕</button>
+            <button id="archive-float" class="btn btn-default" name="action" value="archive" formaction="{% url 'notepad:hideform' page %}">☖</button>
+            <button id="edit-float" class="btn btn-default" name="action" value="edit" formaction="{% url 'notepad:editform' page %}">✎</button>
+            <button id="moveup-float" class="btn btn-default" name="action" value="moveup" formaction="{% url 'notepad:move' page %}">↑</button>
+            <button id="movedown-float" class="btn btn-default" name="action" value="movedown" formaction="{% url 'notepad:move' page %}">↓</button>
+            <button id="movepage-float" class="btn btn-default" name="action" value="movepage" formaction="{% url 'notepad:moveform' page %}">→</button>
+          </li>
           {% endif %}
         </ul>
