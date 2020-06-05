@@ -172,6 +172,7 @@ def do_bar_plotting(timestamps, basic_counts, unusual_counts):
   unusual_plot = axes.bar(timestamps, unusual_counts, BAR_WIDTH, color='#ff7f0e')
   basic_plot = axes.bar(timestamps, basic_counts, BAR_WIDTH, color='#1f77b4', bottom=unusual_counts)
   xticks, xlabels = get_time_ticks(timestamps[0], timestamps[-1], max_ticks=5)
+  axes.set_ylabel('Spams per day')
   axes.set_xticks(xticks)
   axes.set_xticklabels(xlabels)
   axes.legend((basic_plot, unusual_plot), ('Basic', 'Unusual'))
