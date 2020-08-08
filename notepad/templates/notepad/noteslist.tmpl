@@ -117,12 +117,12 @@ Try adding something with the form below!</div>
             <button id="movepage" class="btn btn-default" name="action" value="movepage" formaction="{% url 'notepad:moveform' page %}">→ Move to another page</button>
           </li>
           <li id="floating-toolbar" class="list-group-item action-buttons">
-            <button id="delete-float" class="btn btn-default" name="action" value="delete" formaction="{% url 'notepad:hideform' page %}">✕</button>
-            <button id="archive-float" class="btn btn-default" name="action" value="archive" formaction="{% url 'notepad:hideform' page %}">☖</button>
-            <button id="edit-float" class="btn btn-default" name="action" value="edit" formaction="{% url 'notepad:editform' page %}">✎</button>
-            <button id="moveup-float" class="btn btn-default" name="action" value="moveup" formaction="{% url 'notepad:move' page %}">↑</button>
-            <button id="movedown-float" class="btn btn-default" name="action" value="movedown" formaction="{% url 'notepad:move' page %}">↓</button>
-            <button id="movepage-float" class="btn btn-default" name="action" value="movepage" formaction="{% url 'notepad:moveform' page %}">→</button>
+            <button id="delete-float" title="Delete" class="btn btn-default" name="action" value="delete" formaction="{% url 'notepad:hideform' page %}">✕</button>
+            <button id="archive-float" title="Archive" class="btn btn-default" name="action" value="archive" formaction="{% url 'notepad:hideform' page %}">☖</button>
+            <button id="edit-float" title="Edit" class="btn btn-default" name="action" value="edit" formaction="{% url 'notepad:editform' page %}">✎</button>
+            <button id="moveup-float" title="Move up" class="btn btn-default" name="action" value="moveup" formaction="{% url 'notepad:move' page %}">↑</button>
+            <button id="movedown-float" title="Move down" class="btn btn-default" name="action" value="movedown" formaction="{% url 'notepad:move' page %}">↓</button>
+            <button id="movepage-float" title="Move to another page" class="btn btn-default" name="action" value="movepage" formaction="{% url 'notepad:moveform' page %}">→</button>
           </li>
           {% endif %}
         </ul>
