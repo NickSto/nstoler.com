@@ -14,6 +14,8 @@ except ImportError:
   log.warning('ImportError for module "yaml".')
   yaml = None
 
+HONEY_TRUNCATE = 63
+SPAM_TRUNCATE = 255
 DEFAULT_ROBOTS_CONFIG_PATH = os.path.join(settings.CONFIG_DIR, 'robots.yaml')
 
 SCORES = {
@@ -91,8 +93,8 @@ def save_spam(request, content):
   honey_value = params.get(HONEYPOT_NAME)
   js_enabled = parse_bool(params.get('jsEnabled'))
   grid_autofilled = parse_bool(params.get('gridAutofilled'))
-  honey_value, honey_len = truncate_field(honey_value, 1023)
-  content, content_len = truncate_field(content, 2047)
+  honey_value, honey_len = truncate_field(honey_value, HONEY_TRUNCATE)
+  content, content_len = truncate_field(content, SPAM_TRUNCATE)
   spam = Spam(
     captcha_version=CAPTCHA_VERSION,
     captcha_failed=True,
