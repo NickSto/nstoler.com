@@ -21,7 +21,7 @@ Pygments==2.2.0
 PyMySQL==0.7.10
 pyparsing==2.2.0
 pytz==2019.1
-PyYAML==5.1
+PyYAML==5.4
 requests==2.20.1
 simplegeneric==0.8.1
 six==1.10.0
