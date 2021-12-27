@@ -1,5 +1,3 @@
-# www.robotstxt.org/
-# www.google.com/support/webmasters/bin/answer.py?hl=en&answer=156449
 
 # Disable indexing Notepad pages. Since they can be any url, best to define
 # them by what they're not.
@@ -13,7 +11,13 @@ Allow: /yourgenome$
 Allow: /traffic$
 Allow: /worktime$
 Allow: /misc/sessionrecover$
+Allow: /covid$
 
+# Disallowed due to over-crawling.
+User-agent: MJ12bot
+Disallow: /
+
+# Internet Archive <3
 User-agent: ia_archiver
 Disallow:
 
@@ -22,3 +26,4 @@ Disallow:
 
 User-agent: ia_archiver-web.archive.org
 Disallow:
+
