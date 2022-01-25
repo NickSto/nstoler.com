@@ -55,6 +55,7 @@ INSTALLED_APPS = [
   'ET',
   'misc',
   'covid',
+  'wordle',
   'uptest',
   'notepad',
   'traffic',

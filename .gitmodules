@@ -22,3 +22,6 @@
 [submodule "covid"]
 	path = covid
 	url = https://github.com/NickSto/covid19.git
+[submodule "wordle"]
+	path = wordle
+	url = git@github.com:NickSto/wordle.git

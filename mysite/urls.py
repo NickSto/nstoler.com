@@ -4,6 +4,7 @@ import traffic.views
 import editpages.views
 import horcrux.views
 import worktime.views
+import wordle.views
 
 urlpatterns = [
   url(r'^misc/', include('misc.urls')),
@@ -21,6 +22,8 @@ urlpatterns = [
   url(r'^horcrux$', horcrux.views.main, name='horcrux_main'),
   url(r'^horcruxes$', RedirectView.as_view(url='/horcrux', permanent=True)),
   url(r'^horcrux/', include('horcrux.urls')),
+  url(r'^wordle$', wordle.views.main, name='wordle_main'),
+  url(r'^wordle/', include('wordle.urls')),
   url(r'^worktime$', worktime.views.main, name='worktime_main'),
   url(r'^worktime/', include('worktime.urls')),
   url(r'^uptest/', include('uptest.urls')),
