@@ -90,9 +90,8 @@ def view(request, page_name):
     return HttpResponse('\n\n'.join(contents), content_type=settings.PLAINTEXT)
   else:
     links = collections.OrderedDict()
-    randomness = rand.randint(1, 1000000)
-    links['☑ Select all'] = str(params.but_with(select='all', reload=randomness))
-    links['□ Select none'] = str(params.but_with(select='none', reload=randomness))
+    links['☑ Select all'] = str(params.but_with(select='all'))
+    links['□ Select none'] = str(params.but_with(select='none'))
     if is_admin:
       if params['admin']:
         links['Admin off'] = str(params.but_with(admin=False))
