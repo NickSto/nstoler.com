@@ -1,5 +1,7 @@
+import logging
 from django.db import transaction, DatabaseError
 from .models import Note
+log = logging.getLogger(__name__)
 
 DISPLAY_ORDER_MARGIN = 1000
 
