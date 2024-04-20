@@ -1,10 +1,9 @@
-from django.conf.urls import url
-from django.views.generic.base import RedirectView
+from django.urls import re_path
 
 from . import views
 
 app_name = 'myadmin'
 urlpatterns = [
-  url(r'^(?P<action>[^/]+)/submit$', views.submit, name='submit'),
-  url(r'^(?P<action>[^/]+)$', views.auth_form, name='auth_form'),
+  re_path(r'^(?P<action>[^/]+)/submit$', views.submit, name='submit'),
+  re_path(r'^(?P<action>[^/]+)$', views.auth_form, name='auth_form'),
 ]
