@@ -145,7 +145,7 @@ class Spam(ModelMixin, models.Model):
   # Version 4: Add gridAutofilled field.
   # Version 5: Store '' in honeypot_value instead of None when '' was actually provided.
   captcha_version = models.PositiveSmallIntegerField(null=True)
-  captcha_failed = models.NullBooleanField()
+  captcha_failed = models.BooleanField(null=True)
   visit = models.OneToOneField(Visit, models.SET_NULL, null=True)
   honeypot_name = models.CharField(max_length=31)
   # `honeypot_value` and `content` will store a truncated string if the original was too long.
@@ -154,11 +154,11 @@ class Spam(ModelMixin, models.Model):
   honeypot_value = models.TextField(null=True)
   honeypot_len = models.IntegerField(null=True)
   # Did JavaScript solve the captcha grid automatically?
-  grid_autofilled = models.NullBooleanField()
+  grid_autofilled = models.BooleanField(null=True)
   checkboxes_str = models.CharField(max_length=18)
   content = models.TextField(null=True, blank=True)
   content_len = models.IntegerField(null=True)
-  js_enabled = models.NullBooleanField()
+  js_enabled = models.BooleanField(null=True)
   @property
   def checkboxes(self):
     checkbox_strs = self.checkboxes_str.split(',')
