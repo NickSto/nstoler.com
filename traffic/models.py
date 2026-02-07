@@ -12,7 +12,7 @@ class Cookie(ModelMixin, models.Model):
   expires = models.DateTimeField(null=True, blank=True)
   path = models.CharField(max_length=1023)
   domain = models.CharField(max_length=127)
-  secure = models.NullBooleanField()
+  secure = models.BooleanField(null=True)
   def __str__(self):
     return '{}: {}'.format(self.name, self.value)
 
