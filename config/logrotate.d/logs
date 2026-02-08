@@ -21,3 +21,39 @@
   compressext .xz
   create 644 www www
 }
+
+/var/www/logs/uwsgi.stderr.log {
+  su www www
+  size 20M
+  rotate 12000
+  missingok
+  notifempty
+  compress
+  compresscmd /usr/bin/xz
+  compressext .xz
+  create 644 www www
+}
+
+/var/www/logs/watch_nginx.stderr.log {
+  su www www
+  size 20M
+  rotate 12000
+  missingok
+  notifempty
+  compress
+  compresscmd /usr/bin/xz
+  compressext .xz
+  create 644 www www
+}
+
+/var/www/logs/blocked.log {
+  su www www
+  size 20M
+  rotate 12000
+  missingok
+  notifempty
+  compress
+  compresscmd /usr/bin/xz
+  compressext .xz
+  create 644 www www
+}
