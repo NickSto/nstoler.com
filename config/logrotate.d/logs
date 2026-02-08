@@ -1,6 +1,6 @@
 /var/www/logs/traffic2.log {
   su www www
-  size 20M
+  size 100M
   rotate 12000
   missingok
   notifempty
@@ -12,7 +12,7 @@
 
 /var/www/logs/django.log {
   su www www
-  size 20M
+  size 100M
   rotate 12000
   missingok
   notifempty
@@ -24,7 +24,7 @@
 
 /var/www/logs/uwsgi.stderr.log {
   su www www
-  size 20M
+  size 100M
   rotate 12000
   missingok
   notifempty
@@ -36,7 +36,7 @@
 
 /var/www/logs/watch_nginx.stderr.log {
   su www www
-  size 20M
+  size 100M
   rotate 12000
   missingok
   notifempty
@@ -48,7 +48,7 @@
 
 /var/www/logs/blocked.log {
   su www www
-  size 20M
+  size 100M
   rotate 12000
   missingok
   notifempty
