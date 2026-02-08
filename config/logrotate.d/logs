@@ -1,23 +1,23 @@
 /var/www/logs/traffic2.log {
-        su www www
-        size 20M
-        rotate 12000
-        missingok
-        notifempty
-        compress
-        compresscmd /usr/bin/xz
-        compressext .xz
-        create 644 www www
+  su www www
+  size 20M
+  rotate 12000
+  missingok
+  notifempty
+  compress
+  compresscmd /usr/bin/xz
+  compressext .xz
+  create 644 www www
 }
 
 /var/www/logs/django.log {
-        su www www
-        size 20M
-        rotate 12000
-        missingok
-        notifempty
-        compress
-        compresscmd /usr/bin/xz
-        compressext .xz
-        create 644 www www
+  su www www
+  size 20M
+  rotate 12000
+  missingok
+  notifempty
+  compress
+  compresscmd /usr/bin/xz
+  compressext .xz
+  create 644 www www
 }
