@@ -136,3 +136,9 @@ textarea[name="content"] {
 #submit_note .panel {
   margin-bottom: 10px;
 }
+
+@media (prefers-color-scheme: dark) {
+  .button-border {
+    border-color: #444;
+  }
+}

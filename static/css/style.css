@@ -102,3 +102,96 @@ select {
 .w512 {
   width: 512px;
 }
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #121212;
+    color: #bfbfbf;
+  }
+
+  .navbar {
+    background-color: #1a1a1a;
+    border-color: #444;
+  }
+
+  .navbar-default .navbar-brand {
+    color: #bfbfbf;
+  }
+
+  .navbar-default .navbar-nav > li > a {
+    color: #bfbfbf;
+  }
+
+  .panel {
+    border-color: #444;
+  }
+
+  .panel > .panel-heading {
+    background-color: #1a1a1a;
+    border-color: #444;
+    color: #bfbfbf;
+  }
+
+  .panel > .panel-body {
+    background-color: #222;
+    color: #bfbfbf;
+  }
+
+  .page-header {
+    border-bottom-color: #444;
+  }
+
+  .jumbotron {
+    background-color: #1a1a1a;
+    color: #bfbfbf;
+  }
+
+  img.img-thumbnail {
+    border-color: #444;
+    background-color: #222;
+  }
+
+  .list-group-item {
+    background-color: #222;
+    border-color: #444;
+  }
+
+  .list-group-item.header {
+    background-color: #1a1a1a;
+  }
+
+  .table-bordered {
+    border-color: #444;
+  }
+
+  th, th.name, td.value {
+    background-color: #1a1a1a;
+    color: #bfbfbf;
+  }
+
+  .table-bordered > tbody > tr > td, .table-bordered > tbody > tr > th {
+    border-color: #444;
+  }
+
+  .btn-default {
+    background-color: #333;
+    color: #bfbfbf;
+    border-color: #444;
+  }
+
+  .button-border {
+    border-color: #444;
+  }
+
+  input[type="text"] {
+    background-color: #222;
+    color: #bfbfbf;
+    border-color: #444;
+  }
+
+  textarea {
+    background-color: #222;
+    color: #bfbfbf;
+    border-color: #444;
+  }
+}
