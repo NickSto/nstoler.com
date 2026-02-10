@@ -6,7 +6,7 @@
             {% if forloop.last %}
               <a id="bottom"></a>
             {% endif %}
-            <li id="note_{{ note.id }}" class="note list-group-item">
+            <li id="note_{{ note.history }}" class="note list-group-item">
               {% if type == 'view' %}
                 <span class="left-controls">
                   <a class="note-anchor" href="#note_{{ note.history }}">¶</a>
