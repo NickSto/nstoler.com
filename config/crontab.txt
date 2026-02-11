@@ -1,12 +1,35 @@
-# Note: Also define $HOME, $ERR_LOG, $OUT_LOG
-BASE_DIR=/var/www/nstoler.com
-LOG_DIR=/var/www/logs
+USER=me
+HOME=/home/me
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/me/bin:/home/me/.local/bin
+BaseDir=/var/www/nstoler.com
+LogDir=/var/www/logs
+OutLog=/var/www/logs/cron.out.log
+ErrLog=/var/www/logs/cron.err.log
+TotalMem=4096
 
-# m h dom mon dow   command
-# Auto-update Django bugfixes.
-0 5 * * * "$BASE_DIR/.venv/bin/pip" install --upgrade 'Django>=1.11,<1.12' >> "$OUT_LOG" 2>> "$ERR_LOG"
+# m h  dom mon dow   command
+1 0 * * * date >> /var/www/logs/cron.out.log
+1 0 * * * date >> /var/www/logs/cron.err.log
+0 5 * * * "$BaseDir/.venv/bin/pip" install --upgrade 'Django>=4.2,<4.3' >> "$OutLog" 2>> "$ErrLog"
+# 30 2 * * * /var/www/nstoler.com/.venv/bin/python /var/www/nstoler.com/utils/get_ipinfo.py -v >> /var/www/logs/cron.out.log 2>> /var/www/logs/cron.err.log
 # Log and plot Postgres disk usage.
-0 */6 * * * bash "$BASE_DIR/utils/psql-du.sh" -t >> "$LOG_DIR/du-postgres.tsv" 2>> "$ERR_LOG"
-9 1,7,13,19 * * * "$BASE_DIR/utils/filter-top-groups.py" "$LOG_DIR/du-postgres.tsv" -g 2 -n 8 | awk -F '\t' '{print $1, $3/1024/1024, $2}' | "$HOME/bin/scatterplot.py" -g 3 -u x --date -Y MB -T 'Disk usage' -o "$BASE_DIR/static/img/du-postgres.png" 2>> "$ERR_LOG"
+##0 */6 * * * bash "$BaseDir/utils/psql-du.sh" -t >> "$LogDir/du-postgres.tsv" 2>> "$ErrLog"
+##9 1,7,13,19 * * * "$BaseDir/utils/filter-top-groups.py" "$LogDir/du-postgres.tsv" -g 2 -n 8 | awk -F '\t' '{print $1, $3/1024/1024, $2}' | "$HOME/bin/scatterplot.py" --grid -g 3 -u x --date -Y MB -T 'Disk usage' -o "$BaseDir/static/img/du-postgres.png" 2>> "$ErrLog"
+# Log and plot memory usage.
+##14,29,44,59 * * * * bash "$HOME/code/memcheck.sh" >> "$LogDir/mem.tsv" 2>> "$ErrLog"
+##*/15 * * * * "$HOME/bin/scatterplot.py" --grid --title 'Free Memory' -Y 'Free RAM (MB)' -u x -x 1 -y 7 --date --y-range 0 "$TotalMem" -o "$BaseDir/static/img/mem.png" "$LogDir/mem.tsv" 2>> "$ErrLog"
+##*/15 * * * * awk 'FNR == NR {end=$1} FNR != NR && end-$1 < 60*60*24*7 {print}' "$LogDir/mem.tsv" "$LogDir/mem.tsv" | "$HOME/bin/scatterplot.py" --grid --title 'Free Memory (past week)' -Y 'Free RAM (MB)' -u x -x 1 -y 7 -U days --x-range -7.1 0.1 --y-range 0 "$TotalMem" -o "$BaseDir/static/img/mem-recent.png" 2>> "$ErrLog"
+##14,29,44,59 * * * * bash "$HOME/bin/totalmem.sh" -tu -b uwsgi-core >> "$LogDir/mem-uwsgi.tsv" 2>> "$ErrLog"
+##*/15 * * * * "$HOME/bin/scatterplot.py" --grid --title 'UWSGI Memory' -Y 'Used (MB)' -u x -x 1 -y 3 --date --y-range 0 "$TotalMem" -o "$BaseDir/static/img/mem-uwsgi.png" "$LogDir/mem-uwsgi.tsv" 2>> "$ErrLog"
+##14,29,44,59 * * * * bash "$HOME/bin/totalmem.sh" -tu -b postgres postgres: >> "$LogDir/mem-postgres.tsv" 2>> "$ErrLog"
+##*/15 * * * * "$HOME/bin/scatterplot.py" --grid --title 'Postgres Memory' -Y 'Used (MB)' -u x -x 1 -y 3 --date --y-range 0 "$TotalMem" -o "$BaseDir/static/img/mem-postgres.png" "$LogDir/mem-postgres.tsv" 2>> "$ErrLog"
 # Log and plot spam trend.
-@reboot run-one-constantly "$BASE_DIR/utils/plot_spam_log.py" --watch "$LOG_DIR/spam.tsv" timeline "$BASE_DIR/static/img/spam-time.png" bar "$BASE_DIR/static/img/spam-bar.png" 2>> "$ERR_LOG"
+##@reboot run-one-constantly "$BaseDir/utils/plot_spam_log.py" --watch "$LogDir/spam.tsv" timeline "$BaseDir/static/img/spam-time.png" bar "$BaseDir/static/img/spam-bar.png" 2>> "$ErrLog"
+
+# Diagnostics
+0  0 * * * echo "cron thinks it's 0:00"  >> "$HOME/tmp/crontime/0.txt"
+0  4 * * * echo "cron thinks it's 4:00"  >> "$HOME/tmp/crontime/4.txt"
+0  8 * * * echo "cron thinks it's 8:00"  >> "$HOME/tmp/crontime/8.txt"
+0 12 * * * echo "cron thinks it's 12:00" >> "$HOME/tmp/crontime/12.txt"
+0 16 * * * echo "cron thinks it's 16:00" >> "$HOME/tmp/crontime/16.txt"
+0 20 * * * echo "cron thinks it's 20:00" >> "$HOME/tmp/crontime/20.txt"
