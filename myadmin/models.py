@@ -2,9 +2,7 @@ from django.db import models
 from utils import ModelMixin
 
 class AdminCookie(ModelMixin, models.Model):
-  #TODO: Make connection to Visitor.cookie1 explicit? The problem is one-to-many relationship:
-  #      many Visitors can have the same cookie. And if a user visits from a new IP, they appear as
-  #      a new Visitor. Would have to update relationships on the fly.
+  #TODO: Replace with connection to traffic.models.User.
   cookie = models.CharField(max_length=24, null=True, blank=True)
 
 class AdminPassword(ModelMixin, models.Model):
