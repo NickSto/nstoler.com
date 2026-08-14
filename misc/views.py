@@ -60,6 +60,12 @@ def setcookie(request):
   return render(request, 'misc/setcookie.tmpl', context)
 
 
+def urlparse(request):
+  # Prefill the original url box from the `url` query parameter, if given.
+  context = {'url': request.GET.get('url', '')}
+  return render(request, 'misc/urlparse.tmpl', context)
+
+
 def captcha(request, name):
   context = {'name':name, 'show_captcha':True}
   if name == 'email':

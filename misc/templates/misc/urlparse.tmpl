@@ -1,0 +1,62 @@
+{% extends 'bootstrap.tmpl' %}
+{% load static %}
+
+{% block title %}Parse a URL's query parameters{% endblock %}
+
+{% block stylesheet %}
+  <link rel="stylesheet" href="{% static 'misc/css/urlparse.css' %}?via=html">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+    <section>
+      <noscript>
+        <h4>Notice: Javascript is required for this page's functionality.</h4>
+      </noscript>
+    </section>
+    <section class="panel">
+      <div class="panel-heading">
+        <h4>URLs:</h4>
+      </div>
+      <div class="panel-body">
+        <div class="input">
+          <label for="originalUrl">Original:</label>
+          <textarea id="originalUrl" class="form-control" rows="1" placeholder="Paste a url here&hellip;">{{ url }}</textarea>
+          <p id="urlError" class="text-danger"></p>
+        </div>
+        <div class="input">
+          <label for="editedUrl">Edited:</label>
+          <textarea id="editedUrl" class="form-control" rows="1" readonly></textarea>
+          <div class="buttons">
+            <input id="copyButton" class="btn btn-default" type="button" value="Copy">
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="clearfix-ish"></div>
+    <section class="panel panel-shrink">
+      <div class="panel-heading">
+        <h4>Query parameters:</h4>
+      </div>
+      <div class="panel-body">
+        <div class="buttons">
+          <input id="selectAll" class="btn btn-default" type="button" value="Select all">
+          <input id="selectNone" class="btn btn-default" type="button" value="Select none">
+          <input id="selectNoTracking" class="btn btn-default" type="button" value="Select all but tracking">
+        </div>
+        <table id="paramsTable" class="table table-bordered table-condensed table-hover">
+          <thead>
+            <tr><th></th><th>Parameter</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <p id="noParamsMessage">No query parameters found.</p>
+      </div>
+    </section>
+    </div>
+{% endblock content %}
+
+{% block javascript %}
+  <script src="{% static 'misc/js/urlparse.js' %}?via=html"></script>
+{% endblock %}

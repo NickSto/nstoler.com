@@ -1,0 +1,35 @@
+
+.container-fluid {
+  padding-top: 20px;
+  padding-left: 40px;
+}
+
+#originalUrl, #editedUrl {
+  font-family: monospace;
+  width: 100%;
+  resize: none;
+  overflow: hidden;
+  word-break: break-all;
+}
+
+table#paramsTable {
+  width: auto;
+}
+
+table#paramsTable td:first-child {
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  /* Widen the checkbox column ~50% beyond the table's default padding, for a bigger click target. */
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+#noParamsMessage {
+  display: none;
+  font-style: italic;
+}
+
+.buttons {
+  margin-bottom: 10px;
+}
