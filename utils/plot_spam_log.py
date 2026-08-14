@@ -137,6 +137,7 @@ def bar_plot(spams, out_path):
   bar_data = make_bar_data(spam_by_day)
   do_bar_plotting(*bar_data)
   pyplot.savefig(out_path)
+  pyplot.close('all')
 
 
 def bin_spam_by_day(spams):
