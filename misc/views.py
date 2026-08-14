@@ -11,6 +11,7 @@ from utils import recaptcha_verify
 log = logging.getLogger(__name__)
 
 
+#TODO: Switch to xz with https://docs.python.org/3/library/lzma.html
 @require_admin_and_privacy
 def export(request):
   db_name = settings.DATABASES['default']['NAME']
