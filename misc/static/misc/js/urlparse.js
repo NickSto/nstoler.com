@@ -3,7 +3,7 @@
 // Tracking/analytics query parameters that are always trackers, regardless of which site the url
 // points to (matched case-insensitively). These are deselected by default, and are what the
 // "all but tracking" preset removes.
-var GLOBAL_TRACKING_PARAMS = new Set([
+const GLOBAL_TRACKING_PARAMS = new Set([
   // Google Analytics / Google Ads.
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'utm_name',
   'utm_source_platform', 'utm_creative_format', 'utm_marketing_tactic',
@@ -22,7 +22,7 @@ var GLOBAL_TRACKING_PARAMS = new Set([
 
 // Query parameters that are only trackers on specific sites (they may be legitimate, functional
 // parameters elsewhere). `domains` matches the url's hostname exactly or any of its subdomains.
-var DOMAIN_TRACKING_PARAMS = [
+const DOMAIN_TRACKING_PARAMS = [
   {domains: ['instagram.com'], params: ['igshid', 'igsh', 'igsi']},
   {domains: ['threads.com'], params: ['xmt', 'slof']},
   {domains: ['youtube.com', 'youtu.be'], params: ['si']},
@@ -49,16 +49,16 @@ var DOMAIN_TRACKING_PARAMS = [
 ];
 
 // The currently parsed query parameters: {key, value, selected}, in the order they appear in the url.
-var params = [];
+let params = [];
 
 // The hostname of the last successfully parsed url, used to apply domain-specific tracking rules.
-var currentHostname = null;
+let currentHostname = null;
 
 function main() {
-  var originalUrlInput = document.querySelector('#originalUrl');
+  const originalUrlInput = document.querySelector('#originalUrl');
   originalUrlInput.addEventListener('input', parseAndRender);
-  document.querySelector('#selectAll').addEventListener('click', function() { setAllSelected(true); });
-  document.querySelector('#selectNone').addEventListener('click', function() { setAllSelected(false); });
+  document.querySelector('#selectAll').addEventListener('click', () => setAllSelected(true));
+  document.querySelector('#selectNone').addEventListener('click', () => setAllSelected(false));
   document.querySelector('#selectNoTracking').addEventListener('click', selectAllButTracking);
   document.querySelector('#copyButton').addEventListener('click', copyEditedUrl);
   // Parse whatever is already in the box on load (e.g. from the `url` query parameter).
@@ -75,23 +75,28 @@ function autoResizeTextarea(textarea) {
 // The parameter table's selection state is intentionally not preserved across this, since a change
 // to the original url is treated as a fresh url to work with.
 function parseAndRender() {
-  var originalUrlInput = document.querySelector('#originalUrl');
+  const originalUrlInput = document.querySelector('#originalUrl');
   autoResizeTextarea(originalUrlInput);
-  var urlStr = originalUrlInput.value.trim();
-  var errorElement = document.querySelector('#urlError');
-  var url = urlStr === '' ? null : parseUrl(urlStr);
+  const urlStr = originalUrlInput.value.trim();
+  const errorElement = document.querySelector('#urlError');
+  let url = null;
+  if (urlStr !== '') {
+    url = parseUrl(urlStr);
+  }
   if (urlStr !== '' && url === null) {
     errorElement.textContent = 'Invalid url.';
   } else {
     errorElement.textContent = '';
   }
-  currentHostname = url === null ? null : url.hostname;
+  if (url === null) {
+    currentHostname = null;
+  } else {
+    currentHostname = url.hostname;
+  }
   params = [];
   if (url !== null) {
-    for (var pair of url.searchParams.entries()) {
-      var key = pair[0];
-      var value = pair[1];
-      params.push({key: key, value: value, selected: !isTrackingParam(key, currentHostname)});
+    for (const [key, value] of url.searchParams.entries()) {
+      params.push({key, value, selected: !isTrackingParam(key, currentHostname)});
     }
   }
   displayParams();
@@ -108,17 +113,16 @@ function parseUrl(urlStr) {
 
 // `hostname` is the hostname of the url the parameter came from (or null, if unknown).
 function isTrackingParam(key, hostname) {
-  var lowerKey = key.toLowerCase();
+  const lowerKey = key.toLowerCase();
   if (GLOBAL_TRACKING_PARAMS.has(lowerKey)) {
     return true;
   }
-  for (var i = 0; i < DOMAIN_TRACKING_PARAMS.length; i++) {
-    var rule = DOMAIN_TRACKING_PARAMS[i];
-    if (rule.params.indexOf(lowerKey) === -1) {
+  for (const rule of DOMAIN_TRACKING_PARAMS) {
+    if (!rule.params.includes(lowerKey)) {
       continue;
     }
-    for (var j = 0; j < rule.domains.length; j++) {
-      if (hostnameMatchesDomain(hostname, rule.domains[j])) {
+    for (const domain of rule.domains) {
+      if (hostnameMatchesDomain(hostname, domain)) {
         return true;
       }
     }
@@ -131,22 +135,22 @@ function hostnameMatchesDomain(hostname, domain) {
   if (!hostname) {
     return false;
   }
-  hostname = hostname.toLowerCase();
-  return hostname === domain || hostname.endsWith('.'+domain);
+  const lowerHostname = hostname.toLowerCase();
+  return lowerHostname === domain || lowerHostname.endsWith('.'+domain);
 }
 
 function displayParams() {
-  var tbody = document.querySelector('#paramsTable tbody');
+  const tbody = document.querySelector('#paramsTable tbody');
   // First, delete all the existing rows.
   while (tbody.children.length > 0) {
     tbody.removeChild(tbody.children[0]);
   }
   // Then, add a row for each parameter.
-  for (var i = 0; i < params.length; i++) {
-    tbody.appendChild(makeParamRow(params[i], i));
+  for (const [index, param] of params.entries()) {
+    tbody.appendChild(makeParamRow(param, index));
   }
-  var table = document.querySelector('#paramsTable');
-  var noParamsMessage = document.querySelector('#noParamsMessage');
+  const table = document.querySelector('#paramsTable');
+  const noParamsMessage = document.querySelector('#noParamsMessage');
   if (params.length === 0) {
     table.style.display = 'none';
     noParamsMessage.style.display = 'block';
@@ -157,30 +161,30 @@ function displayParams() {
 }
 
 function makeParamRow(param, index) {
-  var checkbox = document.createElement('input');
+  const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.checked = param.selected;
-  checkbox.addEventListener('change', function() {
+  checkbox.addEventListener('change', () => {
     params[index].selected = checkbox.checked;
     updateEditedUrl(parseUrl(document.querySelector('#originalUrl').value.trim()));
   });
-  var checkboxCell = document.createElement('td');
+  const checkboxCell = document.createElement('td');
   checkboxCell.appendChild(checkbox);
   // Let clicking anywhere in the cell toggle the checkbox, not just the tiny checkbox itself.
-  checkboxCell.addEventListener('click', function(event) {
+  checkboxCell.addEventListener('click', (event) => {
     if (event.target !== checkbox) {
       checkbox.checked = !checkbox.checked;
       checkbox.dispatchEvent(new Event('change'));
     }
   });
 
-  var keyCell = document.createElement('td');
+  const keyCell = document.createElement('td');
   keyCell.appendChild(document.createTextNode(param.key));
 
-  var valueCell = document.createElement('td');
+  const valueCell = document.createElement('td');
   valueCell.appendChild(document.createTextNode(param.value));
 
-  var row = document.createElement('tr');
+  const row = document.createElement('tr');
   row.appendChild(checkboxCell);
   row.appendChild(keyCell);
   row.appendChild(valueCell);
@@ -188,16 +192,16 @@ function makeParamRow(param, index) {
 }
 
 function setAllSelected(selected) {
-  for (var i = 0; i < params.length; i++) {
-    params[i].selected = selected;
+  for (const param of params) {
+    param.selected = selected;
   }
   displayParams();
   updateEditedUrl(parseUrl(document.querySelector('#originalUrl').value.trim()));
 }
 
 function selectAllButTracking() {
-  for (var i = 0; i < params.length; i++) {
-    params[i].selected = !isTrackingParam(params[i].key, currentHostname);
+  for (const param of params) {
+    param.selected = !isTrackingParam(param.key, currentHostname);
   }
   displayParams();
   updateEditedUrl(parseUrl(document.querySelector('#originalUrl').value.trim()));
@@ -206,26 +210,30 @@ function selectAllButTracking() {
 // Rebuilds the "Edited url" box from the currently selected parameters.
 // `url` is the parsed original url (or null, if the original box is empty/invalid).
 function updateEditedUrl(url) {
-  var editedUrlInput = document.querySelector('#editedUrl');
+  const editedUrlInput = document.querySelector('#editedUrl');
   if (url === null) {
     editedUrlInput.value = '';
   } else {
-    var query = new URLSearchParams();
-    for (var i = 0; i < params.length; i++) {
-      if (params[i].selected) {
-        query.append(params[i].key, params[i].value);
+    const query = new URLSearchParams();
+    for (const param of params) {
+      if (param.selected) {
+        query.append(param.key, param.value);
       }
     }
-    var queryStr = query.toString();
-    editedUrlInput.value = url.origin + url.pathname + (queryStr ? '?'+queryStr : '') + url.hash;
+    const queryStr = query.toString();
+    let queryPart = '';
+    if (queryStr) {
+      queryPart = '?'+queryStr;
+    }
+    editedUrlInput.value = url.origin + url.pathname + queryPart + url.hash;
   }
   autoResizeTextarea(editedUrlInput);
 }
 
 function copyEditedUrl() {
-  var editedUrlInput = document.querySelector('#editedUrl');
+  const editedUrlInput = document.querySelector('#editedUrl');
   editedUrlInput.select();
-  if (navigator.clipboard && navigator.clipboard.writeText) {
+  if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(editedUrlInput.value);
   } else {
     document.execCommand('copy');
