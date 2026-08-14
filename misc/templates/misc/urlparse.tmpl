@@ -29,6 +29,8 @@
           <textarea id="editedUrl" class="form-control" rows="1" readonly></textarea>
           <div class="buttons">
             <input id="copyButton" class="btn btn-default" type="button" value="Copy">
+            <!-- rel="noopener noreferrer" and referrerpolicy keep this page's url from leaking via the Referer header. -->
+            <a id="goButton" class="btn btn-default disabled" role="button" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Go</a>
           </div>
         </div>
       </div>

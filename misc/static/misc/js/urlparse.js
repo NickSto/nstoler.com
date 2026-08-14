@@ -61,6 +61,12 @@ function main() {
   document.querySelector('#selectNone').addEventListener('click', () => setAllSelected(false));
   document.querySelector('#selectNoTracking').addEventListener('click', selectAllButTracking);
   document.querySelector('#copyButton').addEventListener('click', copyEditedUrl);
+  document.querySelector('#goButton').addEventListener('click', (event) => {
+    // The button is only a real link (with an href) once there's a valid edited url to go to.
+    if (!event.currentTarget.hasAttribute('href')) {
+      event.preventDefault();
+    }
+  });
   // Parse whatever is already in the box on load (e.g. from the `url` query parameter).
   parseAndRender();
 }
@@ -213,6 +219,7 @@ function updateEditedUrl(url) {
   const editedUrlInput = document.querySelector('#editedUrl');
   if (url === null) {
     editedUrlInput.value = '';
+    updateGoButton(null);
   } else {
     const query = new URLSearchParams();
     for (const param of params) {
@@ -225,9 +232,23 @@ function updateEditedUrl(url) {
     if (queryStr) {
       queryPart = '?'+queryStr;
     }
-    editedUrlInput.value = url.origin + url.pathname + queryPart + url.hash;
+    const editedUrlStr = url.origin + url.pathname + queryPart + url.hash;
+    editedUrlInput.value = editedUrlStr;
+    updateGoButton(editedUrlStr);
   }
   autoResizeTextarea(editedUrlInput);
+}
+
+// Keeps the "Go" button's target in sync with the edited url, disabling it when there isn't one.
+function updateGoButton(editedUrlStr) {
+  const goButton = document.querySelector('#goButton');
+  if (editedUrlStr === null) {
+    goButton.removeAttribute('href');
+    goButton.classList.add('disabled');
+  } else {
+    goButton.href = editedUrlStr;
+    goButton.classList.remove('disabled');
+  }
 }
 
 function copyEditedUrl() {
