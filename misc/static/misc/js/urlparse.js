@@ -1,12 +1,10 @@
 'use strict';
 
-// Tracking/analytics query parameters that are always trackers, regardless of which site the url
-// points to (matched case-insensitively). These are deselected by default, and are what the
-// "all but tracking" preset removes.
+// Confirmed or likely tracking/analytics query parameters that aren't specific to a single site.
 const GLOBAL_TRACKING_PARAMS = new Set([
   // Google Analytics / Google Ads.
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'utm_name',
-  'utm_source_platform', 'utm_creative_format', 'utm_marketing_tactic',
+  'utm_source_platform', 'utm_creative_format', 'utm_marketing_tactic', 'utm_kxconfid',
   'gclid', 'gclsrc', 'dclid', 'gbraid', 'wbraid', '_ga', '_gl',
   // Other ad networks.
   'fbclid', 'msclkid', 'twclid', 'ttclid', 'yclid', 'srsltid',
@@ -17,7 +15,8 @@ const GLOBAL_TRACKING_PARAMS = new Set([
   'oly_anon_id', 'oly_enc_id', 'epik', 'guccounter', 'guce_referrer', 'guce_referrer_sig',
   'pk_campaign', 'pk_kwd', 'pk_source', 'pk_medium', 'pk_content', 's_cid', 'scid',
   // Unknown
-  'gad_campaignid', 'gad_source', 'tw_source', 'tw_adid', 'tw_campaign', 'tw_kwdid'
+  'link_id', 'can_id', 'email_referrer', 'email_subject', 'referrer', 'ref',
+  'gad_campaignid', 'gad_source', 'tw_source', 'tw_adid', 'tw_campaign', 'tw_kwdid',
 ]);
 
 // Query parameters that are only trackers on specific sites (they may be legitimate, functional
@@ -25,11 +24,12 @@ const GLOBAL_TRACKING_PARAMS = new Set([
 const DOMAIN_TRACKING_PARAMS = [
   {domains: ['instagram.com'], params: ['igshid', 'igsh', 'igsi']},
   {domains: ['threads.com'], params: ['xmt', 'slof']},
-  {domains: ['youtube.com', 'youtu.be'], params: ['si']},
-  {domains: ['spotify.com'], params: ['si']},
+  {domains: ['youtube.com', 'youtu.be'], params: ['si', 'si', 'pp']},
   {domains: ['twitter.com', 'x.com'], params: ['ref_src', 'ref_url', 's', 't']},
+  {domains: ['facebook.com'], params: ['mibextid']},
   {domains: ['reddit.com'], params: ['share_id']},
-  {domains: ['linkedin.com'], params: ['trk', 'trkemail', 'trackingid', 'refid']},
+  {domains: ['spotify.com'], params: ['si']},
+  {domains: ['linkedin.com'], params: ['trk', 'trkemail', 'trackingid', 'refid', 'rcm']},
   {
     domains: ['amazon.com', 'amazon.co.uk', 'amazon.ca', 'amazon.de'],
     params: [
@@ -37,14 +37,28 @@ const DOMAIN_TRACKING_PARAMS = [
       'pd_rd_r', 'pd_rd_w', 'pd_rd_wg', 'pf_rd_p', 'pf_rd_r', 'pf_rd_s', 'pf_rd_t', 'pf_rd_i',
     ]
   },
+  {domains: ['patreon.com'], params: ['post_id', 'token']},
+  {domains: ['yelp.com'], params: ['src_bizid', 's']},
   {domains: ['taobao.com', 'tmall.com', 'alibaba.com'], params: ['spm']},
   {domains: ['yahoo.com', 'aol.com'], params: ['ncid']},
+  {domains: ['partiful.com'], params: ['c']},
+  {domains: ['washingtonpost.com'], params: ['carta-url']},
+  {domains: ['nytimes.com'], params: ['smid', 'referringSource', 'sgrp']},
+  {domains: ['fandango.com'], params: ['ssid', 'rtm', 'lat', 'lon', 'rad', 'cmp']},
+  {domains: ['wsj.com'], params: ['gaa_at', 'gaa_n', 'gaa_ts', 'gaa_sig']},
   {
     domains: [
       'condenast.com', 'wired.com', 'vogue.com', 'vanityfair.com', 'gq.com', 'newyorker.com',
       'architecturaldigest.com'
     ],
     params: ['cndid']
+  },
+  {
+    domains: ['etsy.com'],
+    params: [
+      'ga_order', 'ga_search_type', 'ga_view_type', 'ga_search_query', 'ref', 'content_source',
+      'organic_search_click', 'logging_key', 'click_key', 'click_sum'
+    ]
   }
 ];
 
