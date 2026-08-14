@@ -32,3 +32,9 @@
 #the-net .haxxorz {
   color: #ddd;
 }
+
+@media (prefers-color-scheme: dark) {
+  #the-net .haxxorz {
+    color: #222;
+  }
+}
