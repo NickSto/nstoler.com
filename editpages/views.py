@@ -18,6 +18,14 @@ EDITPAGES_NAMESPACE = '__editpages__'
 ITEM_TYPES = {'item':Item, 'listitem':ListItem}
 
 
+#TODO: After each edit, save a static HTML version of each page to disk.
+#      And set up nginx to serve those HTML files directly.
+#      There could be changes outside of editpages edits which invalidate the cached HTML files,
+#      like changes to {% static %} links elsewhere in the site.
+#      To handle that, could just add a manual button to the edit page for "re-render".
+#      This could really speed up serving important pages (like the home page!).
+#      - The median time to serve the homepage right now is 831ms. For robots.txt it's 390ms.
+
 ##### Views #####
 
 def view(request, page):
@@ -329,3 +337,8 @@ def create_item(item_type, page_name, content, attributes, visit, key=None, pare
   if item_type is ListItem:
     item.display_order = item.id * lib.DISPLAY_ORDER_MARGIN
     item.save()
+
+
+def save_render():
+  context = {'editing':False, 'editing_text':False, 'admin':False}
+  return show_page(request, page, context)
