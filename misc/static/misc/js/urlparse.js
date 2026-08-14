@@ -1,10 +1,11 @@
 'use strict';
 
-// Common tracking/analytics query parameters (matched case-insensitively).
-// These are deselected by default, and are what the "all but tracking" preset removes.
-var TRACKING_PARAMS = new Set([
+// Tracking/analytics query parameters that are always trackers, regardless of which site the url
+// points to (matched case-insensitively). These are deselected by default, and are what the
+// "all but tracking" preset removes.
+var GLOBAL_TRACKING_PARAMS = new Set([
   // Google Analytics / Google Ads.
-  'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+  'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'utm_name',
   'utm_source_platform', 'utm_creative_format', 'utm_marketing_tactic',
   'gclid', 'gclsrc', 'dclid', 'gbraid', 'wbraid', '_ga', '_gl',
   // Other ad networks.
@@ -12,15 +13,46 @@ var TRACKING_PARAMS = new Set([
   // Email marketing platforms.
   'mc_cid', 'mc_eid', 'mkt_tok', 'vero_id', 'vero_conv',
   '_hsenc', '_hsmi', '__hssc', '__hstc', '__hsfp',
-  // Social/referral sharing.
-  'igshid', 'igsh', 'igsi', 'ref', 'ref_src', 'ref_url', 'si', 'spm', 'scid', 'ncid', 'cndid',
-  // Misc analytics.
+  // Misc analytics, added to the destination url regardless of what site it points to.
   'oly_anon_id', 'oly_enc_id', 'epik', 'guccounter', 'guce_referrer', 'guce_referrer_sig',
-  'pk_campaign', 'pk_kwd', 'pk_source', 'pk_medium', 'pk_content', 'trk', 'trkcampaign', 's_cid',
+  'pk_campaign', 'pk_kwd', 'pk_source', 'pk_medium', 'pk_content', 's_cid', 'scid',
+  // Unknown
+  'gad_campaignid', 'gad_source', 'tw_source', 'tw_adid', 'tw_campaign', 'tw_kwdid'
 ]);
+
+// Query parameters that are only trackers on specific sites (they may be legitimate, functional
+// parameters elsewhere). `domains` matches the url's hostname exactly or any of its subdomains.
+var DOMAIN_TRACKING_PARAMS = [
+  {domains: ['instagram.com'], params: ['igshid', 'igsh', 'igsi']},
+  {domains: ['threads.com'], params: ['xmt', 'slof']},
+  {domains: ['youtube.com', 'youtu.be'], params: ['si']},
+  {domains: ['spotify.com'], params: ['si']},
+  {domains: ['twitter.com', 'x.com'], params: ['ref_src', 'ref_url', 's', 't']},
+  {domains: ['reddit.com'], params: ['share_id']},
+  {domains: ['linkedin.com'], params: ['trk', 'trkemail', 'trackingid', 'refid']},
+  {
+    domains: ['amazon.com', 'amazon.co.uk', 'amazon.ca', 'amazon.de'],
+    params: [
+      'ref', 'ref_', 'tag', 'linkcode', 'creativeasin', 'psc',
+      'pd_rd_r', 'pd_rd_w', 'pd_rd_wg', 'pf_rd_p', 'pf_rd_r', 'pf_rd_s', 'pf_rd_t', 'pf_rd_i',
+    ]
+  },
+  {domains: ['taobao.com', 'tmall.com', 'alibaba.com'], params: ['spm']},
+  {domains: ['yahoo.com', 'aol.com'], params: ['ncid']},
+  {
+    domains: [
+      'condenast.com', 'wired.com', 'vogue.com', 'vanityfair.com', 'gq.com', 'newyorker.com',
+      'architecturaldigest.com'
+    ],
+    params: ['cndid']
+  }
+];
 
 // The currently parsed query parameters: {key, value, selected}, in the order they appear in the url.
 var params = [];
+
+// The hostname of the last successfully parsed url, used to apply domain-specific tracking rules.
+var currentHostname = null;
 
 function main() {
   var originalUrlInput = document.querySelector('#originalUrl');
@@ -53,12 +85,13 @@ function parseAndRender() {
   } else {
     errorElement.textContent = '';
   }
+  currentHostname = url === null ? null : url.hostname;
   params = [];
   if (url !== null) {
     for (var pair of url.searchParams.entries()) {
       var key = pair[0];
       var value = pair[1];
-      params.push({key: key, value: value, selected: !isTrackingParam(key)});
+      params.push({key: key, value: value, selected: !isTrackingParam(key, currentHostname)});
     }
   }
   displayParams();
@@ -73,8 +106,33 @@ function parseUrl(urlStr) {
   }
 }
 
-function isTrackingParam(key) {
-  return TRACKING_PARAMS.has(key.toLowerCase());
+// `hostname` is the hostname of the url the parameter came from (or null, if unknown).
+function isTrackingParam(key, hostname) {
+  var lowerKey = key.toLowerCase();
+  if (GLOBAL_TRACKING_PARAMS.has(lowerKey)) {
+    return true;
+  }
+  for (var i = 0; i < DOMAIN_TRACKING_PARAMS.length; i++) {
+    var rule = DOMAIN_TRACKING_PARAMS[i];
+    if (rule.params.indexOf(lowerKey) === -1) {
+      continue;
+    }
+    for (var j = 0; j < rule.domains.length; j++) {
+      if (hostnameMatchesDomain(hostname, rule.domains[j])) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// True if `hostname` is exactly `domain`, or a subdomain of it.
+function hostnameMatchesDomain(hostname, domain) {
+  if (!hostname) {
+    return false;
+  }
+  hostname = hostname.toLowerCase();
+  return hostname === domain || hostname.endsWith('.'+domain);
 }
 
 function displayParams() {
@@ -139,7 +197,7 @@ function setAllSelected(selected) {
 
 function selectAllButTracking() {
   for (var i = 0; i < params.length; i++) {
-    params[i].selected = !isTrackingParam(params[i].key);
+    params[i].selected = !isTrackingParam(params[i].key, currentHostname);
   }
   displayParams();
   updateEditedUrl(parseUrl(document.querySelector('#originalUrl').value.trim()));
