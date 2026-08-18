@@ -7,7 +7,7 @@ import requests
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound, JsonResponse
 from django.conf import settings
-from myadmin.lib import require_admin_and_privacy
+from myadmin.lib import require_admin_and_privacy, is_admin_and_secure
 from utils import recaptcha_verify
 from longurl import longurl
 log = logging.getLogger(__name__)
@@ -70,7 +70,8 @@ def setcookie(request):
 
 def urlparse(request):
   # Prefill the original url box from the `url` query parameter, if given.
-  context = {'url': request.GET.get('url', '')}
+  # The redirect-following buttons are admin-only, so only show them to the admin.
+  context = {'url': request.GET.get('url', ''), 'is_admin': is_admin_and_secure(request)}
   return render(request, 'misc/urlparse.tmpl', context)
 
 
@@ -98,6 +99,29 @@ def resolve_redirects(request):
   else:
     final_url = url
   return JsonResponse({'final_url': final_url, 'hops': hops})
+
+
+@require_admin_and_privacy
+def resolve_next_redirect(request):
+  """Take a single step in a url's redirect chain and report where (if anywhere) it points next.
+  Unlike `resolve_redirects()`, this doesn't continue on its own, so the caller can inspect (and
+  potentially edit) the url in between steps.
+  Restricted to the admin, since this makes the server fetch an arbitrary, user-supplied url
+  (a server-side request forgery risk)."""
+  url = request.GET.get('url', '').strip()
+  if not url:
+    return JsonResponse({'error': 'No url given.'}, status=400)
+  if urllib.parse.urlsplit(url).scheme not in ('http', 'https'):
+    return JsonResponse({'error': 'Only http and https urls are supported.'}, status=400)
+  try:
+    reply = longurl.get_next_redirect(
+      url, max_response=RESOLVE_MAX_RESPONSE_KB, timeout=RESOLVE_TIMEOUT,
+    )
+  except (requests.exceptions.RequestException, longurl.URLError) as error:
+    return JsonResponse({'error': f'Error requesting url: {error}'}, status=502)
+  return JsonResponse(
+    {'url':reply.url, 'type':reply.type, 'code':reply.code, 'location':reply.location}
+  )
 
 
 def captcha(request, name):

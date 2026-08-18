@@ -9,6 +9,7 @@ urlpatterns = [
   re_path(r'^setcookie$', views.setcookie, name='setcookie'),
   re_path(r'^urlparse$', views.urlparse, name='urlparse'),
   re_path(r'^urlparse/resolve$', views.resolve_redirects, name='resolve_redirects'),
+  re_path(r'^urlparse/resolve-step$', views.resolve_next_redirect, name='resolve_next_redirect'),
   re_path(r'^export$', views.export, name='export'),
   re_path(r'^captcha/(?P<name>.+)$', views.captcha, name='captcha'),
   re_path(r'^captchasubmit/(?P<name>.+)$', views.captchasubmit, name='captchasubmit'),

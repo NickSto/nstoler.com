@@ -24,7 +24,7 @@ const GLOBAL_TRACKING_PARAMS = new Set([
 const DOMAIN_TRACKING_PARAMS = [
   {domains: ['instagram.com'], params: ['igshid', 'igsh', 'igsi']},
   {domains: ['threads.com'], params: ['xmt', 'slof']},
-  {domains: ['youtube.com', 'youtu.be'], params: ['si', 'si', 'pp']},
+  {domains: ['youtube.com', 'youtu.be'], params: ['si', 'si', 'pp', 'forigin']},
   {domains: ['twitter.com', 'x.com'], params: ['ref_src', 'ref_url', 's', 't']},
   {domains: ['facebook.com'], params: ['mibextid']},
   {domains: ['reddit.com'], params: ['share_id']},
@@ -81,6 +81,11 @@ function main() {
       event.preventDefault();
     }
   });
+  // The step button is only rendered in the template for the admin.
+  const stepButton = document.querySelector('#stepButton');
+  if (stepButton) {
+    stepButton.addEventListener('click', stepForward);
+  }
   // Parse whatever is already in the box on load (e.g. from the `url` query parameter).
   parseAndRender();
 }
@@ -89,6 +94,43 @@ function main() {
 function autoResizeTextarea(textarea) {
   textarea.style.height = 'auto';
   textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+// Asks the server to take one step in the original url's redirect chain (admin-only), and if it
+// finds one, replaces the original url with it (so the user can inspect or edit it before the
+// next step). Leaves the url alone if it's already the final destination, or on error.
+async function stepForward() {
+  const originalUrlInput = document.querySelector('#originalUrl');
+  const stepButton = document.querySelector('#stepButton');
+  const stepStatus = document.querySelector('#stepStatus');
+  const urlStr = originalUrlInput.value.trim();
+  if (!urlStr) {
+    stepStatus.textContent = 'Enter a url first.';
+    return;
+  }
+  stepButton.disabled = true;
+  stepStatus.textContent = 'Checking\u2026';
+  try {
+    const response = await fetch(`/misc/urlparse/resolve-step?url=${encodeURIComponent(urlStr)}`);
+    const data = await response.json();
+    if (!response.ok) {
+      stepStatus.textContent = `Error: ${data.error || response.statusText}`;
+    } else if (data.location) {
+      originalUrlInput.value = data.location;
+      parseAndRender();
+      if (data.type === 'refresh') {
+        stepStatus.textContent = `Redirected via a <meta refresh> (status ${data.code}).`;
+      } else {
+        stepStatus.textContent = `Redirected via a ${data.code} (${data.type}).`;
+      }
+    } else {
+      stepStatus.textContent = `No further redirect (status ${data.code}). This is the final destination.`;
+    }
+  } catch (error) {
+    stepStatus.textContent = `Error: ${error.message}`;
+  } finally {
+    stepButton.disabled = false;
+  }
 }
 
 // Re-reads the original url box, rebuilds the parameter list from scratch, and redraws everything.

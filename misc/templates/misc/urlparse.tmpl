@@ -23,6 +23,13 @@
           <label for="originalUrl">Original:</label>
           <textarea id="originalUrl" class="form-control" rows="1" placeholder="Paste a url here&hellip;">{{ url }}</textarea>
           <p id="urlError" class="text-danger"></p>
+          {% if is_admin %}
+            <!-- Only the admin can use this, since it makes the server fetch a user-supplied url. -->
+            <div class="buttons">
+              <input id="stepButton" class="btn btn-default" type="button" value="Follow next redirect">
+            </div>
+            <p id="stepStatus"></p>
+          {% endif %}
         </div>
         <div class="input">
           <label for="editedUrl">Edited:</label>
