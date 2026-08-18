@@ -25,3 +25,6 @@
 [submodule "wordle"]
 	path = wordle
 	url = https://github.com/NickSto/wordle.git
+[submodule "longurl"]
+	path = longurl
+	url = git@github.com:NickSto/longurl.git
