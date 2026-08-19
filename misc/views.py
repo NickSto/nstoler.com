@@ -1,15 +1,20 @@
+# Standard library
 import collections
 import logging
 import os
 import subprocess
 import urllib.parse
+# Third party
 import requests
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound, JsonResponse
 from django.conf import settings
-from myadmin.lib import require_admin_and_privacy, is_admin_and_secure
-from utils import recaptcha_verify
+# Submodules
 from longurl import longurl
+# Local
+from myadmin.lib import require_admin_and_privacy, is_admin_and_secure
+from misc import lib
+from utils import recaptcha_verify
 log = logging.getLogger(__name__)
 
 # Restrictions on the redirect-resolving feature, since it makes the server fetch a
@@ -85,6 +90,9 @@ def resolve_redirects(request):
     return JsonResponse({'error': 'No url given.'}, status=400)
   if urllib.parse.urlsplit(url).scheme not in ('http', 'https'):
     return JsonResponse({'error': 'Only http and https urls are supported.'}, status=400)
+  public_error = lib.check_url_is_public(url)
+  if public_error:
+    return JsonResponse({'error': public_error}, status=400)
   hops = []
   try:
     for reply in longurl.follow_redirects(
@@ -113,6 +121,13 @@ def resolve_next_redirect(request):
     return JsonResponse({'error': 'No url given.'}, status=400)
   if urllib.parse.urlsplit(url).scheme not in ('http', 'https'):
     return JsonResponse({'error': 'Only http and https urls are supported.'}, status=400)
+  # Make sure this isn't a local IP, to protect against attacks gaining LAN access.
+  # Note: This doesn't defend against DNS rebinding attacks! Also, it's only effective here because
+  # we're using `get_next_redirect()` instead of `follow_redirects()`, where `requests` follows
+  # redirects on its own without a chance for us to intervene.
+  public_error = lib.check_url_is_public(url)
+  if public_error:
+    return JsonResponse({'error': public_error}, status=400)
   try:
     reply = longurl.get_next_redirect(
       url, max_response=RESOLVE_MAX_RESPONSE_KB, timeout=RESOLVE_TIMEOUT,
