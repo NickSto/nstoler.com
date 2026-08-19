@@ -73,40 +73,11 @@ def setcookie(request):
   return render(request, 'misc/setcookie.tmpl', context)
 
 
-def urlparse(request):
+def urltools(request):
   # Prefill the original url box from the `url` query parameter, if given.
   # The redirect-following buttons are admin-only, so only show them to the admin.
   context = {'url': request.GET.get('url', ''), 'is_admin': is_admin_and_secure(request)}
-  return render(request, 'misc/urlparse.tmpl', context)
-
-
-@require_admin_and_privacy
-def resolve_redirects(request):
-  """Follow a url's chain of redirects (HTTP-level and <meta> refreshes) and return the final url.
-  Restricted to the admin, since this makes the server fetch an arbitrary, user-supplied url
-  (a server-side request forgery risk)."""
-  url = request.GET.get('url', '').strip()
-  if not url:
-    return JsonResponse({'error': 'No url given.'}, status=400)
-  if urllib.parse.urlsplit(url).scheme not in ('http', 'https'):
-    return JsonResponse({'error': 'Only http and https urls are supported.'}, status=400)
-  public_error = lib.check_url_is_public(url)
-  if public_error:
-    return JsonResponse({'error': public_error}, status=400)
-  hops = []
-  try:
-    for reply in longurl.follow_redirects(
-        url,max_redirects=RESOLVE_MAX_REDIRECTS, max_response=RESOLVE_MAX_RESPONSE_KB,
-        timeout=RESOLVE_TIMEOUT,
-      ):
-      hops.append({'url':reply.url, 'type':reply.type, 'code':reply.code, 'location':reply.location})
-  except (requests.exceptions.RequestException, longurl.URLError) as error:
-    return JsonResponse({'error': f'Error following redirects: {error}'}, status=502)
-  if hops:
-    final_url = hops[-1]['location']
-  else:
-    final_url = url
-  return JsonResponse({'final_url': final_url, 'hops': hops})
+  return render(request, 'misc/urltools.tmpl', context)
 
 
 @require_admin_and_privacy

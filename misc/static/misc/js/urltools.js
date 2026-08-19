@@ -111,7 +111,7 @@ async function stepForward() {
   stepButton.disabled = true;
   stepStatus.textContent = 'Checking\u2026';
   try {
-    const response = await fetch(`/misc/urlparse/resolve-step?url=${encodeURIComponent(urlStr)}`);
+    const response = await fetch(`/misc/urltools/resolve?url=${encodeURIComponent(urlStr)}&via=js`);
     const data = await response.json();
     if (!response.ok) {
       stepStatus.textContent = `Error: ${data.error || response.statusText}`;
