@@ -12,8 +12,13 @@
   word-break: break-all;
 }
 
+#query-parameters h5 {
+  margin-bottom: 20px;
+}
+
 table#paramsTable {
   width: auto;
+  display: none;
 }
 
 table#paramsTable td:first-child {
@@ -26,7 +31,6 @@ table#paramsTable td:first-child {
 }
 
 #noParamsMessage {
-  display: none;
   font-style: italic;
 }
 

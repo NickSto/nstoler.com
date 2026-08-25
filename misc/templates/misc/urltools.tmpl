@@ -1,7 +1,7 @@
 {% extends 'bootstrap.tmpl' %}
 {% load static %}
 
-{% block title %}Parse a URL's query parameters{% endblock %}
+{% block title %}Tools to work with URLs{% endblock %}
 
 {% block stylesheet %}
   <link rel="stylesheet" href="{% static 'misc/css/urltools.css' %}?via=html">
@@ -16,18 +16,21 @@
     </section>
     <section class="panel">
       <div class="panel-heading">
-        <h4>URLs:</h4>
+        <h4>URLs</h4>
       </div>
       <div class="panel-body">
         <div class="input">
           <label for="originalUrl">Original:</label>
           <textarea id="originalUrl" class="form-control" rows="1" placeholder="Paste a url here&hellip;">{{ url }}</textarea>
           <p id="urlError" class="text-danger"></p>
-          {% if is_admin %}
-            <!-- Only the admin can use this, since it makes the server fetch a user-supplied url. -->
-            <div class="buttons">
+          <div class="buttons">
+            <input id="pasteButton" class="btn btn-default" type="button" value="Paste">
+            {% if is_admin %}
+              <!-- Only the admin can use this, since it makes the server fetch a user-supplied url. -->
               <input id="stepButton" class="btn btn-default" type="button" value="Follow next redirect">
-            </div>
+            {% endif %}
+          </div>
+          {% if is_admin %}
             <p id="stepStatus"></p>
           {% endif %}
         </div>
@@ -45,22 +48,25 @@
     <div class="clearfix-ish"></div>
     <section class="panel panel-shrink">
       <div class="panel-heading">
-        <h4>Query parameters:</h4>
+        <h4>Parsed URL</h4>
       </div>
       <div class="panel-body">
-        <div class="buttons">
-          <input id="selectAll" class="btn btn-default" type="button" value="Select all">
-          <input id="selectNone" class="btn btn-default" type="button" value="Select none">
-          <input id="selectNoTracking" class="btn btn-default" type="button" value="Select all but tracking">
+        <div id="query-parameters">
+          <h5>Query parameters</h5>
+          <div class="buttons">
+            <input id="selectAll" class="btn btn-default" type="button" value="Select all">
+            <input id="selectNone" class="btn btn-default" type="button" value="Select none">
+            <input id="selectNoTracking" class="btn btn-default" type="button" value="Select all but tracking">
+          </div>
+          <table id="paramsTable" class="table table-bordered table-condensed table-hover">
+            <thead>
+              <tr><th></th><th>Parameter</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+          <p id="noParamsMessage">No query parameters found.</p>
         </div>
-        <table id="paramsTable" class="table table-bordered table-condensed table-hover">
-          <thead>
-            <tr><th></th><th>Parameter</th><th>Value</th></tr>
-          </thead>
-          <tbody>
-          </tbody>
-        </table>
-        <p id="noParamsMessage">No query parameters found.</p>
       </div>
     </section>
     </div>

@@ -24,7 +24,7 @@ const GLOBAL_TRACKING_PARAMS = new Set([
 const DOMAIN_TRACKING_PARAMS = [
   {domains: ['instagram.com'], params: ['igshid', 'igsh', 'igsi']},
   {domains: ['threads.com'], params: ['xmt', 'slof']},
-  {domains: ['youtube.com', 'youtu.be'], params: ['si', 'si', 'pp', 'forigin']},
+  {domains: ['youtube.com', 'youtu.be'], params: ['si', 'is', 'pp', 'forigin']},
   {domains: ['twitter.com', 'x.com'], params: ['ref_src', 'ref_url', 's', 't']},
   {domains: ['facebook.com'], params: ['mibextid']},
   {domains: ['reddit.com'], params: ['share_id']},
@@ -70,19 +70,29 @@ let currentHostname = null;
 
 function main() {
   const originalUrlInput = document.querySelector('#originalUrl');
+  const errorElement = document.getElementById('urlError');
   originalUrlInput.addEventListener('input', parseAndRender);
-  document.querySelector('#selectAll').addEventListener('click', () => setAllSelected(true));
-  document.querySelector('#selectNone').addEventListener('click', () => setAllSelected(false));
-  document.querySelector('#selectNoTracking').addEventListener('click', selectAllButTracking);
-  document.querySelector('#copyButton').addEventListener('click', copyEditedUrl);
-  document.querySelector('#goButton').addEventListener('click', (event) => {
+  document.getElementById('selectAll').addEventListener('click', () => setAllSelected(true));
+  document.getElementById('selectNone').addEventListener('click', () => setAllSelected(false));
+  document.getElementById('selectNoTracking').addEventListener('click', selectAllButTracking);
+  document.getElementById('goButton').addEventListener('click', (event) => {
     // The button is only a real link (with an href) once there's a valid edited url to go to.
     if (!event.currentTarget.hasAttribute('href')) {
       event.preventDefault();
     }
   });
+  document.getElementById('copyButton').addEventListener('click', copyEditedUrl);
+  document.getElementById('pasteButton').addEventListener('click', async () => {
+    try {
+      const url = await navigator.clipboard.readText();
+      originalUrlInput.value = url;
+      parseAndRender();
+    } catch (error) {
+      errorElement.textContent = 'Failed to read from clipboard: ' + error.message;
+    }
+  });
   // The step button is only rendered in the template for the admin.
-  const stepButton = document.querySelector('#stepButton');
+  const stepButton = document.getElementById('stepButton');
   if (stepButton) {
     stepButton.addEventListener('click', stepForward);
   }
@@ -100,9 +110,9 @@ function autoResizeTextarea(textarea) {
 // finds one, replaces the original url with it (so the user can inspect or edit it before the
 // next step). Leaves the url alone if it's already the final destination, or on error.
 async function stepForward() {
-  const originalUrlInput = document.querySelector('#originalUrl');
-  const stepButton = document.querySelector('#stepButton');
-  const stepStatus = document.querySelector('#stepStatus');
+  const originalUrlInput = document.getElementById('originalUrl');
+  const stepButton = document.getElementById('stepButton');
+  const stepStatus = document.getElementById('stepStatus');
   const urlStr = originalUrlInput.value.trim();
   if (!urlStr) {
     stepStatus.textContent = 'Enter a url first.';
@@ -137,10 +147,10 @@ async function stepForward() {
 // The parameter table's selection state is intentionally not preserved across this, since a change
 // to the original url is treated as a fresh url to work with.
 function parseAndRender() {
-  const originalUrlInput = document.querySelector('#originalUrl');
+  const originalUrlInput = document.getElementById('originalUrl');
   autoResizeTextarea(originalUrlInput);
   const urlStr = originalUrlInput.value.trim();
-  const errorElement = document.querySelector('#urlError');
+  const errorElement = document.getElementById('urlError');
   let url = null;
   if (urlStr !== '') {
     url = parseUrl(urlStr);
@@ -211,13 +221,13 @@ function displayParams() {
   for (const [index, param] of params.entries()) {
     tbody.appendChild(makeParamRow(param, index));
   }
-  const table = document.querySelector('#paramsTable');
-  const noParamsMessage = document.querySelector('#noParamsMessage');
+  const table = document.getElementById('paramsTable');
+  const noParamsMessage = document.getElementById('noParamsMessage');
   if (params.length === 0) {
     table.style.display = 'none';
     noParamsMessage.style.display = 'block';
   } else {
-    table.style.display = '';
+    table.style.display = 'table';
     noParamsMessage.style.display = 'none';
   }
 }
@@ -228,7 +238,7 @@ function makeParamRow(param, index) {
   checkbox.checked = param.selected;
   checkbox.addEventListener('change', () => {
     params[index].selected = checkbox.checked;
-    updateEditedUrl(parseUrl(document.querySelector('#originalUrl').value.trim()));
+    updateEditedUrl(parseUrl(document.getElementById('originalUrl').value.trim()));
   });
   const checkboxCell = document.createElement('td');
   checkboxCell.appendChild(checkbox);
@@ -258,7 +268,7 @@ function setAllSelected(selected) {
     param.selected = selected;
   }
   displayParams();
-  updateEditedUrl(parseUrl(document.querySelector('#originalUrl').value.trim()));
+  updateEditedUrl(parseUrl(document.getElementById('originalUrl').value.trim()));
 }
 
 function selectAllButTracking() {
@@ -266,13 +276,13 @@ function selectAllButTracking() {
     param.selected = !isTrackingParam(param.key, currentHostname);
   }
   displayParams();
-  updateEditedUrl(parseUrl(document.querySelector('#originalUrl').value.trim()));
+  updateEditedUrl(parseUrl(document.getElementById('originalUrl').value.trim()));
 }
 
 // Rebuilds the "Edited url" box from the currently selected parameters.
 // `url` is the parsed original url (or null, if the original box is empty/invalid).
 function updateEditedUrl(url) {
-  const editedUrlInput = document.querySelector('#editedUrl');
+  const editedUrlInput = document.getElementById('editedUrl');
   if (url === null) {
     editedUrlInput.value = '';
     updateGoButton(null);
@@ -297,7 +307,7 @@ function updateEditedUrl(url) {
 
 // Keeps the "Go" button's target in sync with the edited url, disabling it when there isn't one.
 function updateGoButton(editedUrlStr) {
-  const goButton = document.querySelector('#goButton');
+  const goButton = document.getElementById('goButton');
   if (editedUrlStr === null) {
     goButton.removeAttribute('href');
     goButton.classList.add('disabled');
@@ -308,7 +318,7 @@ function updateGoButton(editedUrlStr) {
 }
 
 function copyEditedUrl() {
-  const editedUrlInput = document.querySelector('#editedUrl');
+  const editedUrlInput = document.getElementById('editedUrl');
   editedUrlInput.select();
   if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(editedUrlInput.value);
