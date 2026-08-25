@@ -65,7 +65,7 @@ const DOMAIN_TRACKING_PARAMS = [
 // The currently parsed query parameters: {key, value, selected}, in the order they appear in the url.
 let params = [];
 
-// The hostname of the last successfully parsed url, used to apply domain-specific tracking rules.
+// The hostname of the last successfully parsed url.
 let currentHostname = null;
 
 function main() {
@@ -90,6 +90,19 @@ function main() {
     } catch (error) {
       errorElement.textContent = 'Failed to read from clipboard: ' + error.message;
     }
+  });
+  document.getElementById('domainBox').addEventListener('input', (event) => {
+    const newDomain = event.currentTarget.value.trim() || null;
+    //TODO: Validate that it's a valid domain.
+    if (newDomain === '') {
+      return;
+    }
+    let url = parseUrl(originalUrlInput.value.trim());
+    if (url === null) {
+      return;
+    }
+    url.hostname = newDomain;
+    updateEditedUrl(url);
   });
   // The step button is only rendered in the template for the admin.
   const stepButton = document.getElementById('stepButton');
@@ -149,6 +162,7 @@ async function stepForward() {
 function parseAndRender() {
   const originalUrlInput = document.getElementById('originalUrl');
   autoResizeTextarea(originalUrlInput);
+  const domainBox = document.getElementById('domainBox');
   const urlStr = originalUrlInput.value.trim();
   const errorElement = document.getElementById('urlError');
   let url = null;
@@ -164,6 +178,7 @@ function parseAndRender() {
     currentHostname = null;
   } else {
     currentHostname = url.hostname;
+    domainBox.value = currentHostname;
   }
   params = [];
   if (url !== null) {

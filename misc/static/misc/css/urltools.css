@@ -12,6 +12,10 @@
   word-break: break-all;
 }
 
+.subpanel {
+  margin-bottom: 30px;
+}
+
 #query-parameters h5 {
   margin-bottom: 20px;
 }
