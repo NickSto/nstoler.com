@@ -15,8 +15,9 @@ const GLOBAL_TRACKING_PARAMS = new Set([
   'oly_anon_id', 'oly_enc_id', 'epik', 'guccounter', 'guce_referrer', 'guce_referrer_sig',
   'pk_campaign', 'pk_kwd', 'pk_source', 'pk_medium', 'pk_content', 's_cid', 'scid',
   // Unknown
-  'link_id', 'can_id', 'email_referrer', 'email_subject', 'referrer', 'ref',
-  'gad_campaignid', 'gad_source', 'tw_source', 'tw_adid', 'tw_campaign', 'tw_kwdid',
+  'link_id', 'can_id', 'email_referrer', 'email_subject', 'user_email', 'user_email_md5',
+  'referrer', 'ref', 'gad_campaignid', 'gad_source', 'source',
+  'tw_source', 'tw_adid', 'tw_campaign', 'tw_kwdid',
 ]);
 
 // Query parameters that are only trackers on specific sites (they may be legitimate, functional
@@ -24,9 +25,9 @@ const GLOBAL_TRACKING_PARAMS = new Set([
 const DOMAIN_TRACKING_PARAMS = [
   {domains: ['instagram.com'], params: ['igshid', 'igsh', 'igsi']},
   {domains: ['threads.com'], params: ['xmt', 'slof']},
-  {domains: ['youtube.com', 'youtu.be'], params: ['si', 'is', 'pp', 'forigin']},
+  {domains: ['youtube.com', 'youtu.be'], params: ['si', 'is', 'pp', 'forigin', 'redir_token']},
   {domains: ['twitter.com', 'x.com'], params: ['ref_src', 'ref_url', 's', 't']},
-  {domains: ['facebook.com'], params: ['mibextid']},
+  {domains: ['facebook.com'], params: ['mibextid', 'rdid', 'share_url']},
   {domains: ['reddit.com'], params: ['share_id']},
   {domains: ['spotify.com'], params: ['si']},
   {domains: ['linkedin.com'], params: ['trk', 'trkemail', 'trackingid', 'refid', 'rcm']},
@@ -45,6 +46,7 @@ const DOMAIN_TRACKING_PARAMS = [
   {domains: ['washingtonpost.com'], params: ['carta-url']},
   {domains: ['nytimes.com'], params: ['smid', 'referringSource', 'sgrp']},
   {domains: ['fandango.com'], params: ['ssid', 'rtm', 'lat', 'lon', 'rad', 'cmp']},
+  {domains: ['patch.com'], params: ['lctg']},
   {domains: ['wsj.com'], params: ['gaa_at', 'gaa_n', 'gaa_ts', 'gaa_sig']},
   {
     domains: [
