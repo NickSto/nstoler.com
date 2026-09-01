@@ -142,7 +142,6 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 DISPLAY_TIME_ZONE = 'America/New_York'
 USE_I18N = False
-USE_L10N = True
 USE_TZ = True
 APPEND_SLASH = False
 DEFAULT_CHARSET = 'utf-8'
