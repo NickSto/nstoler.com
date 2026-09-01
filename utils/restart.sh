@@ -142,14 +142,38 @@ function stop {
   www_root="$1"
   set +e
   echo "Killing watch_nginx.py.."
-  sudo pkill -9 -f "$www_root/nstoler.com/traffic/watch_nginx.py"
+  kill_gracefully -f "$www_root/nstoler.com/traffic/watch_nginx.py"
+  echo "Killing tail process feeding watch_nginx.py.."
+  kill_gracefully -f "tail -n 0 --follow=name $www_root/logs/traffic2.log"
   echo "Killing uwsgi.."
-  sudo pkill -9 uwsgi
+  kill_gracefully uwsgi
   set -e
   echo "Stopping Postgres.."
   sudo service postgresql stop
   echo "Stopping Nginx.."
   sudo service nginx stop
+}
+
+
+function kill_gracefully {
+  # Send SIGTERM first (pkill's default) so a matched process can clean up after
+  # itself--e.g. restore terminal state, or let a child process exit on its own via
+  # a broken pipe--before falling back to SIGKILL, which can't be caught or cleaned
+  # up after. Takes pkill arguments, e.g. "-f pattern" or a bare process name.
+  match_args=("$@")
+  if ! sudo pkill "${match_args[@]}"; then
+    return 0
+  fi
+  for i in 1 2 3 4 5; do
+    if ! sudo pkill -0 "${match_args[@]}" 2>/dev/null; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Warning: Process matching \"${match_args[*]}\" did not exit after SIGTERM."
+  echo "Sending SIGKILL.." >&2
+  sudo pkill -9 "${match_args[@]}"
+  stty sane
 }
 
 
@@ -165,7 +189,10 @@ function start {
   sudo service postgresql start
   echo "Starting uwsgi.."
   cd "$www_root/logs"
+  # Redirect stdin from /dev/null so this background process tree is never attached
+  # to the controlling terminal (nohup only redirects stdout/stderr by default).
   sudo -u www nohup uwsgi --emperor /etc/uwsgi/vassals --uid www --gid www \
+    < /dev/null \
     > "$www_root/logs/uwsgi.stdout.log" \
     2> "$www_root/logs/uwsgi.stderr.log" &
   echo "Starting watch_nginx.py.."
@@ -174,6 +201,7 @@ function start {
     "$www_root/nstoler.com/traffic/watch_nginx.py" -v html,css,js \
     -l "$www_root/logs/watch_nginx.log" \
     "$www_root/logs/traffic2.log" \
+    < /dev/null \
     > "$www_root/logs/watch_nginx.stdout.log" \
     2> "$www_root/logs/watch_nginx.stderr.log" &
 }
