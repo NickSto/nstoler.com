@@ -4,31 +4,50 @@
 const TRACKING_PARAMS = {
   // Confirmed or likely tracking/analytics query parameters that aren't specific to a single site.
   global: [
-    // Google Analytics / Google Ads.
+    // Google Analytics / Google Ads
+    // See https://support.google.com/analytics/answer/10917952 for most of these
     'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'utm_name',
     'utm_source_platform', 'utm_creative_format', 'utm_marketing_tactic', 'utm_kxconfid',
-    'gclid', 'gclsrc', 'dclid', 'gbraid', 'wbraid', '_ga', '_gl',
-    // Other ad networks.
-    'fbclid', 'msclkid', 'twclid', 'ttclid', 'yclid', 'srsltid',
+    'gclid', '_ga', '_gl',
     // Email marketing platforms.
-    'mc_cid', 'mc_eid', 'mkt_tok', 'vero_id', 'vero_conv',
-    '_hsenc', '_hsmi', '__hssc', '__hstc', '__hsfp',
+    'mkt_tok', 'vero_id', 'vero_conv', '_hsenc', '_hsmi', '__hssc', '__hstc', '__hsfp',
     // Misc analytics, added to the destination url regardless of what site it points to.
     'oly_anon_id', 'oly_enc_id', 'epik', 'guccounter', 'guce_referrer', 'guce_referrer_sig',
     'pk_campaign', 'pk_kwd', 'pk_source', 'pk_medium', 'pk_content', 's_cid', 'scid',
     // Unknown
     'link_id', 'can_id', 'email_referrer', 'email_subject', 'user_email', 'user_email_md5',
-    'referrer', 'ref', 'gad_campaignid', 'gad_source', 'source',
-    'tw_source', 'tw_adid', 'tw_campaign', 'tw_kwdid',
+    'referrer', 'ref', 'source', 'taid', 'link_source',
+    'tw_source', 'tw_adid', 'tw_campaign', 'tw_kwdid', 'embed_host_url',
+    // From https://github.com/mpchadwick/tracking-query-params-registry/
+    'twclid', // Twitter https://business.twitter.com/en/help/campaign-measurement-and-analytics/conversion-tracking-for-websites.html
+    'fbclid', // Facebook https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/fbp-and-fbc#what-is-meta-s-clickid
+    'ttclid', // TikTok https://ads.tiktok.com/help/article/tiktok-click-id
+    'yclid', // Yahoo https://ads-help.yahoo-net.jp/s/article/H000044650
+             // and Yandex https://yandex.com/support/metrica/data/yclid.html
+    'msclkid', // Microsoft Advertising https://help.ads.microsoft.com/apex/index/3/en/60000
+    'gclsrc', 'dclid', // Google DoubleClick
+    'gPromoCode', 'gQT', // Google Merchant Centre
+    'gbraid', 'wbraid', 'gad_source', // Google AdWords
+    'gad_campaignid', // Google Ads
+    'utm_klaviyo_id', // Google Analytics
+    'srsltid', // Google Shopping/Organic
+    'mc_cid', 'mc_eid', // Mailchimp
   ],
   // Query parameters that are only trackers on specific sites (they may be legitimate, functional
   // parameters elsewhere). `domains` matches the url's hostname exactly or any of its subdomains.
   sites: [
-    {domains: ['instagram.com'], params: ['igshid', 'igsh', 'igsi']},
+    {domains: ['instagram.com'], params: ['igshid', 'igsh', 'igsi', 'stkn']},
     {domains: ['threads.com'], params: ['xmt', 'slof']},
-    {domains: ['youtube.com', 'youtu.be'], params: ['si', 'is', 'pp', 'forigin', 'redir_token']},
+    {
+      domains: ['youtube.com', 'youtu.be'],
+      params: [
+        'si', 'is', 'pp', 'forigin', 'redir_token', 'event', 'source_ve_path',
+        'embeds_referring_euri'
+      ]
+      //TODO: On some urls (`/watch`), `v` is necessary. But on others (`/redirect`), it's a tracker.
+    },
     {domains: ['twitter.com', 'x.com'], params: ['ref_src', 'ref_url', 's', 't']},
-    {domains: ['facebook.com'], params: ['mibextid', 'rdid', 'share_url']},
+    {domains: ['facebook.com'], params: ['mibextid', 'rdid', 'share_url', 'set']}, // Not 100% on 'set' yet. Maybe indicates the photo album?
     {domains: ['reddit.com'], params: ['share_id']},
     {domains: ['spotify.com'], params: ['si']},
     {domains: ['linkedin.com'], params: ['trk', 'trkemail', 'trackingid', 'refid', 'rcm']},
@@ -39,13 +58,16 @@ const TRACKING_PARAMS = {
         'pd_rd_r', 'pd_rd_w', 'pd_rd_wg', 'pf_rd_p', 'pf_rd_r', 'pf_rd_s', 'pf_rd_t', 'pf_rd_i',
       ]
     },
+    {domains: ['gofundme.com'], params: ['pc', 'attribution_id', 'ts']},
     {domains: ['patreon.com'], params: ['post_id', 'token']},
     {domains: ['yelp.com'], params: ['src_bizid', 's']},
     {domains: ['taobao.com', 'tmall.com', 'alibaba.com'], params: ['spm']},
     {domains: ['yahoo.com', 'aol.com'], params: ['ncid']},
     {domains: ['partiful.com'], params: ['c']},
+    {domains: ['luma.com'], params: ['tk']},
     {domains: ['washingtonpost.com'], params: ['carta-url']},
     {domains: ['nytimes.com'], params: ['smid', 'referringSource', 'sgrp']},
+    {domains: ['substack.com'], params: ['r']},
     {domains: ['fandango.com'], params: ['ssid', 'rtm', 'lat', 'lon', 'rad', 'cmp']},
     {domains: ['patch.com'], params: ['lctg']},
     {domains: ['wsj.com'], params: ['gaa_at', 'gaa_n', 'gaa_ts', 'gaa_sig']},
