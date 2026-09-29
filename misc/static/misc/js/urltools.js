@@ -1,94 +1,29 @@
 'use strict';
 
-//TODO: Read this in from a JSON file.
-const TRACKING_PARAMS = {
-  // Confirmed or likely tracking/analytics query parameters that aren't specific to a single site.
-  global: [
-    // Google Analytics / Google Ads
-    // See https://support.google.com/analytics/answer/10917952 for most of these
-    'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id', 'utm_name',
-    'utm_source_platform', 'utm_creative_format', 'utm_marketing_tactic', 'utm_kxconfid',
-    'gclid', '_ga', '_gl',
-    // Email marketing platforms.
-    'mkt_tok', 'vero_id', 'vero_conv', '_hsenc', '_hsmi', '__hssc', '__hstc', '__hsfp',
-    // Misc analytics, added to the destination url regardless of what site it points to.
-    'oly_anon_id', 'oly_enc_id', 'epik', 'guccounter', 'guce_referrer', 'guce_referrer_sig',
-    'pk_campaign', 'pk_kwd', 'pk_source', 'pk_medium', 'pk_content', 's_cid', 'scid',
-    // Unknown
-    'link_id', 'can_id', 'email_referrer', 'email_subject', 'user_email', 'user_email_md5',
-    'referrer', 'ref', 'source', 'taid', 'link_source',
-    'tw_source', 'tw_adid', 'tw_campaign', 'tw_kwdid', 'embed_host_url',
-    // From https://github.com/mpchadwick/tracking-query-params-registry/
-    'twclid', // Twitter https://business.twitter.com/en/help/campaign-measurement-and-analytics/conversion-tracking-for-websites.html
-    'fbclid', // Facebook https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/fbp-and-fbc#what-is-meta-s-clickid
-    'ttclid', // TikTok https://ads.tiktok.com/help/article/tiktok-click-id
-    'yclid', // Yahoo https://ads-help.yahoo-net.jp/s/article/H000044650
-             // and Yandex https://yandex.com/support/metrica/data/yclid.html
-    'msclkid', // Microsoft Advertising https://help.ads.microsoft.com/apex/index/3/en/60000
-    'gclsrc', 'dclid', // Google DoubleClick
-    'gPromoCode', 'gQT', // Google Merchant Centre
-    'gbraid', 'wbraid', 'gad_source', // Google AdWords
-    'gad_campaignid', // Google Ads
-    'utm_klaviyo_id', // Google Analytics
-    'srsltid', // Google Shopping/Organic
-    'mc_cid', 'mc_eid', // Mailchimp
-  ],
-  // Query parameters that are only trackers on specific sites (they may be legitimate, functional
-  // parameters elsewhere). `domains` matches the url's hostname exactly or any of its subdomains.
-  sites: [
-    {domains: ['instagram.com'], params: ['igshid', 'igsh', 'igsi', 'stkn']},
-    {domains: ['threads.com'], params: ['xmt', 'slof']},
-    {
-      domains: ['youtube.com', 'youtu.be'],
-      params: [
-        'si', 'is', 'pp', 'forigin', 'redir_token', 'event', 'source_ve_path',
-        'embeds_referring_euri'
-      ]
-      //TODO: On some urls (`/watch`), `v` is necessary. But on others (`/redirect`), it's a tracker.
-    },
-    {domains: ['twitter.com', 'x.com'], params: ['ref_src', 'ref_url', 's', 't']},
-    {domains: ['facebook.com'], params: ['mibextid', 'rdid', 'share_url', 'set']}, // Not 100% on 'set' yet. Maybe indicates the photo album?
-    {domains: ['reddit.com'], params: ['share_id']},
-    {domains: ['spotify.com'], params: ['si']},
-    {domains: ['linkedin.com'], params: ['trk', 'trkemail', 'trackingid', 'refid', 'rcm']},
-    {
-      domains: ['amazon.com', 'amazon.co.uk', 'amazon.ca', 'amazon.de'],
-      params: [
-        'ref', 'ref_', 'tag', 'linkcode', 'creativeasin', 'psc',
-        'pd_rd_r', 'pd_rd_w', 'pd_rd_wg', 'pf_rd_p', 'pf_rd_r', 'pf_rd_s', 'pf_rd_t', 'pf_rd_i',
-      ]
-    },
-    {domains: ['gofundme.com'], params: ['pc', 'attribution_id', 'ts']},
-    {domains: ['patreon.com'], params: ['post_id', 'token']},
-    {domains: ['yelp.com'], params: ['src_bizid', 's']},
-    {domains: ['taobao.com', 'tmall.com', 'alibaba.com'], params: ['spm']},
-    {domains: ['yahoo.com', 'aol.com'], params: ['ncid']},
-    {domains: ['partiful.com'], params: ['c']},
-    {domains: ['luma.com'], params: ['tk']},
-    {domains: ['washingtonpost.com'], params: ['carta-url']},
-    {domains: ['nytimes.com'], params: ['smid', 'referringSource', 'sgrp']},
-    {domains: ['substack.com'], params: ['r']},
-    {domains: ['fandango.com'], params: ['ssid', 'rtm', 'lat', 'lon', 'rad', 'cmp']},
-    {domains: ['patch.com'], params: ['lctg']},
-    {domains: ['wsj.com'], params: ['gaa_at', 'gaa_n', 'gaa_ts', 'gaa_sig']},
-    {
-      domains: [
-        'condenast.com', 'wired.com', 'vogue.com', 'vanityfair.com', 'gq.com', 'newyorker.com',
-        'architecturaldigest.com'
-      ],
-      params: ['cndid']
-    },
-    {
-      domains: ['etsy.com'],
-      params: [
-        'ga_order', 'ga_search_type', 'ga_view_type', 'ga_search_query', 'ref', 'content_source',
-        'organic_search_click', 'logging_key', 'click_key', 'click_sum'
-      ]
-    }
-  ]
-};
+// GitHub caches raw gists for about 5 minutes, so edits to the gist take that long to show up.
+const GIST_URL = 'https://gist.githubusercontent.com/NickSto/9b1c2d7ba2ad7187c1f35a51bba3d85e/raw/tracking-params.json';
+const GIST_TIMEOUT_MS = 3000;
+// The repo's copy of the gist. Often out of date, since it only updates when I push.
+const LOCAL_PARAMS_URL = document.currentScript.dataset.localParamsUrl;
 
-const GLOBAL_TRACKING_PARAMS = new Set(TRACKING_PARAMS.global);
+/* The list of all known tracking parameters (loaded at startup).
+ * `global` is a Set of query parameters that are trackers on any site.
+ * `sites` are parameters which are only considered trackers if they appear on specific sites
+ *   (they may be legitimate, functional parameters on other sites).
+ *   The structure: a list of {domains, params}, where each domain in `domains` may match the url's
+ *   hostname exactly or any subdomain.
+ */
+let trackingParams = {global: new Set(), sites: []};
+
+/*TODO: Find a way to handle certain parameters which are too generic to strip indiscriminately.
+ *      For example, the tracking-query-params-registry lists two parameters they think are Adobe's:
+ *      `cid` and `sid`. These are probably too short to safely remove from everything, but may be
+ *      used the same as other global trackers. But the registry notes that these are usually
+ *      combined with other tracking parameters, leading to the possibility of only removing them
+ *      when present in certain combinations. Others like this: `kb`, `adid`, `adgroupid`, `adtype`.
+ */
+//TODO: Break the site-specific parameters down further by path. For example, on Youtube, `v` is a
+//      necessary parameter on `/watch`, but a tracker on `/redirect`.
 
 // The currently parsed query parameters: {key, value, selected}, in the order they appear in the url.
 let params = [];
@@ -96,7 +31,63 @@ let params = [];
 // The hostname of the last successfully parsed url.
 let currentHostname = null;
 
-function main() {
+// Fetches the tracking parameters from the gist, falling back to the copy on this site.
+// Throws if both fail.
+async function loadTrackingParams() {
+  try {
+    const gistOptions = {
+      signal: AbortSignal.timeout(GIST_TIMEOUT_MS),
+      referrerPolicy: 'no-referrer',
+      credentials: 'omit',
+    };
+    return await fetchTrackingParams(GIST_URL, gistOptions);
+  } catch (error) {
+    console.warn('Failed to load tracking parameters from the gist:', error);
+  }
+  return await fetchTrackingParams(LOCAL_PARAMS_URL + '?via=js', {});
+}
+
+async function fetchTrackingParams(url, options) {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText}`);
+  }
+  return parseTrackingParams(await response.json());
+}
+
+// Validates the JSON structure and flattens the sections of global parameters into one Set.
+function parseTrackingParams(data) {
+  if (!Array.isArray(data?.global) || !Array.isArray(data?.sites)) {
+    throw new Error('Expected "global" and "sites" lists.');
+  }
+  const globalParams = new Set();
+  for (const section of data.global) {
+    requireStringArray(section?.params, 'params of a global section');
+    for (const param of section.params) {
+      globalParams.add(param);
+    }
+  }
+  for (const rule of data.sites) {
+    requireStringArray(rule?.domains, 'domains of a site rule');
+    requireStringArray(rule?.params, 'params of a site rule');
+  }
+  return {global: globalParams, sites: data.sites};
+}
+
+function requireStringArray(value, description) {
+  if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) {
+    throw new Error(`Expected the ${description} to be a list of strings.`);
+  }
+}
+
+async function main() {
+  try {
+    trackingParams = await loadTrackingParams();
+  } catch (error) {
+    document.getElementById('paramsError').textContent =
+      `Error: Failed to load the list of tracking parameters (${error.message}). ` +
+      'No parameters will be recognized as tracking.';
+  }
   const originalUrlInput = document.querySelector('#originalUrl');
   const errorElement = document.getElementById('urlError');
   originalUrlInput.addEventListener('input', parseAndRender);
@@ -228,12 +219,11 @@ function parseUrl(urlStr) {
 
 // `hostname` is the hostname of the url the parameter came from (or null, if unknown).
 function isTrackingParam(key, hostname) {
-  const lowerKey = key.toLowerCase();
-  if (GLOBAL_TRACKING_PARAMS.has(lowerKey)) {
+  if (trackingParams.global.has(key)) {
     return true;
   }
-  for (const rule of TRACKING_PARAMS.sites) {
-    if (!rule.params.includes(lowerKey)) {
+  for (const rule of trackingParams.sites) {
+    if (!rule.params.includes(key)) {
       continue;
     }
     for (const domain of rule.domains) {

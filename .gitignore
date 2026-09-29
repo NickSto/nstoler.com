@@ -13,6 +13,8 @@ static/media/
 1.0/protect/*.tsv
 *.log
 *.log.gz
+*.ods
+*.ods#
 static/.well-known
 static/myadmin
 static/notepad

@@ -57,6 +57,7 @@
         </div>
         <div id="query-parameters" class="subpanel">
           <h5>Query parameters</h5>
+          <p id="paramsError" class="text-danger"></p>
           <div class="buttons">
             <input id="selectAll" class="btn btn-default" type="button" value="Select all">
             <input id="selectNone" class="btn btn-default" type="button" value="Select none">
@@ -77,5 +78,5 @@
 {% endblock content %}
 
 {% block javascript %}
-  <script src="{% static 'misc/js/urltools.js' %}?via=html"></script>
+  <script src="{% static 'misc/js/urltools.js' %}?via=html" data-local-params-url="{% static 'misc/js/tracking-params.json' %}"></script>
 {% endblock %}
