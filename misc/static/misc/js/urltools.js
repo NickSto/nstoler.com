@@ -13,6 +13,10 @@ const LOCAL_PARAMS_URL = document.currentScript.dataset.localParamsUrl;
  *   The structure: a list of {domains, params}, where each domain in `domains` may match the url's
  *   hostname exactly or any subdomain.
  */
+//TODO: Use the extensive AdGuard filters as a source of tracking parameters:
+//      https://github.com/AdguardTeam/AdguardFilters/tree/master/TrackParamFilter/sections
+//TODO: This page refers to a lot of other tools that do this. Investigate:
+//      https://github.com/jparise/chrome-utm-stripper
 let trackingParams = {global: new Set(), sites: []};
 
 /*TODO: Find a way to handle certain parameters which are too generic to strip indiscriminately.

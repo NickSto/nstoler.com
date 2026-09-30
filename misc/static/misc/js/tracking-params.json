@@ -7,13 +7,9 @@
       "params": [
         "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id", "utm_name",
         "utm_source_platform", "utm_creative_format", "utm_marketing_tactic", "utm_kxconfid",
+        "utm_internal", "utm_reader", "utm_referrer", "utm_social", "utm_social-type",
         "gclid", "_ga", "_gl"
       ]
-    },
-    {
-      "section": "Email marketing platforms",
-      "note": "From Claude, I believe.",
-      "params": ["mkt_tok", "vero_id", "vero_conv"]
     },
     {
       "section": "Misc analytics",
@@ -46,14 +42,29 @@
       "params": ["ttclid"]
     },
     {
-      "section": "Yahoo",
-      "source": "https://ads-help.yahoo-net.jp/s/article/H000044650",
-      "params": ["yclid"]
+      "section": "Yandex",
+      "source": "https://github.com/jparise/chrome-utm-stripper",
+      "params": ["_openstat"]
     },
     {
       "section": "Yandex",
       "source": "https://yandex.com/support/metrica/data/yclid.html",
       "params": ["yclid"]
+    },
+    {
+      "section": "Yahoo",
+      "source": "https://ads-help.yahoo-net.jp/s/article/H000044650",
+      "params": ["yclid"]
+    },
+    {
+      "section": "Yahoo",
+      "source": "https://help.yahooinc.com/identity/docs/track-conversions",
+      "params": ["vmcid"]
+    },
+    {
+      "section": "Yahoo",
+      "source": "https://github.com/jparise/chrome-utm-stripper",
+      "params": ["soc_src", "soc_trk"]
     },
     {
       "section": "Microsoft Advertising",
@@ -81,8 +92,8 @@
       "params": ["gad_campaignid"]
     },
     {
-      "section": "Google Analytics",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
+      "section": "Google Analytics & Klaviyo",
+      "source": "https://github.com/jparise/chrome-utm-stripper",
       "params": ["utm_klaviyo_id"]
     },
     {
@@ -221,11 +232,6 @@
       "params": ["irclickid"]
     },
     {
-      "section": "Yahoo",
-      "source": "https://help.yahooinc.com/identity/docs/track-conversions",
-      "params": ["vmcid"]
-    },
-    {
       "section": "Triple Whale",
       "source": "https://kb.triplewhale.com/en/articles/9534445-attribution-for-non-integrated-channels",
       "params": ["tw_source", "tw_campaign", "tw_term", "tw_content"]
@@ -341,6 +347,51 @@
       "params": ["meta_placement", "meta_site_source"]
     },
     {
+      "section": "Vero",
+      "source": "https://help.getvero.com/vero-2/campaigns/conversion-tracking",
+      "params": ["vero_conv"]
+    },
+    {
+      "section": "ActiveCampaign",
+      "source": "https://github.com/jparise/chrome-utm-stripper",
+      "params": ["vgo_ee"]
+    },
+    {
+      "section": "Marketo",
+      "source": "https://github.com/jparise/chrome-utm-stripper",
+      "params": ["mkt_tok"]
+    },
+    {
+      "section": "Microsoft (MSN/Bing)",
+      "source": "https://github.com/jparise/chrome-utm-stripper",
+      "params": ["cvid", "oicd"]
+    },
+    {
+      "section": "Olytics",
+      "source": "https://web.archive.org/web/20190716184152/https://main.omeda.com/knowledge-base/olytics-product-outline/",
+      "params": ["oly_anon_id", "oly_enc_id", "ajs_uid", "ajs_trait_oebid"]
+    },
+    {
+      "section": "Wicked Reports",
+      "source": "https://github.com/jparise/chrome-utm-stripper",
+      "params": ["wickedid"]
+    },
+    {
+      "section": "stm_ variants of the utm_ parameters",
+      "source": "https://github.com/jparise/chrome-utm-stripper",
+      "note": "Not all are from the 'source' url.",
+      "params": [
+        "stm_source", "stm_medium", "stm_campaign", "stm_term", "stm_content", "stm_id", "stm_name",
+        "stm_source_platform", "stm_creative_format", "stm_marketing_tactic", "stm_kxconfid",
+        "stm_internal", "stm_reader", "stm_referrer", "stm_social"
+      ]
+    },
+    {
+      "section": "Mozilla clean url feature",
+      "source": "https://firefox.settings.services.mozilla.com/v1/buckets/main/collections/query-stripping/records",
+      "params": ["hsctatracking", "ysclid", "__s", "vero_id"]
+    },
+    {
       "section": "Unknown origin",
       "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
       "note": "Always combined with gad_*",
@@ -351,8 +402,14 @@
       "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
       "note": "Always combined with gad_* and utm_*",
       "params": ["pl_gc"]
+    },
+    {
+      "section": "Unknown origin",
+      "source": "https://github.com/jparise/chrome-utm-stripper",
+      "params": ["ICID", "rb_clickid"]
     }
   ],
+
   "sites": [
     {"domains": ["instagram.com"], "params": ["igshid", "igsh", "igsi", "stkn"]},
     {"domains": ["threads.com"], "params": ["xmt", "slof"]},
