@@ -42,6 +42,18 @@ table#paramsTable td:first-child {
   margin-bottom: 10px;
 }
 
+#compareBox {
+  margin-top: 10px;
+}
+
+#compareBox.match {
+  background-color: #dff0d8;
+}
+
+#compareBox.mismatch {
+  background-color: #f2dede;
+}
+
 /* Copy on the left, Follow in the center, Go on the right (apart from the others, since it visits the url). */
 .buttons-edited {
   display: grid;

@@ -122,6 +122,7 @@ async function main() {
     }
   });
   document.getElementById('domainBox').addEventListener('input', (event) => {
+    updateCompareResult();
     const newDomain = event.currentTarget.value.trim() || null;
     //TODO: Validate that it's a valid domain.
     if (newDomain === '') {
@@ -134,6 +135,7 @@ async function main() {
     url.hostname = newDomain;
     updateEditedUrl(url);
   });
+  document.getElementById('compareBox').addEventListener('input', updateCompareResult);
   // The step button is only rendered in the template for the admin.
   const stepButton = document.getElementById('stepButton');
   if (stepButton) {
@@ -147,6 +149,18 @@ async function main() {
 function autoResizeTextarea(textarea) {
   textarea.style.height = 'auto';
   textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+// Colors the second domain box green if it equals the domain box above it, or red if not.
+function updateCompareResult() {
+  const compareBox = document.getElementById('compareBox');
+  const domain = document.getElementById('domainBox').value.trim().toLowerCase();
+  const otherDomain = compareBox.value.trim().toLowerCase();
+  compareBox.classList.remove('match', 'mismatch');
+  if (otherDomain === '') {
+    return;
+  }
+  compareBox.classList.add(otherDomain === domain ? 'match' : 'mismatch');
 }
 
 // Asks the server to take one step in the edited url's redirect chain (admin-only). If it finds a
@@ -300,6 +314,7 @@ function parseAndRender() {
     currentHostname = url.hostname;
     domainBox.value = currentHostname;
   }
+  updateCompareResult();
   params = [];
   if (url !== null) {
     for (const [key, value] of url.searchParams.entries()) {
