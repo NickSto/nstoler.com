@@ -35,6 +35,10 @@ let params = [];
 // The hostname of the last successfully parsed url.
 let currentHostname = null;
 
+// The urls followed with the redirect stepper, in order: {url, info}. `info` says how the url was
+// reached (null for the starting url).
+let redirectChain = [];
+
 // Fetches the tracking parameters from the gist, falling back to the copy on this site.
 // Throws if both fail.
 async function loadTrackingParams() {
@@ -142,41 +146,125 @@ function autoResizeTextarea(textarea) {
   textarea.style.height = textarea.scrollHeight + 'px';
 }
 
-// Asks the server to take one step in the original url's redirect chain (admin-only), and if it
-// finds one, replaces the original url with it (so the user can inspect or edit it before the
-// next step). Leaves the url alone if it's already the final destination, or on error.
+// Asks the server to take one step in the edited url's redirect chain (admin-only). If it finds a
+// redirect, the destination becomes the new original url, so it can be inspected or edited before
+// the next step. Otherwise, the original url is left alone and the outcome is reported.
 async function stepForward() {
   const originalUrlInput = document.getElementById('originalUrl');
   const stepButton = document.getElementById('stepButton');
-  const stepStatus = document.getElementById('stepStatus');
-  const urlStr = originalUrlInput.value.trim();
-  if (!urlStr) {
-    stepStatus.textContent = 'Enter a url first.';
+  const editedUrlStr = document.getElementById('editedUrl').value.trim();
+  if (!editedUrlStr) {
+    showStepStatus('warning', 'Enter a url first.');
     return;
   }
   stepButton.disabled = true;
-  stepStatus.textContent = 'Checking\u2026';
+  showStepStatus('info', 'Checking\u2026');
   try {
-    const response = await fetch(`/misc/urltools/resolve?url=${encodeURIComponent(urlStr)}&via=js`);
+    const response = await fetch(
+      `/misc/urltools/resolve?url=${encodeURIComponent(editedUrlStr)}&via=js`
+    );
     const data = await response.json();
     if (!response.ok) {
-      stepStatus.textContent = `Error: ${data.error || response.statusText}`;
-    } else if (data.location) {
+      showStepStatus('danger', `Error: ${data.error || response.statusText}`);
+      return;
+    }
+    addFollowedUrlToChain(editedUrlStr);
+    if (data.location) {
+      redirectChain.push({url: data.location, info: describeRedirect(data)});
+      hideStepStatus();
       originalUrlInput.value = data.location;
       parseAndRender();
-      if (data.type === 'refresh') {
-        stepStatus.textContent = `Redirected via a <meta refresh> (status ${data.code}).`;
-      } else {
-        stepStatus.textContent = `Redirected via a ${data.code} (${data.type}).`;
-      }
     } else {
-      stepStatus.textContent = `No further redirect (status ${data.code}). This is the final destination.`;
+      const [level, message] = describeNoRedirect(data.code);
+      showStepStatus(level, message);
     }
+    displayChain();
   } catch (error) {
-    stepStatus.textContent = `Error: ${error.message}`;
+    showStepStatus('danger', `Error: ${error.message}`);
   } finally {
     stepButton.disabled = false;
   }
+}
+
+// Makes sure the chain ends with the url being followed, including the starting url and (if it
+// differs) the edited version of it.
+function addFollowedUrlToChain(editedUrlStr) {
+  if (redirectChain.length === 0) {
+    const originalUrlStr = document.getElementById('originalUrl').value.trim();
+    redirectChain.push({url: addDefaultScheme(originalUrlStr), info: null});
+  }
+  const lastUrl = redirectChain[redirectChain.length - 1].url;
+  if (!sameUrl(lastUrl, editedUrlStr)) {
+    redirectChain.push({url: editedUrlStr, info: 'Edited before following.'});
+  }
+}
+
+function describeRedirect(data) {
+  if (data.type === 'refresh') {
+    return `Redirected via a <meta refresh> (status ${data.code}).`;
+  }
+  return `Redirected via a ${data.code} (${data.type}).`;
+}
+
+// Explains a response that had no redirect. Returns [alert level, message].
+function describeNoRedirect(code) {
+  if (code === 200) {
+    return ['success', 'No further redirect (status 200). This is the final destination.'];
+  }
+  if (code >= 300 && code < 400) {
+    return ['warning', `Got a redirect status (${code}), but no location to redirect to.`];
+  }
+  if (code >= 200 && code < 300) {
+    return [
+      'info',
+      `No further redirect (status ${code}). This may be the final destination, but it isn't a normal 200 response.`
+    ];
+  }
+  return ['warning', `Problem: the server returned status ${code} and no redirect.`];
+}
+
+// `level` is one of the bootstrap alert types: success, info, warning, or danger.
+function showStepStatus(level, message) {
+  const statusBox = document.getElementById('stepStatus');
+  statusBox.className = `alert alert-${level}`;
+  statusBox.textContent = message;
+  statusBox.style.display = 'block';
+}
+
+function hideStepStatus() {
+  document.getElementById('stepStatus').style.display = 'none';
+}
+
+function displayChain() {
+  const container = document.getElementById('redirectChain');
+  const list = document.getElementById('chainList');
+  list.replaceChildren();
+  // A chain of one url has nothing to show.
+  if (redirectChain.length < 2) {
+    container.style.display = 'none';
+    return;
+  }
+  for (const entry of redirectChain) {
+    const item = document.createElement('li');
+    if (entry.info) {
+      const infoBox = document.createElement('div');
+      infoBox.className = 'chain-info';
+      infoBox.textContent = entry.info;
+      item.appendChild(infoBox);
+    }
+    const urlElement = document.createElement('div');
+    urlElement.className = 'chain-url';
+    urlElement.textContent = entry.url;
+    item.appendChild(urlElement);
+    list.appendChild(item);
+  }
+  container.style.display = 'block';
+}
+
+function resetChain() {
+  redirectChain = [];
+  hideStepStatus();
+  displayChain();
 }
 
 // Re-reads the original url box, rebuilds the parameter list from scratch, and redraws everything.
@@ -188,6 +276,10 @@ function parseAndRender() {
   const domainBox = document.getElementById('domainBox');
   const urlStr = originalUrlInput.value.trim();
   const errorElement = document.getElementById('urlError');
+  // If the url isn't the last one followed, the user started over, so the old chain is stale.
+  if (redirectChain.length > 0 && !sameUrl(redirectChain[redirectChain.length - 1].url, urlStr)) {
+    resetChain();
+  }
   let url = null;
   if (urlStr !== '') {
     url = parseUrl(urlStr);
@@ -213,12 +305,42 @@ function parseAndRender() {
   updateEditedUrl(url);
 }
 
+// Returns null if the url is invalid. If it has no scheme, assumes https://.
 function parseUrl(urlStr) {
   try {
-    return new URL(urlStr);
+    return new URL(addDefaultScheme(urlStr));
   } catch (error) {
     return null;
   }
+}
+
+function addDefaultScheme(urlStr) {
+  if (urlStr.startsWith('//')) {
+    return 'https:' + urlStr;
+  }
+  if (hasScheme(urlStr)) {
+    return urlStr;
+  }
+  return 'https://' + urlStr;
+}
+
+function hasScheme(urlStr) {
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(urlStr)) {
+    return true;
+  }
+  // `example.com:8080/path` looks like a scheme ("example.com:"), but it's a host and port.
+  if (/^[^/?#:]+:\d+([/?#]|$)/.test(urlStr)) {
+    return false;
+  }
+  // Non-hierarchical schemes like `mailto:` have no `//`.
+  return /^[a-z][a-z0-9+.-]*:/i.test(urlStr);
+}
+
+// True if both are valid urls that are equivalent once parsed.
+function sameUrl(urlStr1, urlStr2) {
+  const url1 = parseUrl(urlStr1);
+  const url2 = parseUrl(urlStr2);
+  return url1 !== null && url2 !== null && url1.href === url2.href;
 }
 
 // `hostname` is the hostname of the url the parameter came from (or null, if unknown).

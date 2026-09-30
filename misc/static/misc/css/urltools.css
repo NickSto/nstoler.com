@@ -41,3 +41,32 @@ table#paramsTable td:first-child {
 .buttons {
   margin-bottom: 10px;
 }
+
+#stepStatus, #redirectChain {
+  display: none;
+}
+
+#chainList {
+  list-style: none;
+  padding-left: 0;
+}
+
+.chain-url {
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.chain-info {
+  display: inline-block;
+  margin: 6px 0 6px 20px;
+  padding: 2px 8px;
+  border: 1px solid #bce8f1;
+  border-radius: 3px;
+  background-color: #d9edf7;
+  color: #31708f;
+  font-size: 90%;
+}
+
+.chain-info::before {
+  content: '\2193  ';
+}

@@ -25,14 +25,7 @@
           <p id="urlError" class="text-danger"></p>
           <div class="buttons">
             <input id="pasteButton" class="btn btn-default" type="button" value="Paste">
-            {% if is_admin %}
-              <!-- Only the admin can use this, since it makes the server fetch a user-supplied url. -->
-              <input id="stepButton" class="btn btn-default" type="button" value="Follow next redirect">
-            {% endif %}
           </div>
-          {% if is_admin %}
-            <p id="stepStatus"></p>
-          {% endif %}
         </div>
         <div class="input">
           <label for="editedUrl">Edited:</label>
@@ -41,7 +34,18 @@
             <input id="copyButton" class="btn btn-default" type="button" value="Copy">
             <!-- rel="noopener noreferrer" and referrerpolicy keep this page's url from leaking via the Referer header. -->
             <a id="goButton" class="btn btn-default disabled" role="button" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Go</a>
+            {% if is_admin %}
+              <!-- Only the admin can use this, since it makes the server fetch a user-supplied url. -->
+              <input id="stepButton" class="btn btn-default" type="button" value="Follow next redirect">
+            {% endif %}
           </div>
+          {% if is_admin %}
+            <div id="stepStatus" class="alert"></div>
+            <div id="redirectChain">
+              <h5>Redirect history</h5>
+              <ol id="chainList"></ol>
+            </div>
+          {% endif %}
         </div>
       </div>
     </section>
