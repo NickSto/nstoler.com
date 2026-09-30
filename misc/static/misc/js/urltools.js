@@ -35,9 +35,12 @@ let params = [];
 // The hostname of the last successfully parsed url.
 let currentHostname = null;
 
-// The urls followed with the redirect stepper, in order: {url, info}. `info` says how the url was
-// reached (null for the starting url).
-let redirectChain = [];
+// The urls followed with the redirect stepper, oldest first: {url, info}. `info` says how the
+// server redirected from `url` to the next one.
+let redirectHistory = [];
+
+// Where the last followed redirect led. The original box should hold this, unless the user started over.
+let latestLocation = null;
 
 // Fetches the tracking parameters from the gist, falling back to the copy on this site.
 // Throws if both fail.
@@ -168,34 +171,20 @@ async function stepForward() {
       showStepStatus('danger', `Error: ${data.error || response.statusText}`);
       return;
     }
-    addFollowedUrlToChain(editedUrlStr);
     if (data.location) {
-      redirectChain.push({url: data.location, info: describeRedirect(data)});
-      hideStepStatus();
+      redirectHistory.push({url: editedUrlStr, info: describeRedirect(data)});
+      latestLocation = data.location;
       originalUrlInput.value = data.location;
       parseAndRender();
+      displayHistory();
     } else {
       const [level, message] = describeNoRedirect(data.code);
       showStepStatus(level, message);
     }
-    displayChain();
   } catch (error) {
     showStepStatus('danger', `Error: ${error.message}`);
   } finally {
     stepButton.disabled = false;
-  }
-}
-
-// Makes sure the chain ends with the url being followed, including the starting url and (if it
-// differs) the edited version of it.
-function addFollowedUrlToChain(editedUrlStr) {
-  if (redirectChain.length === 0) {
-    const originalUrlStr = document.getElementById('originalUrl').value.trim();
-    redirectChain.push({url: addDefaultScheme(originalUrlStr), info: null});
-  }
-  const lastUrl = redirectChain[redirectChain.length - 1].url;
-  if (!sameUrl(lastUrl, editedUrlStr)) {
-    redirectChain.push({url: editedUrlStr, info: 'Edited before following.'});
   }
 }
 
@@ -232,39 +221,54 @@ function showStepStatus(level, message) {
 }
 
 function hideStepStatus() {
-  document.getElementById('stepStatus').style.display = 'none';
+  const statusBox = document.getElementById('stepStatus');
+  // The status box only exists for the admin.
+  if (statusBox) {
+    statusBox.style.display = 'none';
+  }
 }
 
-function displayChain() {
-  const container = document.getElementById('redirectChain');
-  const list = document.getElementById('chainList');
+// Shows a read-only box for each followed url, with the message about how it redirected in between.
+// The last message leads to the original box, which holds the newest url.
+function displayHistory() {
+  const container = document.getElementById('redirectHistory');
+  const list = document.getElementById('historyList');
   list.replaceChildren();
-  // A chain of one url has nothing to show.
-  if (redirectChain.length < 2) {
+  for (const step of redirectHistory) {
+    list.appendChild(makeHistoryBox(step.url));
+    list.appendChild(makeRedirectInfo(step.info));
+  }
+  if (redirectHistory.length === 0) {
     container.style.display = 'none';
     return;
   }
-  for (const entry of redirectChain) {
-    const item = document.createElement('li');
-    if (entry.info) {
-      const infoBox = document.createElement('div');
-      infoBox.className = 'chain-info';
-      infoBox.textContent = entry.info;
-      item.appendChild(infoBox);
-    }
-    const urlElement = document.createElement('div');
-    urlElement.className = 'chain-url';
-    urlElement.textContent = entry.url;
-    item.appendChild(urlElement);
-    list.appendChild(item);
-  }
+  // A textarea can only be sized to its content once it's visible.
   container.style.display = 'block';
+  for (const textarea of list.querySelectorAll('textarea')) {
+    autoResizeTextarea(textarea);
+  }
 }
 
-function resetChain() {
-  redirectChain = [];
-  hideStepStatus();
-  displayChain();
+function makeHistoryBox(urlStr) {
+  const textarea = document.createElement('textarea');
+  textarea.className = 'form-control history-url';
+  textarea.rows = 1;
+  textarea.readOnly = true;
+  textarea.value = urlStr;
+  return textarea;
+}
+
+function makeRedirectInfo(message) {
+  const infoBox = document.createElement('div');
+  infoBox.className = 'redirect-info';
+  infoBox.textContent = message;
+  return infoBox;
+}
+
+function resetHistory() {
+  redirectHistory = [];
+  latestLocation = null;
+  displayHistory();
 }
 
 // Re-reads the original url box, rebuilds the parameter list from scratch, and redraws everything.
@@ -276,10 +280,11 @@ function parseAndRender() {
   const domainBox = document.getElementById('domainBox');
   const urlStr = originalUrlInput.value.trim();
   const errorElement = document.getElementById('urlError');
-  // If the url isn't the last one followed, the user started over, so the old chain is stale.
-  if (redirectChain.length > 0 && !sameUrl(redirectChain[redirectChain.length - 1].url, urlStr)) {
-    resetChain();
+  // Anything but the last redirect's destination means the user started over, so the history is stale.
+  if (redirectHistory.length > 0 && !sameUrl(latestLocation, urlStr)) {
+    resetHistory();
   }
+  hideStepStatus();
   let url = null;
   if (urlStr !== '') {
     url = parseUrl(urlStr);
@@ -453,12 +458,10 @@ function updateEditedUrl(url) {
         query.append(param.key, param.value);
       }
     }
-    const queryStr = query.toString();
-    let queryPart = '';
-    if (queryStr) {
-      queryPart = '?'+queryStr;
-    }
-    const editedUrlStr = url.origin + url.pathname + queryPart + url.hash;
+    // Edit a copy instead of rebuilding from `url.origin`, which is "null" for schemes like mailto:.
+    const editedUrl = new URL(url);
+    editedUrl.search = query.toString();
+    const editedUrlStr = editedUrl.href;
     editedUrlInput.value = editedUrlStr;
     updateGoButton(editedUrlStr);
   }
