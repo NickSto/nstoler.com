@@ -1,409 +1,465 @@
 {
   "global": [
     {
-      "section": "Google Analytics / Google Ads",
-      "source": "https://support.google.com/analytics/answer/10917952",
-      "note": "Not all are from the 'source' url.",
-      "params": [
-        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id", "utm_name",
-        "utm_source_platform", "utm_creative_format", "utm_marketing_tactic", "utm_kxconfid",
-        "utm_internal", "utm_reader", "utm_referrer", "utm_social", "utm_social-type",
-        "gclid", "_ga", "_gl"
+      "section": "Google",
+      "groups": [
+        {
+          "group": "Google Analytics / Google Ads",
+          "sources": ["https://support.google.com/analytics/answer/10917952"],
+          "notes": "Not all are from the 'source' url.",
+          "params": [
+            "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id",
+            "utm_name", "utm_source_platform", "utm_creative_format", "utm_marketing_tactic",
+            "utm_kxconfid", "utm_internal", "utm_reader", "utm_referrer", "utm_social",
+            "utm_social-type", "gclid", "_ga", "_gl"
+          ]
+        },
+        {
+          "group": "Google DoubleClick",
+          "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+          "params": ["gclsrc", "dclid"]
+        },
+        {
+          "group": "Google Merchant Centre",
+          "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+          "params": ["gPromoCode", "gQT"]
+        },
+        {
+          "group": "Google AdWords",
+          "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+          "params": ["gbraid", "wbraid", "gad_source"]
+        },
+        {
+          "group": "Google Ads",
+          "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+          "params": ["gad_campaignid"]
+        },
+        {
+          "group": "Google Analytics & Klaviyo",
+          "sources": ["https://github.com/jparise/chrome-utm-stripper"],
+          "params": ["utm_klaviyo_id"]
+        },
+        {
+          "group": "Google Shopping/Organic",
+          "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+          "params": ["srsltid"]
+        },
+        {
+          "sources": ["https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values"],
+          "notes": "Discovered via a Triple Whale help article.",
+          "params": ["gadid"]
+        }
+      ]
+    },
+    {
+      "section": "stm_ variants of the utm_ parameters",
+      "sources": ["https://github.com/jparise/chrome-utm-stripper"],
+      "notes": "Not all are from the 'source' url.",
+      "groups": [
+        {
+          "params": [
+            "stm_source", "stm_medium", "stm_campaign", "stm_term", "stm_content", "stm_id",
+            "stm_name", "stm_source_platform", "stm_creative_format", "stm_marketing_tactic",
+            "stm_kxconfid", "stm_internal", "stm_reader", "stm_referrer", "stm_social"
+          ]
+        }
       ]
     },
     {
       "section": "Misc analytics",
-      "params": ["guccounter", "guce_referrer", "guce_referrer_sig", "s_cid", "scid"]
+      "groups": [
+        {"params": ["guccounter", "guce_referrer", "guce_referrer_sig", "s_cid", "scid"]}
+      ]
     },
     {
       "section": "Unknown origin",
-      "note": "Don't know what sites created these.",
-      "params": [
-        "link_id", "can_id", "email_referrer", "email_subject", "user_email", "user_email_md5",
-        "source", "taid", "link_source", "embed_host_url"
+      "groups": [
+        {
+          "notes": "Don't know what sites created these.",
+          "params": [
+            "link_id", "can_id", "email_referrer", "email_subject", "user_email", "user_email_md5",
+            "source", "taid", "link_source", "embed_host_url"
+          ]
+        },
+        {
+          "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+          "notes": "Always combined with gad_*",
+          "params": [
+            "cq_cmp", "cq_con", "cq_med", "cq_net", "cq_plac", "cq_plt", "cq_src", "cq_term"
+          ]
+        },
+        {
+          "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+          "notes": "Always combined with gad_* and utm_*",
+          "params": ["pl_gc"]
+        },
+        {
+          "sources": ["https://github.com/jparise/chrome-utm-stripper"],
+          "params": ["ICID", "rb_clickid"]
+        }
+      ]
+    },
+    {
+      "section": "Microsoft",
+      "groups": [
+        {
+          "group": "MSN/Bing",
+          "sources": ["https://github.com/jparise/chrome-utm-stripper"],
+          "params": ["cvid", "oicd"]
+        },
+        {
+          "group": "Microsoft Advertising",
+          "sources": ["https://help.ads.microsoft.com/apex/index/3/en/60000"],
+          "params": ["msclkid"]
+        }
+      ]
+    },
+    {
+      "section": "Facebook",
+      "groups": [
+        {
+          "sources": ["https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/fbp-and-fbc#what-is-meta-s-clickid"],
+          "params": ["fbclid"]
+        },
+        {
+          "sources": ["https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values"],
+          "notes": "Discovered via a Triple Whale help article.",
+          "params": ["fbadid"]
+        },
+        {
+          "sources": ["https://www.facebook.com/business/help/2360940870872492"],
+          "params": ["meta_placement", "meta_site_source"]
+        }
       ]
     },
     {
       "section": "Twitter",
-      "source": "https://business.twitter.com/en/help/campaign-measurement-and-analytics/conversion-tracking-for-websites.html",
-      "params": ["twclid"]
-    },
-    {
-      "section": "Facebook",
-      "source": "https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/fbp-and-fbc#what-is-meta-s-clickid",
-      "params": ["fbclid"]
+      "sources": ["https://business.twitter.com/en/help/campaign-measurement-and-analytics/conversion-tracking-for-websites.html"],
+      "groups": [{"params": ["twclid"]}]
     },
     {
       "section": "TikTok",
-      "source": "https://ads.tiktok.com/help/article/tiktok-click-id",
-      "params": ["ttclid"]
+      "groups": [
+        {
+          "sources": ["https://ads.tiktok.com/help/article/tiktok-click-id"],
+          "params": ["ttclid"]
+        },
+        {
+          "sources": ["https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values"],
+          "notes": "Discovered via a Triple Whale help article.",
+          "params": ["ttadid"]
+        }
+      ]
     },
     {
       "section": "Yandex",
-      "source": "https://github.com/jparise/chrome-utm-stripper",
-      "params": ["_openstat"]
-    },
-    {
-      "section": "Yandex",
-      "source": "https://yandex.com/support/metrica/data/yclid.html",
-      "params": ["yclid"]
-    },
-    {
-      "section": "Yahoo",
-      "source": "https://ads-help.yahoo-net.jp/s/article/H000044650",
-      "params": ["yclid"]
-    },
-    {
-      "section": "Yahoo",
-      "source": "https://help.yahooinc.com/identity/docs/track-conversions",
-      "params": ["vmcid"]
+      "groups": [
+        {
+          "sources": ["https://github.com/jparise/chrome-utm-stripper"],
+          "params": ["_openstat"]
+        },
+        {
+          "sources": ["https://yandex.com/support/metrica/data/yclid.html"],
+          "params": ["yclid"]
+        }
+      ]
     },
     {
       "section": "Yahoo",
-      "source": "https://github.com/jparise/chrome-utm-stripper",
-      "params": ["soc_src", "soc_trk"]
-    },
-    {
-      "section": "Microsoft Advertising",
-      "source": "https://help.ads.microsoft.com/apex/index/3/en/60000",
-      "params": ["msclkid"]
-    },
-    {
-      "section": "Google DoubleClick",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["gclsrc", "dclid"]
-    },
-    {
-      "section": "Google Merchant Centre",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["gPromoCode", "gQT"]
-    },
-    {
-      "section": "Google AdWords",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["gbraid", "wbraid", "gad_source"]
-    },
-    {
-      "section": "Google Ads",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["gad_campaignid"]
-    },
-    {
-      "section": "Google Analytics & Klaviyo",
-      "source": "https://github.com/jparise/chrome-utm-stripper",
-      "params": ["utm_klaviyo_id"]
-    },
-    {
-      "section": "Google Shopping/Organic",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["srsltid"]
+      "groups": [
+        {
+          "sources": ["https://ads-help.yahoo-net.jp/s/article/H000044650"],
+          "params": ["yclid"]
+        },
+        {
+          "sources": ["https://help.yahooinc.com/identity/docs/track-conversions"],
+          "params": ["vmcid"]
+        },
+        {
+          "sources": ["https://github.com/jparise/chrome-utm-stripper"],
+          "params": ["soc_src", "soc_trk"]
+        }
+      ]
     },
     {
       "section": "Mailchimp",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["mc_cid", "mc_eid"]
+      "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+      "groups": [{"params": ["mc_cid", "mc_eid"]}]
     },
     {
       "section": "Bronto",
-      "source": "https://p.bm23.com/bta.js",
-      "params": ["_bta_tid", "_bta_c"]
+      "sources": ["https://p.bm23.com/bta.js"],
+      "groups": [{"params": ["_bta_tid", "_bta_c"]}]
     },
     {
       "section": "Listrak",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["trk_contact", "trk_msg", "trk_module", "trk_sid"]
+      "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+      "groups": [{"params": ["trk_contact", "trk_msg", "trk_module", "trk_sid"]}]
     },
     {
       "section": "GoDataFeed",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["gdfms", "gdftrk", "gdffi"]
+      "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+      "groups": [{"params": ["gdfms", "gdftrk", "gdffi"]}]
     },
     {
       "section": "Klaviyo",
-      "source": "http://a.klaviyo.com/media/js/analytics/analytics.js",
-      "params": ["_ke"]
-    },
-    {
-      "section": "Klaviyo",
-      "source": "https://help.klaviyo.com/hc/en-us/articles/115005076767#the-_-kx-parameter7",
-      "params": ["_kx"]
+      "groups": [
+        {
+          "sources": ["http://a.klaviyo.com/media/js/analytics/analytics.js"],
+          "params": ["_ke"]
+        },
+        {
+          "sources": ["https://help.klaviyo.com/hc/en-us/articles/115005076767#the-_-kx-parameter7"],
+          "params": ["_kx"]
+        }
+      ]
     },
     {
       "section": "Springbot",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["redirect_log_mongo_id", "redirect_mongo_id", "sb_referer_host"]
+      "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+      "groups": [{"params": ["redirect_log_mongo_id", "redirect_mongo_id", "sb_referer_host"]}]
     },
     {
       "section": "Marin",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["mkwid", "pcrid"]
+      "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+      "groups": [{"params": ["mkwid", "pcrid"]}]
     },
     {
-      "section": "Adobe Advertising Cloud",
-      "source": "https://helpx.adobe.com/media-optimizer/internal-kb/conversion-tracking-basics.html",
-      "params": ["ef_id"]
-    },
-    {
-      "section": "Adobe Analytics",
-      "source": "https://docs.adobe.com/content/help/en/analytics/integration/advertising-analytics/advertising-analytics-workflow/aa-manual-vs-automatic-tracking.html",
-      "params": ["s_kwcid"]
+      "section": "Adobe",
+      "groups": [
+        {
+          "group": "Adobe Advertising Cloud",
+          "sources": ["https://helpx.adobe.com/media-optimizer/internal-kb/conversion-tracking-basics.html"],
+          "params": ["ef_id"]
+        },
+        {
+          "group": "Adobe Analytics",
+          "sources": ["https://docs.adobe.com/content/help/en/analytics/integration/advertising-analytics/advertising-analytics-workflow/aa-manual-vs-automatic-tracking.html"],
+          "params": ["s_kwcid"]
+        }
+      ]
     },
     {
       "section": "dotdigital",
-      "source": "https://support.dotdigital.com/hc/en-gb/articles/360006551019-Link-tracking",
-      "params": ["dm_i"]
+      "sources": ["https://support.dotdigital.com/hc/en-gb/articles/360006551019-Link-tracking"],
+      "groups": [{"params": ["dm_i"]}]
     },
     {
       "section": "Piwik",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": [
-        "pk_campaign", "pk_kwd", "pk_source", "pk_medium", "pk_content", "pk_keyword", "pk_cid",
-        "piwik_campaign", "piwik_kwd", "piwik_keyword"
+      "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+      "groups": [
+        {
+          "params": [
+            "pk_campaign", "pk_kwd", "pk_source", "pk_medium", "pk_content", "pk_keyword", "pk_cid",
+            "piwik_campaign", "piwik_kwd", "piwik_keyword"
+          ]
+        }
       ]
     },
     {
       "section": "Matomo",
-      "source": "https://matomo.org/docs/tracking-campaigns/",
-      "params": [
-        "mtm_campaign", "mtm_keyword", "mtm_source", "mtm_medium", "mtm_content", "mtm_cid",
-        "mtm_group", "mtm_placement", "matomo_campaign", "matomo_keyword", "matomo_source",
-        "matomo_medium", "matomo_content", "matomo_cid", "matomo_group", "matomo_placement"
+      "sources": ["https://matomo.org/docs/tracking-campaigns/"],
+      "groups": [
+        {
+          "params": [
+            "mtm_campaign", "mtm_keyword", "mtm_source", "mtm_medium", "mtm_content", "mtm_cid",
+            "mtm_group", "mtm_placement", "matomo_campaign", "matomo_keyword", "matomo_source",
+            "matomo_medium", "matomo_content", "matomo_cid", "matomo_group", "matomo_placement"
+          ]
+        }
       ]
     },
     {
       "section": "Hubspot",
-      "source": "https://knowledge.hubspot.com/ads/ad-tracking-in-hubspot",
-      "params": [
-        "hsa_cam", "hsa_grp", "hsa_mt", "hsa_src", "hsa_ad", "hsa_acc", "hsa_net", "hsa_kw",
-        "hsa_tgt", "hsa_ver"
+      "groups": [
+        {
+          "sources": ["https://knowledge.hubspot.com/ads/ad-tracking-in-hubspot"],
+          "params": [
+            "hsa_cam", "hsa_grp", "hsa_mt", "hsa_src", "hsa_ad", "hsa_acc", "hsa_net", "hsa_kw",
+            "hsa_tgt", "hsa_ver"
+          ]
+        },
+        {
+          "sources": ["https://knowledge.hubspot.com/reports/what-cookies-does-hubspot-set-in-a-visitor-s-browser"],
+          "params": ["__hssc", "__hstc", "__hsfp"]
+        },
+        {
+          "sources": ["https://knowledge.hubspot.com/email/manage-your-marketing-email-account-settings#identity-tracking"],
+          "params": ["_hsenc"]
+        },
+        {
+          "sources": ["https://knowledge.hubspot.com/email/links-in-emails-or-ctas-lead-to-an-error-page"],
+          "params": ["_hsmi"]
+        },
+        {
+          "sources": ["https://knowledge.hubspot.com/ctas/calls-to-action-frequently-asked-questions#why-is-the-landing-page-url-so-long-after-i-click-on-a-cta"],
+          "params": ["hsCtaTracking"]
+        }
       ]
-    },
-    {
-      "section": "Hubspot",
-      "source": "https://knowledge.hubspot.com/reports/what-cookies-does-hubspot-set-in-a-visitor-s-browser",
-      "params": ["__hssc", "__hstc", "__hsfp"]
-    },
-    {
-      "section": "Hubspot",
-      "source": "https://knowledge.hubspot.com/email/manage-your-marketing-email-account-settings#identity-tracking",
-      "params": ["_hsenc"]
-    },
-    {
-      "section": "Hubspot",
-      "source": "https://knowledge.hubspot.com/email/links-in-emails-or-ctas-lead-to-an-error-page",
-      "params": ["_hsmi"]
-    },
-    {
-      "section": "Hubspot",
-      "source": "https://knowledge.hubspot.com/ctas/calls-to-action-frequently-asked-questions#why-is-the-landing-page-url-so-long-after-i-click-on-a-cta",
-      "params": ["hsCtaTracking"]
     },
     {
       "section": "Branch",
-      "source": "https://stackoverflow.com/a/37892369",
-      "params": ["_branch_match_id"]
+      "sources": ["https://stackoverflow.com/a/37892369"],
+      "groups": [{"params": ["_branch_match_id"]}]
     },
     {
       "section": "Wunderkind",
-      "source": "https://assets.bounceexchange.com/assets/smart-tag/versioned/sms_2579b6aa71148c3eb940153c85a653a0.br.js",
-      "params": ["sms_source", "sms_click", "sms_uph"]
+      "sources": ["https://assets.bounceexchange.com/assets/smart-tag/versioned/sms_2579b6aa71148c3eb940153c85a653a0.br.js"],
+      "groups": [{"params": ["sms_source", "sms_click", "sms_uph"]}]
     },
     {
       "section": "Next Door",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "params": ["ndclid"]
+      "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+      "groups": [{"params": ["ndclid"]}]
     },
     {
       "section": "Snapchat",
-      "source": "https://businesshelp.snapchat.com/s/article/click-id",
-      "params": ["ScCid"]
+      "groups": [
+        {
+          "sources": ["https://businesshelp.snapchat.com/s/article/click-id"],
+          "params": ["ScCid"]
+        },
+        {
+          "sources": ["https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values"],
+          "notes": "Discovered via a Triple Whale help article.",
+          "params": ["scadid"]
+        }
+      ]
     },
     {
       "section": "Rokt",
-      "source": "https://docs.rokt.com/developers/integration-guides/web/advanced/rokt-id-tag/",
-      "params": ["rtid"]
+      "sources": ["https://docs.rokt.com/developers/integration-guides/web/advanced/rokt-id-tag/"],
+      "groups": [{"params": ["rtid"]}]
     },
     {
       "section": "Impact (formerly Impact Radius)",
-      "source": "https://integrations.impact.com/impact-brand/docs/api-tracking-integration",
-      "params": ["irclickid"]
+      "sources": ["https://integrations.impact.com/impact-brand/docs/api-tracking-integration"],
+      "groups": [{"params": ["irclickid"]}]
     },
     {
       "section": "Triple Whale",
-      "source": "https://kb.triplewhale.com/en/articles/9534445-attribution-for-non-integrated-channels",
-      "params": ["tw_source", "tw_campaign", "tw_term", "tw_content"]
-    },
-    {
-      "section": "Triple Whale",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "note": "Undocumented but always combined with tw_adid&tw_campaign&tw_source",
-      "params": ["tw_kwdid"]
-    },
-    {
-      "section": "Triple Whale",
-      "source": "https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values",
-      "params": ["tw_adid"]
-    },
-    {
-      "section": "Google",
-      "source": "https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values",
-      "note": "Discovered via a Triple Whale help article.",
-      "params": ["gadid"]
-    },
-    {
-      "section": "Meta/Facebook",
-      "source": "https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values",
-      "note": "Discovered via a Triple Whale help article.",
-      "params": ["fbadid"]
-    },
-    {
-      "section": "TikTok",
-      "source": "https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values",
-      "note": "Discovered via a Triple Whale help article.",
-      "params": ["ttadid"]
-    },
-    {
-      "section": "Snapchat",
-      "source": "https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values",
-      "note": "Discovered via a Triple Whale help article.",
-      "params": ["scadid"]
+      "groups": [
+        {
+          "sources": ["https://kb.triplewhale.com/en/articles/9534445-attribution-for-non-integrated-channels"],
+          "params": ["tw_source", "tw_campaign", "tw_term", "tw_content"]
+        },
+        {
+          "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+          "notes": "Undocumented but always combined with tw_adid&tw_campaign&tw_source",
+          "params": ["tw_kwdid"]
+        },
+        {
+          "sources": ["https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values"],
+          "params": ["tw_adid"]
+        }
+      ]
     },
     {
       "section": "Pinterest",
-      "source": "https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values",
-      "note": "Discovered via a Triple Whale help article.",
-      "params": ["padid"]
-    },
-    {
-      "section": "Pinterest",
-      "source": "https://painlessbloganalytics.com/what-is-fbclid-how-to-remove/",
-      "params": ["epik"]
+      "groups": [
+        {
+          "sources": ["https://kb.triplewhale.com/en/articles/6448705-acceptable-utm-source-ad-id-values"],
+          "notes": "Discovered via a Triple Whale help article.",
+          "params": ["padid"]
+        },
+        {
+          "sources": ["https://painlessbloganalytics.com/what-is-fbclid-how-to-remove/"],
+          "params": ["epik"]
+        }
+      ]
     },
     {
       "section": "Klar Insights",
-      "source": "https://help.getklar.com/en/articles/7161450-url-parameters-for-google-ads",
-      "params": ["klar_source", "klar_cpid", "klar_adid"]
+      "sources": ["https://help.getklar.com/en/articles/7161450-url-parameters-for-google-ads"],
+      "groups": [{"params": ["klar_source", "klar_cpid", "klar_adid"]}]
     },
     {
       "section": "Billy Grace",
-      "source": "https://help.billygrace.com/en/articles/9735689-checking-utm-tracking",
-      "params": ["bg_kw", "bg_campaign", "bg_source", "bg_source_id"]
-    },
-    {
-      "section": "Billy Grace",
-      "source": "https://help.billygrace.com/en/articles/6268656-required-utms-for-billy-grace",
-      "params": ["bg_aid_k", "bg_aid_v"]
+      "groups": [
+        {
+          "sources": ["https://help.billygrace.com/en/articles/9735689-checking-utm-tracking"],
+          "params": ["bg_kw", "bg_campaign", "bg_source", "bg_source_id"]
+        },
+        {
+          "sources": ["https://help.billygrace.com/en/articles/6268656-required-utms-for-billy-grace"],
+          "params": ["bg_aid_k", "bg_aid_v"]
+        }
+      ]
     },
     {
       "section": "Criteo payload",
-      "source": "https://support.attribuly.com/en/articles/9742881-channel-group",
-      "params": ["cto_pld"]
+      "sources": ["https://support.attribuly.com/en/articles/9742881-channel-group"],
+      "groups": [{"params": ["cto_pld"]}]
     },
     {
       "section": "Real Time Bidding Hash Click",
-      "source": "https://www.rtbhouse.com/",
-      "params": ["rtbhc"]
+      "sources": ["https://www.rtbhouse.com/"],
+      "groups": [{"params": ["rtbhc"]}]
     },
     {
       "section": "Northbeam",
-      "source": "https://docs.northbeam.io/docs/setting-up-google-ads-for-northbeam",
-      "params": ["nbt"]
-    },
-    {
-      "section": "Northbeam",
-      "source": "https://docs.northbeam.io/docs/setting-up-klaviyo-for-northbeam",
-      "params": ["nb_klid"]
-    },
-    {
-      "section": "Northbeam",
-      "source": "https://docs.northbeam.io/docs/setting-up-facebook-ads-tracking",
-      "params": ["nb_placement"]
-    },
-    {
-      "section": "Northbeam",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "note": "Always combined with ntb and other nb_* params",
-      "params": [
-        "nb_adtype", "nb_ap", "nb_expid_meta", "nb_fii", "nb_kwd", "nb_li_ms", "nb_lp_ms", "nb_mi",
-        "nb_mt", "nb_pc", "nb_pi", "nb_ppi", "nb_ti"
+      "groups": [
+        {
+          "sources": ["https://docs.northbeam.io/docs/setting-up-google-ads-for-northbeam"],
+          "params": ["nbt"]
+        },
+        {
+          "sources": ["https://docs.northbeam.io/docs/setting-up-klaviyo-for-northbeam"],
+          "params": ["nb_klid"]
+        },
+        {
+          "sources": ["https://docs.northbeam.io/docs/setting-up-facebook-ads-tracking"],
+          "params": ["nb_placement"]
+        },
+        {
+          "sources": ["https://github.com/mpchadwick/tracking-query-params-registry/"],
+          "notes": "Always combined with ntb and other nb_* params",
+          "params": [
+            "nb_adtype", "nb_ap", "nb_expid_meta", "nb_fii", "nb_kwd", "nb_li_ms", "nb_lp_ms",
+            "nb_mi", "nb_mt", "nb_pc", "nb_pi", "nb_ppi", "nb_ti"
+          ]
+        }
       ]
     },
     {
       "section": "Channable",
-      "source": "https://www.channable.com/help",
-      "params": ["channable"]
+      "sources": ["https://www.channable.com/help"],
+      "groups": [{"params": ["channable"]}]
     },
     {
       "section": "Hyros",
-      "source": "https://docs.hyros.com/docs/meta-ads",
-      "params": ["fbc_id", "h_ad_id"]
-    },
-    {
-      "section": "Meta (Facebook)",
-      "source": "https://www.facebook.com/business/help/2360940870872492",
-      "params": ["meta_placement", "meta_site_source"]
+      "sources": ["https://docs.hyros.com/docs/meta-ads"],
+      "groups": [{"params": ["fbc_id", "h_ad_id"]}]
     },
     {
       "section": "Vero",
-      "source": "https://help.getvero.com/vero-2/campaigns/conversion-tracking",
-      "params": ["vero_conv"]
+      "sources": ["https://help.getvero.com/vero-2/campaigns/conversion-tracking"],
+      "groups": [{"params": ["vero_conv"]}]
     },
     {
       "section": "ActiveCampaign",
-      "source": "https://github.com/jparise/chrome-utm-stripper",
-      "params": ["vgo_ee"]
+      "sources": ["https://github.com/jparise/chrome-utm-stripper"],
+      "groups": [{"params": ["vgo_ee"]}]
     },
     {
       "section": "Marketo",
-      "source": "https://github.com/jparise/chrome-utm-stripper",
-      "params": ["mkt_tok"]
-    },
-    {
-      "section": "Microsoft (MSN/Bing)",
-      "source": "https://github.com/jparise/chrome-utm-stripper",
-      "params": ["cvid", "oicd"]
+      "sources": ["https://github.com/jparise/chrome-utm-stripper"],
+      "groups": [{"params": ["mkt_tok"]}]
     },
     {
       "section": "Olytics",
-      "source": "https://web.archive.org/web/20190716184152/https://main.omeda.com/knowledge-base/olytics-product-outline/",
-      "params": ["oly_anon_id", "oly_enc_id", "ajs_uid", "ajs_trait_oebid"]
+      "sources": ["https://web.archive.org/web/20190716184152/https://main.omeda.com/knowledge-base/olytics-product-outline/"],
+      "groups": [{"params": ["oly_anon_id", "oly_enc_id", "ajs_uid", "ajs_trait_oebid"]}]
     },
     {
       "section": "Wicked Reports",
-      "source": "https://github.com/jparise/chrome-utm-stripper",
-      "params": ["wickedid"]
-    },
-    {
-      "section": "stm_ variants of the utm_ parameters",
-      "source": "https://github.com/jparise/chrome-utm-stripper",
-      "note": "Not all are from the 'source' url.",
-      "params": [
-        "stm_source", "stm_medium", "stm_campaign", "stm_term", "stm_content", "stm_id", "stm_name",
-        "stm_source_platform", "stm_creative_format", "stm_marketing_tactic", "stm_kxconfid",
-        "stm_internal", "stm_reader", "stm_referrer", "stm_social"
-      ]
+      "sources": ["https://github.com/jparise/chrome-utm-stripper"],
+      "groups": [{"params": ["wickedid"]}]
     },
     {
       "section": "Mozilla clean url feature",
-      "source": "https://firefox.settings.services.mozilla.com/v1/buckets/main/collections/query-stripping/records",
-      "params": ["hsctatracking", "ysclid", "__s", "vero_id"]
-    },
-    {
-      "section": "Unknown origin",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "note": "Always combined with gad_*",
-      "params": ["cq_cmp", "cq_con", "cq_med", "cq_net", "cq_plac", "cq_plt", "cq_src", "cq_term"]
-    },
-    {
-      "section": "Unknown origin",
-      "source": "https://github.com/mpchadwick/tracking-query-params-registry/",
-      "note": "Always combined with gad_* and utm_*",
-      "params": ["pl_gc"]
-    },
-    {
-      "section": "Unknown origin",
-      "source": "https://github.com/jparise/chrome-utm-stripper",
-      "params": ["ICID", "rb_clickid"]
+      "sources": ["https://firefox.settings.services.mozilla.com/v1/buckets/main/collections/query-stripping/records"],
+      "groups": [{"params": ["hsctatracking", "ysclid", "__s", "vero_id"]}]
     }
   ],
 
@@ -416,20 +472,20 @@
         "si", "is", "pp", "forigin", "redir_token", "event", "source_ve_path",
         "embeds_referring_euri"
       ],
-      "note": "On some urls (`/watch`), `v` is necessary. But on others (`/redirect`), it's a tracker."
+      "notes": "On some urls (`/watch`), `v` is necessary. But on others (`/redirect`), it's a tracker."
     },
     {"domains": ["twitter.com", "x.com"], "params": ["ref_src", "ref_url", "s", "t"]},
     {
       "domains": ["facebook.com"],
       "params": ["mibextid", "rdid", "share_url", "set"],
-      "note": "Not 100% on 'set' yet. Maybe indicates the photo album?"
+      "notes": "Not 100% on 'set' yet. Maybe indicates the photo album?"
     },
     {"domains": ["reddit.com"], "params": ["share_id"]},
     {"domains": ["spotify.com"], "params": ["si"]},
     {
       "domains": ["linkedin.com"],
       "params": ["trk", "trkEmail", "trackingId", "refId", "rcm"],
-      "note": "Generated by Claude, I believe."
+      "notes": "Generated by Claude, I believe."
     },
     {
       "domains": [
@@ -443,7 +499,7 @@
         "ref", "ref_", "tag", "linkCode", "creativeASIN", "psc",
         "pd_rd_r", "pd_rd_w", "pd_rd_wg", "pf_rd_p", "pf_rd_r", "pf_rd_s", "pf_rd_t", "pf_rd_i"
       ],
-      "note": "Mostly generated by Claude, I believe."
+      "notes": "Mostly generated by Claude, I believe."
     },
     {"domains": ["gofundme.com"], "params": ["pc", "attribution_id", "ts"]},
     {"domains": ["patreon.com"], "params": ["post_id", "token"]},
@@ -472,7 +528,7 @@
         "ebay.ca", "ebay.com.au", "ebay.at", "ebay.ch", "ebay.ie", "ebay.nl", "ebay.be", "ebay.pl",
         "ebay.com.sg", "ebay.com.hk", "ebay.com.my", "ebay.ph"
       ],
-      "source": "https://partnerhelp.ebay.com/helpcenter/s/article/What-are-the-parameters-of-an-EPN-link#tracking-link-format",
+      "sources": ["https://partnerhelp.ebay.com/helpcenter/s/article/What-are-the-parameters-of-an-EPN-link#tracking-link-format"],
       "params": ["mkevt", "mkcid", "mkrid", "campid", "toolid", "customid"]
     },
     {

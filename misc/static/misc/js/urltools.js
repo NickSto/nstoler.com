@@ -66,16 +66,21 @@ async function fetchTrackingParams(url, options) {
   return parseTrackingParams(await response.json());
 }
 
-// Validates the JSON structure and flattens the sections of global parameters into one Set.
+// Validates the JSON structure and flattens the groups of all global sections into one Set.
 function parseTrackingParams(data) {
   if (!Array.isArray(data?.global) || !Array.isArray(data?.sites)) {
     throw new Error('Expected "global" and "sites" lists.');
   }
   const globalParams = new Set();
   for (const section of data.global) {
-    requireStringArray(section?.params, 'params of a global section');
-    for (const param of section.params) {
-      globalParams.add(param);
+    if (!Array.isArray(section?.groups)) {
+      throw new Error('Expected every global section to have a list of "groups".');
+    }
+    for (const group of section.groups) {
+      requireStringArray(group?.params, 'params of a global group');
+      for (const param of group.params) {
+        globalParams.add(param);
+      }
     }
   }
   for (const rule of data.sites) {
