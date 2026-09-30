@@ -13,10 +13,7 @@
     },
     {
       "section": "Misc analytics",
-      "params": [
-        "oly_anon_id", "oly_enc_id", "guccounter", "guce_referrer", "guce_referrer_sig",
-        "s_cid", "scid"
-      ]
+      "params": ["guccounter", "guce_referrer", "guce_referrer_sig", "s_cid", "scid"]
     },
     {
       "section": "Unknown origin",
