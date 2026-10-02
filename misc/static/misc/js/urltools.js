@@ -35,12 +35,9 @@ let params = [];
 // The hostname of the last successfully parsed url.
 let currentHostname = null;
 
-// The urls followed with the redirect stepper, oldest first: {url, info}. `info` says how the
-// server redirected from `url` to the next one.
+// The redirects followed from the original url, oldest first: {url, info}. `url` is where the
+// server redirected to, and `info` says how.
 let redirectHistory = [];
-
-// Where the last followed redirect led. The original box should hold this, unless the user started over.
-let latestLocation = null;
 
 // Fetches the tracking parameters from the gist, falling back to the copy on this site.
 // Throws if both fail.
@@ -106,7 +103,7 @@ async function main() {
   }
   const originalUrlInput = document.querySelector('#originalUrl');
   const errorElement = document.getElementById('urlError');
-  originalUrlInput.addEventListener('input', parseAndRender);
+  originalUrlInput.addEventListener('input', onOriginalChanged);
   document.getElementById('selectAll').addEventListener('click', () => setAllSelected(true));
   document.getElementById('selectNone').addEventListener('click', () => setAllSelected(false));
   document.getElementById('selectNoTracking').addEventListener('click', selectAllButTracking);
@@ -121,7 +118,7 @@ async function main() {
     try {
       const url = await navigator.clipboard.readText();
       originalUrlInput.value = url;
-      parseAndRender();
+      onOriginalChanged();
     } catch (error) {
       errorElement.textContent = 'Failed to read from clipboard: ' + error.message;
     }
@@ -133,7 +130,7 @@ async function main() {
     if (newDomain === '') {
       return;
     }
-    let url = parseUrl(originalUrlInput.value.trim());
+    let url = parseUrl(getCurrentUrlStr());
     if (url === null) {
       return;
     }
@@ -169,10 +166,9 @@ function updateCompareResult() {
 }
 
 // Asks the server to take one step in the edited url's redirect chain (admin-only). If it finds a
-// redirect, the destination becomes the new original url, so it can be inspected or edited before
-// the next step. Otherwise, the original url is left alone and the outcome is reported.
+// redirect, the destination is added to the history and becomes the current url, so it can be
+// inspected or edited before the next step. Otherwise, the outcome is reported.
 async function stepForward() {
-  const originalUrlInput = document.getElementById('originalUrl');
   const stepButton = document.getElementById('stepButton');
   const editedUrlStr = document.getElementById('editedUrl').value.trim();
   if (!editedUrlStr) {
@@ -191,11 +187,9 @@ async function stepForward() {
       return;
     }
     if (data.location) {
-      redirectHistory.push({url: editedUrlStr, info: describeRedirect(data)});
-      latestLocation = data.location;
-      originalUrlInput.value = data.location;
-      parseAndRender();
+      redirectHistory.push({url: data.location, info: describeRedirect(data)});
       displayHistory();
+      parseAndRender();
     } else {
       const [level, message] = describeNoRedirect(data.code);
       showStepStatus(level, message);
@@ -247,18 +241,27 @@ function hideStepStatus() {
   }
 }
 
-// Shows a read-only box for each followed url, with the message about how it redirected in between.
-// The last message leads to the original box, which holds the newest url.
+// Shows the redirects followed so far, between the original and edited boxes: how each redirect
+// happened, then a read-only box with where it led. The last box holds the current url.
+// The first message goes beside the Paste button instead of between the boxes.
 function displayHistory() {
   const container = document.getElementById('redirectHistory');
-  const list = document.getElementById('historyList');
-  // After a redirect, the box holds the newest url instead of the one the user started with.
-  const label = document.getElementById('originalLabel');
-  label.textContent = redirectHistory.length > 0 ? 'Current:' : 'Original:';
-  list.replaceChildren();
-  for (const step of redirectHistory) {
-    list.appendChild(makeHistoryBox(step.url));
-    list.appendChild(makeRedirectInfo(step.info));
+  const firstInfoSlot = document.getElementById('firstRedirectInfo');
+  container.replaceChildren();
+  firstInfoSlot.replaceChildren();
+  for (const [index, step] of redirectHistory.entries()) {
+    const isCurrent = index === redirectHistory.length - 1;
+    const infoBox = makeRedirectInfo(step.info);
+    // The "Current:" label shares its message's line, which keeps the gap above the box small. That
+    // isn't possible for the first message, since it's beside the Paste button.
+    if (index === 0) {
+      firstInfoSlot.appendChild(infoBox);
+    } else if (isCurrent) {
+      container.appendChild(makeLabeledInfo('Current:', infoBox));
+    } else {
+      container.appendChild(infoBox);
+    }
+    container.appendChild(makeHistoryBox(step.url, isCurrent, isCurrent && index === 0));
   }
   if (redirectHistory.length === 0) {
     container.style.display = 'none';
@@ -266,18 +269,36 @@ function displayHistory() {
   }
   // A textarea can only be sized to its content once it's visible.
   container.style.display = 'block';
-  for (const textarea of list.querySelectorAll('textarea')) {
+  for (const textarea of container.querySelectorAll('textarea')) {
     autoResizeTextarea(textarea);
   }
 }
 
-function makeHistoryBox(urlStr) {
+function makeHistoryBox(urlStr, isCurrent, withLabel) {
   const textarea = document.createElement('textarea');
   textarea.className = 'form-control history-url';
   textarea.rows = 1;
   textarea.readOnly = true;
   textarea.value = urlStr;
-  return textarea;
+  const box = document.createElement('div');
+  box.className = isCurrent ? 'input history-current' : 'input';
+  if (withLabel) {
+    const label = document.createElement('label');
+    label.textContent = 'Current:';
+    box.appendChild(label);
+  }
+  box.appendChild(textarea);
+  return box;
+}
+
+// Puts a label to the left of a redirect message, in the space where the messages are indented.
+function makeLabeledInfo(labelText, infoBox) {
+  const label = document.createElement('label');
+  label.textContent = labelText;
+  const row = document.createElement('div');
+  row.className = 'redirect-row';
+  row.append(label, infoBox);
+  return row;
 }
 
 function makeRedirectInfo(message) {
@@ -287,25 +308,33 @@ function makeRedirectInfo(message) {
   return infoBox;
 }
 
-function resetHistory() {
-  redirectHistory = [];
-  latestLocation = null;
-  displayHistory();
+// Changing the original url makes any redirects followed from it stale.
+function onOriginalChanged() {
+  // The history box only exists for the admin, who is the only one with any history to clear.
+  if (redirectHistory.length > 0) {
+    redirectHistory = [];
+    displayHistory();
+  }
+  parseAndRender();
 }
 
-// Re-reads the original url box, rebuilds the parameter list from scratch, and redraws everything.
-// The parameter table's selection state is intentionally not preserved across this, since a change
-// to the original url is treated as a fresh url to work with.
-function parseAndRender() {
-  const originalUrlInput = document.getElementById('originalUrl');
-  autoResizeTextarea(originalUrlInput);
-  const domainBox = document.getElementById('domainBox');
-  const urlStr = originalUrlInput.value.trim();
-  const errorElement = document.getElementById('urlError');
-  // Anything but the last redirect's destination means the user started over, so the history is stale.
-  if (redirectHistory.length > 0 && !sameUrl(latestLocation, urlStr)) {
-    resetHistory();
+// The url that the parsed url controls and the edited url work on: the newest redirect
+// destination, or the original url if no redirects were followed.
+function getCurrentUrlStr() {
+  if (redirectHistory.length > 0) {
+    return redirectHistory[redirectHistory.length - 1].url;
   }
+  return document.getElementById('originalUrl').value.trim();
+}
+
+// Re-reads the current url, rebuilds the parameter list from scratch, and redraws everything.
+// The parameter table's selection state is intentionally not preserved across this, since a change
+// to the url is treated as a fresh url to work with.
+function parseAndRender() {
+  autoResizeTextarea(document.getElementById('originalUrl'));
+  const domainBox = document.getElementById('domainBox');
+  const urlStr = getCurrentUrlStr();
+  const errorElement = document.getElementById('urlError');
   hideStepStatus();
   let url = null;
   if (urlStr !== '') {
@@ -364,13 +393,6 @@ function hasScheme(urlStr) {
   return /^[a-z][a-z0-9+.-]*:/i.test(urlStr);
 }
 
-// True if both are valid urls that are equivalent once parsed.
-function sameUrl(urlStr1, urlStr2) {
-  const url1 = parseUrl(urlStr1);
-  const url2 = parseUrl(urlStr2);
-  return url1 !== null && url2 !== null && url1.href === url2.href;
-}
-
 // `hostname` is the hostname of the url the parameter came from (or null, if unknown).
 function isTrackingParam(key, hostname) {
   if (trackingParams.global.has(key)) {
@@ -426,7 +448,7 @@ function makeParamRow(param, index) {
   checkbox.checked = param.selected;
   checkbox.addEventListener('change', () => {
     params[index].selected = checkbox.checked;
-    updateEditedUrl(parseUrl(document.getElementById('originalUrl').value.trim()));
+    updateEditedUrl(parseUrl(getCurrentUrlStr()));
   });
   const checkboxCell = document.createElement('td');
   checkboxCell.appendChild(checkbox);
@@ -456,7 +478,7 @@ function setAllSelected(selected) {
     param.selected = selected;
   }
   displayParams();
-  updateEditedUrl(parseUrl(document.getElementById('originalUrl').value.trim()));
+  updateEditedUrl(parseUrl(getCurrentUrlStr()));
 }
 
 function selectAllButTracking() {
@@ -464,7 +486,7 @@ function selectAllButTracking() {
     param.selected = !isTrackingParam(param.key, currentHostname);
   }
   displayParams();
-  updateEditedUrl(parseUrl(document.getElementById('originalUrl').value.trim()));
+  updateEditedUrl(parseUrl(getCurrentUrlStr()));
 }
 
 // Rebuilds the "Edited url" box from the currently selected parameters.

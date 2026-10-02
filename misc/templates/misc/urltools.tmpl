@@ -19,20 +19,20 @@
         <h4>URLs</h4>
       </div>
       <div class="panel-body">
-        {% if is_admin %}
-          <div id="redirectHistory" class="input">
-            <label>Followed:</label>
-            <div id="historyList"></div>
-          </div>
-        {% endif %}
         <div class="input">
-          <label id="originalLabel" for="originalUrl">Original:</label>
+          <label for="originalUrl">Original:</label>
           <textarea id="originalUrl" class="form-control" rows="1" placeholder="Paste a url here&hellip;">{{ url }}</textarea>
           <p id="urlError" class="text-danger"></p>
-          <div class="buttons">
+          <div class="buttons buttons-original">
             <input id="pasteButton" class="btn btn-default" type="button" value="Paste">
+            {% if is_admin %}
+              <div id="firstRedirectInfo"></div>
+            {% endif %}
           </div>
         </div>
+        {% if is_admin %}
+          <div id="redirectHistory"></div>
+        {% endif %}
         <div class="input">
           <label for="editedUrl">Edited:</label>
           <textarea id="editedUrl" class="form-control" rows="1" readonly></textarea>

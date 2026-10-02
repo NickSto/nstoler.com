@@ -1,5 +1,8 @@
 
 .container-fluid {
+  /* The Paste button's fixed width and the gap after it, which the redirect messages line up with. */
+  --paste-width: 70px;
+  --message-gap: 5px;
   padding-top: 20px;
   padding-left: 40px;
 }
@@ -91,4 +94,45 @@ table#paramsTable td:first-child {
 
 .redirect-info::before {
   content: '\2193  ';
+}
+
+#pasteButton {
+  width: var(--paste-width);
+}
+
+/* The first message sits beside the Paste button... */
+.buttons-original {
+  display: flex;
+  align-items: center;
+  gap: var(--message-gap);
+}
+
+.buttons-original .redirect-info {
+  margin: 0;
+}
+
+/* ...and the rest are indented to line up with it. */
+#redirectHistory .redirect-info {
+  margin-left: calc(var(--paste-width) + var(--message-gap));
+}
+
+/* A label fills the indent beside a message, so the message still lines up with the others. */
+.redirect-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--message-gap);
+}
+
+/* The bottom margin matches the message's, so the label's bottom edge lines up with the message's. */
+.redirect-row label {
+  width: var(--paste-width);
+  margin: 0;
+}
+
+#redirectHistory .redirect-row .redirect-info {
+  margin-left: 0;
+}
+
+.history-current {
+  margin-bottom: 12px;
 }
