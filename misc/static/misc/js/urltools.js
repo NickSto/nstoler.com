@@ -252,6 +252,9 @@ function hideStepStatus() {
 function displayHistory() {
   const container = document.getElementById('redirectHistory');
   const list = document.getElementById('historyList');
+  // After a redirect, the box holds the newest url instead of the one the user started with.
+  const label = document.getElementById('originalLabel');
+  label.textContent = redirectHistory.length > 0 ? 'Current:' : 'Original:';
   list.replaceChildren();
   for (const step of redirectHistory) {
     list.appendChild(makeHistoryBox(step.url));
