@@ -29,7 +29,8 @@ let trackingParams = {global: new Set(), sites: []};
 //TODO: Break the site-specific parameters down further by path. For example, on Youtube, `v` is a
 //      necessary parameter on `/watch`, but a tracker on `/redirect`.
 
-// The currently parsed query parameters: {key, value, selected}, in the order they appear in the url.
+// The currently parsed query parameters, in the order they appear in the url:
+// {key, value, raw, selected}. `key` and `value` are decoded, and `raw` is the original text.
 let params = [];
 
 // The hostname of the last successfully parsed url.
@@ -337,14 +338,24 @@ function parseAndRender() {
   const errorElement = document.getElementById('urlError');
   hideStepStatus();
   let url = null;
+  let errorMessage = '';
   if (urlStr !== '') {
     url = parseUrl(urlStr);
+    if (url === null) {
+      errorMessage = 'Invalid url.';
+    }
   }
-  if (urlStr !== '' && url === null) {
-    errorElement.textContent = 'Invalid url.';
-  } else {
-    errorElement.textContent = '';
+  let queryParams = [];
+  if (url !== null) {
+    try {
+      queryParams = parseQuery(url);
+    } catch (error) {
+      // Treat it like an invalid url, so there's no table or edited url to be wrong.
+      errorMessage = `Error: ${error.message}`;
+      url = null;
+    }
   }
+  errorElement.textContent = errorMessage;
   if (url === null) {
     currentHostname = null;
   } else {
@@ -352,14 +363,38 @@ function parseAndRender() {
     domainBox.value = currentHostname;
   }
   updateCompareResult();
-  params = [];
-  if (url !== null) {
-    for (const [key, value] of url.searchParams.entries()) {
-      params.push({key, value, selected: !isTrackingParam(key, currentHostname)});
-    }
-  }
+  params = queryParams.map((param) => (
+    {...param, selected: !isTrackingParam(param.key, currentHostname)}
+  ));
   displayParams();
   updateEditedUrl(url);
+}
+
+// Splits the url's query into {key, value, raw}: the decoded key and value, and the original text.
+// Throws if the original text can't be matched up with what `searchParams` parsed.
+function parseQuery(url) {
+  if (url.search === '') {
+    return [];
+  }
+  const rawSegments = url.search.slice(1).split('&');
+  const decodedPairs = [...url.searchParams];
+  // `searchParams` skips empty segments like the one in `a=1&&b=2`, so they're not counted.
+  const nonEmptyCount = rawSegments.filter((segment) => segment !== '').length;
+  if (nonEmptyCount !== decodedPairs.length) {
+    throw new Error("Failed to parse the url's query parameters.");
+  }
+  const queryParams = [];
+  let pairIndex = 0;
+  for (const raw of rawSegments) {
+    if (raw === '') {
+      queryParams.push({key: '', value: '', raw});
+    } else {
+      const [key, value] = decodedPairs[pairIndex];
+      pairIndex++;
+      queryParams.push({key, value, raw});
+    }
+  }
+  return queryParams;
 }
 
 // Returns null if the url is invalid. If it has no scheme, assumes https://.
@@ -497,15 +532,12 @@ function updateEditedUrl(url) {
     editedUrlInput.value = '';
     updateGoButton(null);
   } else {
-    const query = new URLSearchParams();
-    for (const param of params) {
-      if (param.selected) {
-        query.append(param.key, param.value);
-      }
-    }
+    // Join the original text of the selected parameters, since re-encoding them would alter them.
+    const query = params.filter((param) => param.selected).map((param) => param.raw).join('&');
     // Edit a copy instead of rebuilding from `url.origin`, which is "null" for schemes like mailto:.
     const editedUrl = new URL(url);
-    editedUrl.search = query.toString();
+    // The setter strips one leading `?`, which would eat a `?` that's part of the first segment.
+    editedUrl.search = '?' + query;
     const editedUrlStr = editedUrl.href;
     editedUrlInput.value = editedUrlStr;
     updateGoButton(editedUrlStr);
