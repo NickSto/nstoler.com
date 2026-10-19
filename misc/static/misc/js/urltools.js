@@ -25,6 +25,7 @@ let trackingParams = {global: new Set(), sites: []};
  *      used the same as other global trackers. But the registry notes that these are usually
  *      combined with other tracking parameters, leading to the possibility of only removing them
  *      when present in certain combinations. Others like this: `kb`, `adid`, `adgroupid`, `adtype`.
+ *      For more on combinations of paramters, see the note in 00README.md#Todo
  */
 //TODO: Break the site-specific parameters down further by path. For example, on Youtube, `v` is a
 //      necessary parameter on `/watch`, but a tracker on `/redirect`.
@@ -537,7 +538,8 @@ function updateEditedUrl(url) {
     // Edit a copy instead of rebuilding from `url.origin`, which is "null" for schemes like mailto:.
     const editedUrl = new URL(url);
     // The setter strips one leading `?`, which would eat a `?` that's part of the first segment.
-    editedUrl.search = '?' + query;
+    // But setting an empty query (as opposed to `?`) is what removes the `?` entirely.
+    editedUrl.search = query === '' ? '' : '?' + query;
     const editedUrlStr = editedUrl.href;
     editedUrlInput.value = editedUrlStr;
     updateGoButton(editedUrlStr);
