@@ -464,8 +464,11 @@
   ],
 
   "sites": [
-    {"domains": ["instagram.com"], "params": ["igshid", "igsh", "igsi", "stkn", "vrfl"]},
-    {"domains": ["threads.com"], "params": ["xmt", "slof"]},
+    {
+      "domains": ["instagram.com"],
+      "params": ["igshid", "igsh", "igsi", "stkn", "vrfl", "exln", "psln", "srtk", "cplk"]
+    },
+    {"domains": ["threads.com"], "params": ["xmt", "slof", "hpir", "http_ref"]},
     {
       "domains": ["youtube.com", "youtu.be"],
       "params": [
@@ -474,6 +477,7 @@
       ],
       "notes": "On some urls (`/watch`), `v` is necessary. But on others (`/redirect`), it's a tracker."
     },
+    {"domains": ["tiktok.com"], "params": ["_t", "_r"]},
     {"domains": ["twitter.com", "x.com"], "params": ["ref_src", "ref_url", "s", "t"]},
     {
       "domains": ["facebook.com"],
